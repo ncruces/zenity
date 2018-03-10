@@ -25,6 +25,7 @@ var (
 	sendMessageW          = user32.NewProc("SendMessageW")
 	postQuitMessageW      = user32.NewProc("PostQuitMessage")
 	registerClassExW      = user32.NewProc("RegisterClassExW")
+	unregisterClassW      = user32.NewProc("UnregisterClassW")
 	translateMessageW     = user32.NewProc("TranslateMessage")
 	setWindowTextW        = user32.NewProc("SetWindowTextW")
 	getWindowTextLengthW  = user32.NewProc("GetWindowTextLengthW")
@@ -335,6 +336,12 @@ func registerClassEx(wcx *wndClassExW) (uint16, error) {
 	return uint16(ret), nil
 }
 
+func unregisterClass(className string, instance syscall.Handle) bool {
+	ret, _, _ := unregisterClassW.Call(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))), uintptr(instance))
+
+	return ret != 0
+}
+
 func getMessage(msg *msgW, hwnd syscall.Handle, msgFilterMin, msgFilterMax uint32) (bool, error) {
 	ret, _, err := getMessageW.Call(uintptr(unsafe.Pointer(msg)), uintptr(hwnd), uintptr(msgFilterMin), uintptr(msgFilterMax))
 
@@ -549,6 +556,7 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 	if err != nil {
 		return out, false, err
 	}
+	defer unregisterClass(className, instance)
 
 	hwnd, _ := createWindow(0, className, title, wsOverlappedWindow, swUseDefault, swUseDefault, 235, 140, 0, 0, instance)
 	hwndText, _ := createWindow(0, "STATIC", text, wsChild|wsVisible, 10, 10, 200, 16, hwnd, 0, instance)
