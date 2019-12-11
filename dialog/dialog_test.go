@@ -31,7 +31,7 @@ func TestOpenFiles(t *testing.T) {
 }
 
 func TestSaveFile(t *testing.T) {
-	ret, err := SaveFile("", "", []FileFilter{
+	ret, err := SaveFile("", "", true, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".ico"}},

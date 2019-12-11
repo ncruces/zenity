@@ -14,7 +14,7 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 		Operation:   "chooseFile",
 		Title:       title,
 		DefaultPath: defaultPath,
-		Filter:      toFilter(filters),
+		Filter:      appleFilters(filters),
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -33,7 +33,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 		Multiple:    true,
 		Title:       title,
 		DefaultPath: defaultPath,
-		Filter:      toFilter(filters),
+		Filter:      appleFilters(filters),
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -45,7 +45,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	return strings.Split(string(out), "\x00"), nil
 }
 
-func SaveFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
 		Operation:   "chooseFileName",
@@ -79,12 +79,7 @@ func PickFolder(title, defaultPath string) (string, error) {
 	return string(out), nil
 }
 
-type FileFilter struct {
-	Name string
-	Exts []string
-}
-
-func toFilter(filters []FileFilter) []string {
+func appleFilters(filters []FileFilter) []string {
 	var filter []string
 	for _, f := range filters {
 		for _, e := range f.Exts {
