@@ -16,6 +16,9 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	args = append(args, zenityFilters(filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -36,6 +39,9 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	args = append(args, zenityFilters(filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +65,9 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 	args = append(args, zenityFilters(filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -78,6 +87,9 @@ func PickFolder(title, defaultPath string) (string, error) {
 	}
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
