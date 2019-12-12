@@ -42,6 +42,9 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	if len(out) > 0 {
 		out = out[:len(out)-1]
 	}
+	if len(out) == 0 {
+		return nil, nil
+	}
 	return strings.Split(string(out), "\x00"), nil
 }
 
@@ -112,22 +115,30 @@ func scriptExpand(data scriptData) io.Reader {
 var script = template.Must(template.New("").Parse(`<script>
 var app = Application.currentApplication();
 app.includeStandardAdditions = true;
+app.activate();
 
 var opts = {};
 opts.withPrompt = {{.Title}};
 opts.multipleSelectionsAllowed = {{.Multiple}};
 
 {{if .DefaultPath}}
-  opts.defaultLocation = {{.DefaultPath}};
+	opts.defaultLocation = {{.DefaultPath}};
 {{end}}
 {{if .Filter}}
-  opts.ofType = {{.Filter}};
+	opts.ofType = {{.Filter}};
 {{end}}
 
-var ret = app[{{.Operation}}](opts);
+var ret;
+try {
+	ret = app[{{.Operation}}](opts);
+} catch (e) {
+	if (e.errorNumber !== -128) throw e;
+}
 if (Array.isArray(ret)) {
 	ret.join('\0');
-} else {
+} else if (ret != null) {
 	ret.toString();
+} else {
+	void 0;
 }
 </script>`))
