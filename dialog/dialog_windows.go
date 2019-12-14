@@ -7,12 +7,22 @@ import (
 	"unsafe"
 )
 
-func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
-	comdlg32 := syscall.NewLazyDLL("comdlg32.dll")
-	getOpenFileName := comdlg32.NewProc("GetOpenFileNameW")
+var (
+	ole32    = syscall.NewLazyDLL("ole32.dll")
+	shell32  = syscall.NewLazyDLL("shell32.dll")
+	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 
+	coTaskMemFree       = ole32.NewProc("CoTaskMemFree")
+	getOpenFileName     = comdlg32.NewProc("GetOpenFileNameW")
+	getSaveFileName     = comdlg32.NewProc("GetSaveFileNameW")
+	browseForFolder     = shell32.NewProc("SHBrowseForFolderW")
+	getPathFromIDListEx = shell32.NewProc("SHGetPathFromIDListEx")
+)
+
+func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Flags = 0x00080000 // OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -31,12 +41,9 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 }
 
 func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
-	comdlg32 := syscall.NewLazyDLL("comdlg32.dll")
-	getOpenFileName := comdlg32.NewProc("GetOpenFileNameW")
-
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080200 // OFN_ALLOWMULTISELECT|OFN_EXPLORER
+	args.Flags = 0x00080200 // OFN_EXPLORER|OFN_ALLOWMULTISELECT
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -80,11 +87,9 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 }
 
 func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
-	comdlg32 := syscall.NewLazyDLL("comdlg32.dll")
-	getSaveFileName := comdlg32.NewProc("GetSaveFileNameW")
-
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Flags = 0x00080000 // OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -106,8 +111,23 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 }
 
 func PickFolder(title, defaultPath string) (string, error) {
-	// TODO
-	return "", nil
+	var args _BROWSEINFO
+	args.Flags = 0x00000051 // BIF_RETURNONLYFSDIRS|BIF_USENEWUI
+
+	if title != "" {
+		args.Title = syscall.StringToUTF16Ptr(title)
+	}
+
+	ptr, _, _ := browseForFolder.Call(uintptr(unsafe.Pointer(&args)))
+	if ptr == 0 {
+		return "", nil
+	}
+
+	res := [1024]uint16{}
+	_, _, _ = getPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
+	_, _, _ = coTaskMemFree.Call(ptr)
+
+	return syscall.UTF16ToString(res[:]), nil
 }
 
 func windowsFilters(filters []FileFilter) []uint16 {
@@ -149,7 +169,18 @@ type _OPENFILENAME struct {
 	CustData        uintptr
 	FnHook          uintptr
 	TemplateName    *uint16
-	PvReserved      unsafe.Pointer
+	PvReserved      uintptr
 	DwReserved      uint32
 	FlagsEx         uint32
+}
+
+type _BROWSEINFO struct {
+	Owner        uintptr
+	Root         *uint16
+	DisplayName  *uint16
+	Title        *uint16
+	Flags        uint32
+	CallbackFunc uintptr
+	LParam       uintptr
+	Image        int32
 }
