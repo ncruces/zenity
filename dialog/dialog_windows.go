@@ -22,7 +22,7 @@ var (
 func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080000 // OFN_EXPLORER
+	args.Flags = 0x00080008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -43,7 +43,7 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080200 // OFN_EXPLORER|OFN_ALLOWMULTISELECT
+	args.Flags = 0x00080208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -89,7 +89,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080000 // OFN_EXPLORER
+	args.Flags = 0x00080008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)

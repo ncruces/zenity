@@ -128,16 +128,16 @@ opts.multipleSelectionsAllowed = {{.Multiple}};
 	opts.ofType = {{.Filter}};
 {{end}}
 
-var ret;
+var res;
 try {
-	ret = app[{{.Operation}}](opts);
+	res = app[{{.Operation}}](opts);
 } catch (e) {
 	if (e.errorNumber !== -128) throw e;
 }
-if (Array.isArray(ret)) {
-	ret.join('\0');
-} else if (ret != null) {
-	ret.toString();
+if (Array.isArray(res)) {
+	res.join('\0');
+} else if (res != null) {
+	res.toString();
 } else {
 	void 0;
 }

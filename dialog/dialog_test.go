@@ -3,53 +3,53 @@ package dialog
 import "testing"
 
 func TestOpenFile(t *testing.T) {
-	ret, err := OpenFile("", "", []FileFilter{
+	res, err := OpenFile("", "", []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".ico"}},
+		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
 	})
 
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("%#v", ret)
+		t.Logf("%#v", res)
 	}
 }
 
 func TestOpenFiles(t *testing.T) {
-	ret, err := OpenFiles("", "", []FileFilter{
+	res, err := OpenFiles("", "", []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".ico"}},
+		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
 	})
 
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("%#v", ret)
+		t.Logf("%#v", res)
 	}
 }
 
 func TestSaveFile(t *testing.T) {
-	ret, err := SaveFile("", "", true, []FileFilter{
+	res, err := SaveFile("", "", true, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".ico"}},
+		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
 	})
 
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("%#v", ret)
+		t.Logf("%#v", res)
 	}
 }
 
 func TestPickFolder(t *testing.T) {
-	ret, err := PickFolder("", "")
+	res, err := PickFolder("", "")
 
 	if err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("%#v", ret)
+		t.Logf("%#v", res)
 	}
 }
