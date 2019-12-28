@@ -1,28 +1,36 @@
 package dialog
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
+	"reflect"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
 )
 
 var (
+	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 	ole32    = syscall.NewLazyDLL("ole32.dll")
 	shell32  = syscall.NewLazyDLL("shell32.dll")
-	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 
-	coTaskMemFree       = ole32.NewProc("CoTaskMemFree")
-	getOpenFileName     = comdlg32.NewProc("GetOpenFileNameW")
-	getSaveFileName     = comdlg32.NewProc("GetSaveFileNameW")
-	browseForFolder     = shell32.NewProc("SHBrowseForFolderW")
-	getPathFromIDListEx = shell32.NewProc("SHGetPathFromIDListEx")
+	getOpenFileName             = comdlg32.NewProc("GetOpenFileNameW")
+	getSaveFileName             = comdlg32.NewProc("GetSaveFileNameW")
+	commDlgExtendedError        = comdlg32.NewProc("CommDlgExtendedError")
+	coInitializeEx              = ole32.NewProc("CoInitializeEx")
+	coUninitialize              = ole32.NewProc("CoUninitialize")
+	coCreateInstance            = ole32.NewProc("CoCreateInstance")
+	coTaskMemFree               = ole32.NewProc("CoTaskMemFree")
+	shBrowseForFolder           = shell32.NewProc("SHBrowseForFolderW")
+	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
+	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
 )
 
 func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080008 // OFN_NOCHANGEDIR|OFN_EXPLORER
+	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -32,18 +40,26 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	}
 	args.Filter = &windowsFilters(filters)[0]
 
-	res := [1024]uint16{}
+	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 
-	_, _, _ = getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	n, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if n == 0 {
+		n, _, _ = commDlgExtendedError.Call()
+		if n == 0 {
+			return "", nil
+		} else {
+			return "", fmt.Errorf("Common Dialog error: %x", n)
+		}
+	}
 	return syscall.UTF16ToString(res[:]), nil
 }
 
 func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
+	args.Flags = 0x80208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -53,11 +69,19 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	}
 	args.Filter = &windowsFilters(filters)[0]
 
-	res := [65536]uint16{}
+	res := [32768 + 1024*256]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 
-	_, _, _ = getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	n, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if n == 0 {
+		n, _, _ = commDlgExtendedError.Call()
+		if n == 0 {
+			return nil, nil
+		} else {
+			return nil, fmt.Errorf("Common Dialog error: %x", n)
+		}
+	}
 
 	var i int
 	var nul bool
@@ -89,7 +113,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x00080008 // OFN_NOCHANGEDIR|OFN_EXPLORER
+	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
@@ -98,34 +122,115 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 		args.InitialDir = syscall.StringToUTF16Ptr(defaultPath)
 	}
 	if confirmOverwrite {
-		args.Flags |= 0x00000002 // OFN_OVERWRITEPROMPT
+		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
 	}
 	args.Filter = &windowsFilters(filters)[0]
 
-	res := [1024]uint16{}
+	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 
-	_, _, _ = getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
+	n, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if n == 0 {
+		n, _, _ = commDlgExtendedError.Call()
+		if n == 0 {
+			return "", nil
+		} else {
+			return "", fmt.Errorf("Common Dialog error: %x", n)
+		}
+	}
 	return syscall.UTF16ToString(res[:]), nil
 }
 
 func PickFolder(title, defaultPath string) (string, error) {
+	hr, _, _ := coInitializeEx.Call(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
+	if hr < 0 {
+		return "", errors.New("COM initialization failed.")
+	}
+	defer coUninitialize.Call()
+
+	var dialog *_IFileOpenDialog
+	hr, _, _ = coCreateInstance.Call(
+		_CLSID_FileOpenDialog, 0, 0x17, // CLSCTX_ALL
+		_IID_IFileOpenDialog, uintptr(unsafe.Pointer(&dialog)))
+	if hr < 0 || dialog == nil {
+		return browseForFolder(title, defaultPath)
+	}
+	defer dialog.Call(dialog.vtbl.Release)
+
+	var opts int
+	hr, _, _ = dialog.Call(dialog.vtbl.GetOptions, uintptr(unsafe.Pointer(&opts)))
+	if hr < 0 {
+		return "", fmt.Errorf("IFileOpenDialog.GetOptions error: %x", hr)
+	}
+	hr, _, _ = dialog.Call(dialog.vtbl.SetOptions, uintptr(opts|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
+	if hr < 0 {
+		return "", fmt.Errorf("IFileOpenDialog.SetOptions error: %x", hr)
+	}
+
+	if title != "" {
+		ptr := syscall.StringToUTF16Ptr(title)
+		dialog.Call(dialog.vtbl.SetTitle, uintptr(unsafe.Pointer(ptr)))
+	}
+
+	if defaultPath != "" {
+		var item *_IShellItem
+		ptr := syscall.StringToUTF16Ptr(defaultPath)
+		hr, _, _ = shCreateItemFromParsingName.Call(
+			uintptr(unsafe.Pointer(ptr)), 0,
+			_IID_IShellItem,
+			uintptr(unsafe.Pointer(&item)))
+
+		if hr >= 0 && item != nil {
+			dialog.Call(dialog.vtbl.SetDefaultFolder, uintptr(unsafe.Pointer(item)))
+			item.Call(item.vtbl.Release)
+		}
+	}
+
+	hr, _, _ = dialog.Call(dialog.vtbl.Show, 0)
+	if hr < 0 {
+		return "", fmt.Errorf("IFileOpenDialog.Show error: %x", hr)
+	}
+
+	var item *_IShellItem
+	hr, _, _ = dialog.Call(dialog.vtbl.GetResult, uintptr(unsafe.Pointer(&item)))
+	if hr < 0 {
+		return "", fmt.Errorf("IFileOpenDialog.GetResult error: %x", hr)
+	}
+	if item == nil {
+		return "", nil
+	}
+	defer item.Call(item.vtbl.Release)
+
+	var ptr uintptr
+	hr, _, _ = item.Call(item.vtbl.GetDisplayName,
+		0x80058000, // SIGDN_FILESYSPATH
+		uintptr(unsafe.Pointer(&ptr)))
+	if hr < 0 {
+		return "", fmt.Errorf("IShellItem.GetDisplayName error: %x", hr)
+	}
+	defer coTaskMemFree.Call(ptr)
+
+	res := reflect.SliceHeader{Data: ptr, Len: 32768, Cap: 32768}
+	return syscall.UTF16ToString(*(*[]uint16)(unsafe.Pointer(&res))), nil
+}
+
+func browseForFolder(title, defaultPath string) (string, error) {
 	var args _BROWSEINFO
-	args.Flags = 0x00000051 // BIF_RETURNONLYFSDIRS|BIF_USENEWUI
+	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
 	if title != "" {
 		args.Title = syscall.StringToUTF16Ptr(title)
 	}
 
-	ptr, _, _ := browseForFolder.Call(uintptr(unsafe.Pointer(&args)))
+	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
 	if ptr == 0 {
 		return "", nil
 	}
+	defer coTaskMemFree.Call(ptr)
 
-	res := [1024]uint16{}
-	_, _, _ = getPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
-	_, _, _ = coTaskMemFree.Call(ptr)
+	res := [32768]uint16{}
+	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
 
 	return syscall.UTF16ToString(res[:]), nil
 }
@@ -176,11 +281,101 @@ type _OPENFILENAME struct {
 
 type _BROWSEINFO struct {
 	Owner        uintptr
-	Root         *uint16
+	Root         uintptr
 	DisplayName  *uint16
 	Title        *uint16
 	Flags        uint32
 	CallbackFunc uintptr
 	LParam       uintptr
 	Image        int32
+}
+
+func uuid(s string) uintptr {
+	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
+}
+
+var (
+	_IID_IShellItem       = uuid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
+	_IID_IFileOpenDialog  = uuid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
+	_CLSID_FileOpenDialog = uuid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
+)
+
+type _COMObject struct{}
+
+func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
+	self := uintptr(unsafe.Pointer(o))
+	nargs := uintptr(len(a))
+	switch nargs {
+	case 0:
+		return syscall.Syscall(trap, nargs+1, self, 0, 0)
+	case 1:
+		return syscall.Syscall(trap, nargs+1, self, a[0], 0)
+	case 2:
+		return syscall.Syscall(trap, nargs+1, self, a[0], a[1])
+	default:
+		panic("COM call with too many arguments.")
+	}
+}
+
+type _IFileOpenDialog struct {
+	_COMObject
+	vtbl *_IFileOpenDialogVtbl
+}
+
+type _IShellItem struct {
+	_COMObject
+	vtbl *_IShellItemVtbl
+}
+
+type _IFileOpenDialogVtbl struct {
+	_IFileDialogVtbl
+	GetResults       uintptr
+	GetSelectedItems uintptr
+}
+
+type _IFileDialogVtbl struct {
+	_IModalWindowVtbl
+	SetFileTypes        uintptr
+	SetFileTypeIndex    uintptr
+	GetFileTypeIndex    uintptr
+	Advise              uintptr
+	Unadvise            uintptr
+	SetOptions          uintptr
+	GetOptions          uintptr
+	SetDefaultFolder    uintptr
+	SetFolder           uintptr
+	GetFolder           uintptr
+	GetCurrentSelection uintptr
+	SetFileName         uintptr
+	GetFileName         uintptr
+	SetTitle            uintptr
+	SetOkButtonLabel    uintptr
+	SetFileNameLabel    uintptr
+	GetResult           uintptr
+	AddPlace            uintptr
+	SetDefaultExtension uintptr
+	Close               uintptr
+	SetClientGuid       uintptr
+	ClearClientData     uintptr
+	SetFilter           uintptr
+}
+
+type _IModalWindowVtbl struct {
+	_IUnknownVtbl
+	Show uintptr
+}
+
+type _IShellItemVtbl struct {
+	_IUnknownVtbl
+	BindToHandler  uintptr
+	GetParent      uintptr
+	GetDisplayName uintptr
+	GetAttributes  uintptr
+	Compare        uintptr
+}
+
+type _IUnknownVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
 }

@@ -2,8 +2,10 @@ package dialog
 
 import "testing"
 
+const defaultPath = ""
+
 func TestOpenFile(t *testing.T) {
-	res, err := OpenFile("", "", []FileFilter{
+	res, err := OpenFile("", defaultPath, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -17,7 +19,7 @@ func TestOpenFile(t *testing.T) {
 }
 
 func TestOpenFiles(t *testing.T) {
-	res, err := OpenFiles("", "", []FileFilter{
+	res, err := OpenFiles("", defaultPath, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -31,7 +33,7 @@ func TestOpenFiles(t *testing.T) {
 }
 
 func TestSaveFile(t *testing.T) {
-	res, err := SaveFile("", "", true, []FileFilter{
+	res, err := SaveFile("", defaultPath, true, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -45,7 +47,7 @@ func TestSaveFile(t *testing.T) {
 }
 
 func TestPickFolder(t *testing.T) {
-	res, err := PickFolder("", "")
+	res, err := PickFolder("", defaultPath)
 
 	if err != nil {
 		t.Error(err)
