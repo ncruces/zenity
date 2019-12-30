@@ -1,4 +1,4 @@
-package dialog
+package zenity
 
 type FileFilter struct {
 	Name string

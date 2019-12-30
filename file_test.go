@@ -1,11 +1,11 @@
-package dialog
+package zenity
 
 import "testing"
 
 const defaultPath = ""
 
-func TestOpenFile(t *testing.T) {
-	res, err := OpenFile("", defaultPath, []FileFilter{
+func TestSelectFile(t *testing.T) {
+	res, err := SelectFile("", defaultPath, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -18,8 +18,8 @@ func TestOpenFile(t *testing.T) {
 	}
 }
 
-func TestOpenFiles(t *testing.T) {
-	res, err := OpenFiles("", defaultPath, []FileFilter{
+func TestSelectFileMutiple(t *testing.T) {
+	res, err := SelectFileMutiple("", defaultPath, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -32,8 +32,8 @@ func TestOpenFiles(t *testing.T) {
 	}
 }
 
-func TestSaveFile(t *testing.T) {
-	res, err := SaveFile("", defaultPath, true, []FileFilter{
+func TestSelectFileSave(t *testing.T) {
+	res, err := SelectFileSave("", defaultPath, true, []FileFilter{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
@@ -46,8 +46,8 @@ func TestSaveFile(t *testing.T) {
 	}
 }
 
-func TestPickFolder(t *testing.T) {
-	res, err := PickFolder("", defaultPath)
+func TestSelectDirectory(t *testing.T) {
+	res, err := SelectDirectory("", defaultPath)
 
 	if err != nil {
 		t.Error(err)

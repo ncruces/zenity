@@ -1,2 +1,1 @@
-# go-ui
-Golang UI utilities
+# Zenity for Golang

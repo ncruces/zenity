@@ -1,4 +1,4 @@
-package dialog
+package zenity
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SelectFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
 		Operation:   "chooseFile",
@@ -26,7 +26,7 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	return string(out), nil
 }
 
-func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
+func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]string, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
 		Operation:   "chooseFile",
@@ -48,7 +48,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	return strings.Split(string(out), "\x00"), nil
 }
 
-func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
+func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
 		Operation:   "chooseFileName",
@@ -65,7 +65,7 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 	return string(out), nil
 }
 
-func PickFolder(title, defaultPath string) (string, error) {
+func SelectDirectory(title, defaultPath string) (string, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
 		Operation:   "chooseFolder",

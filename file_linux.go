@@ -1,11 +1,11 @@
-package dialog
+package zenity
 
 import (
 	"os/exec"
 	"strings"
 )
 
-func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SelectFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	args := []string{"--file-selection"}
 	if title != "" {
 		args = append(args, "--title="+title)
@@ -28,7 +28,7 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	return string(out), nil
 }
 
-func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
+func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]string, error) {
 	args := []string{"--file-selection", "--multiple", "--separator=\x1e"}
 	if title != "" {
 		args = append(args, "--title="+title)
@@ -51,7 +51,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	return strings.Split(string(out), "\x1e"), nil
 }
 
-func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
+func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	args := []string{"--file-selection", "--save"}
 	if title != "" {
 		args = append(args, "--title="+title)
@@ -77,7 +77,7 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 	return string(out), nil
 }
 
-func PickFolder(title, defaultPath string) (string, error) {
+func SelectDirectory(title, defaultPath string) (string, error) {
 	args := []string{"--file-selection", "--directory"}
 	if title != "" {
 		args = append(args, "--title="+title)

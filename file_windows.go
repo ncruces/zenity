@@ -1,4 +1,4 @@
-package dialog
+package zenity
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ var (
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
 )
 
-func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SelectFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
@@ -56,7 +56,7 @@ func OpenFile(title, defaultPath string, filters []FileFilter) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error) {
+func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
@@ -110,7 +110,7 @@ func OpenFiles(title, defaultPath string, filters []FileFilter) ([]string, error
 	return split, nil
 }
 
-func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
+func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
@@ -142,7 +142,7 @@ func SaveFile(title, defaultPath string, confirmOverwrite bool, filters []FileFi
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func PickFolder(title, defaultPath string) (string, error) {
+func SelectDirectory(title, defaultPath string) (string, error) {
 	hr, _, _ := coInitializeEx.Call(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
 	if hr < 0 {
 		return "", errors.New("COM initialization failed.")
