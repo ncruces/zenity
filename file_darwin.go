@@ -8,13 +8,15 @@ import (
 	"strings"
 )
 
-func SelectFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SelectFile(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
-		Operation:   "chooseFile",
-		Title:       title,
-		DefaultPath: defaultPath,
-		Filter:      appleFilters(filters),
+		Operation: "chooseFile",
+		Prompt:    opts.title,
+		Location:  opts.filename,
+		Type:      appleFilters(opts.filters),
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -26,14 +28,16 @@ func SelectFile(title, defaultPath string, filters []FileFilter) (string, error)
 	return string(out), nil
 }
 
-func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]string, error) {
+func SelectFileMutiple(options ...FileOption) ([]string, error) {
+	opts := fileoptsParse(options)
+
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
-		Operation:   "chooseFile",
-		Multiple:    true,
-		Title:       title,
-		DefaultPath: defaultPath,
-		Filter:      appleFilters(filters),
+		Operation: "chooseFile",
+		Multiple:  true,
+		Prompt:    opts.title,
+		Location:  opts.filename,
+		Type:      appleFilters(opts.filters),
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -48,12 +52,14 @@ func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]strin
 	return strings.Split(string(out), "\x00"), nil
 }
 
-func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
+func SelectFileSave(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
-		Operation:   "chooseFileName",
-		Title:       title,
-		DefaultPath: defaultPath,
+		Operation: "chooseFileName",
+		Prompt:    opts.title,
+		Location:  opts.filename,
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -65,12 +71,14 @@ func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []
 	return string(out), nil
 }
 
-func SelectDirectory(title, defaultPath string) (string, error) {
+func SelectDirectory(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = scriptExpand(scriptData{
-		Operation:   "chooseFolder",
-		Title:       title,
-		DefaultPath: defaultPath,
+		Operation: "chooseFolder",
+		Prompt:    opts.title,
+		Location:  opts.filename,
 	})
 	out, err := cmd.Output()
 	if err != nil {
@@ -93,11 +101,11 @@ func appleFilters(filters []FileFilter) []string {
 }
 
 type scriptData struct {
-	Operation   string
-	Title       string
-	DefaultPath string
-	Filter      []string
-	Multiple    bool
+	Operation string
+	Prompt    string
+	Location  string
+	Type      []string
+	Multiple  bool
 }
 
 func scriptExpand(data scriptData) io.Reader {
@@ -118,14 +126,14 @@ app.includeStandardAdditions = true;
 app.activate();
 
 var opts = {};
-opts.withPrompt = {{.Title}};
+opts.withPrompt = {{.Prompt}};
 opts.multipleSelectionsAllowed = {{.Multiple}};
 
-{{if .DefaultPath}}
-	opts.defaultLocation = {{.DefaultPath}};
+{{if .Location}}
+	opts.defaultLocation = {{.Location}};
 {{end}}
-{{if .Filter}}
-	opts.ofType = {{.Filter}};
+{{if .Type}}
+	opts.ofType = {{.Type}};
 {{end}}
 
 var res;

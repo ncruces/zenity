@@ -5,15 +5,17 @@ import (
 	"strings"
 )
 
-func SelectFile(title, defaultPath string, filters []FileFilter) (string, error) {
+func SelectFile(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	args := []string{"--file-selection"}
-	if title != "" {
-		args = append(args, "--title="+title)
+	if opts.title != "" {
+		args = append(args, "--title="+opts.title)
 	}
-	if defaultPath != "" {
-		args = append(args, "--filename="+defaultPath)
+	if opts.filename != "" {
+		args = append(args, "--filename="+opts.filename)
 	}
-	args = append(args, zenityFilters(filters)...)
+	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -28,15 +30,17 @@ func SelectFile(title, defaultPath string, filters []FileFilter) (string, error)
 	return string(out), nil
 }
 
-func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]string, error) {
+func SelectFileMutiple(options ...FileOption) ([]string, error) {
+	opts := fileoptsParse(options)
+
 	args := []string{"--file-selection", "--multiple", "--separator=\x1e"}
-	if title != "" {
-		args = append(args, "--title="+title)
+	if opts.title != "" {
+		args = append(args, "--title="+opts.title)
 	}
-	if defaultPath != "" {
-		args = append(args, "--filename="+defaultPath)
+	if opts.filename != "" {
+		args = append(args, "--filename="+opts.filename)
 	}
-	args = append(args, zenityFilters(filters)...)
+	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -51,18 +55,20 @@ func SelectFileMutiple(title, defaultPath string, filters []FileFilter) ([]strin
 	return strings.Split(string(out), "\x1e"), nil
 }
 
-func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []FileFilter) (string, error) {
+func SelectFileSave(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	args := []string{"--file-selection", "--save"}
-	if title != "" {
-		args = append(args, "--title="+title)
+	if opts.title != "" {
+		args = append(args, "--title="+opts.title)
 	}
-	if defaultPath != "" {
-		args = append(args, "--filename="+defaultPath)
+	if opts.filename != "" {
+		args = append(args, "--filename="+opts.filename)
 	}
-	if confirmOverwrite {
+	if opts.overwrite {
 		args = append(args, "--confirm-overwrite")
 	}
-	args = append(args, zenityFilters(filters)...)
+	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -77,13 +83,15 @@ func SelectFileSave(title, defaultPath string, confirmOverwrite bool, filters []
 	return string(out), nil
 }
 
-func SelectDirectory(title, defaultPath string) (string, error) {
+func SelectDirectory(options ...FileOption) (string, error) {
+	opts := fileoptsParse(options)
+
 	args := []string{"--file-selection", "--directory"}
-	if title != "" {
-		args = append(args, "--title="+title)
+	if opts.title != "" {
+		args = append(args, "--title="+opts.title)
 	}
-	if defaultPath != "" {
-		args = append(args, "--filename="+defaultPath)
+	if opts.filename != "" {
+		args = append(args, "--filename="+opts.filename)
 	}
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()

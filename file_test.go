@@ -5,11 +5,11 @@ import "testing"
 const defaultPath = ""
 
 func TestSelectFile(t *testing.T) {
-	res, err := SelectFile("", defaultPath, []FileFilter{
+	res, err := SelectFile(Filename(defaultPath), FileFilters{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
-	})
+	}.New())
 
 	if err != nil {
 		t.Error(err)
@@ -19,11 +19,11 @@ func TestSelectFile(t *testing.T) {
 }
 
 func TestSelectFileMutiple(t *testing.T) {
-	res, err := SelectFileMutiple("", defaultPath, []FileFilter{
+	res, err := SelectFileMutiple(Filename(defaultPath), FileFilters{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
-	})
+	}.New())
 
 	if err != nil {
 		t.Error(err)
@@ -33,11 +33,11 @@ func TestSelectFileMutiple(t *testing.T) {
 }
 
 func TestSelectFileSave(t *testing.T) {
-	res, err := SelectFileSave("", defaultPath, true, []FileFilter{
+	res, err := SelectFileSave(Filename(defaultPath), ConfirmOverwrite, FileFilters{
 		{"Go files", []string{".go"}},
 		{"Web files", []string{".html", ".js", ".css"}},
 		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
-	})
+	}.New())
 
 	if err != nil {
 		t.Error(err)
@@ -47,7 +47,7 @@ func TestSelectFileSave(t *testing.T) {
 }
 
 func TestSelectDirectory(t *testing.T) {
-	res, err := SelectDirectory("", defaultPath)
+	res, err := SelectDirectory(Filename(defaultPath))
 
 	if err != nil {
 		t.Error(err)
