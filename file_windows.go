@@ -27,12 +27,12 @@ var (
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
 )
 
-func SelectFile(options ...FileOption) (string, error) {
+func SelectFile(options ...Option) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
-	opts := fileoptsParse(options)
+	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -55,12 +55,12 @@ func SelectFile(options ...FileOption) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func SelectFileMutiple(options ...FileOption) ([]string, error) {
+func SelectFileMutiple(options ...Option) ([]string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
 
-	opts := fileoptsParse(options)
+	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -108,12 +108,12 @@ func SelectFileMutiple(options ...FileOption) ([]string, error) {
 	return split, nil
 }
 
-func SelectFileSave(options ...FileOption) (string, error) {
+func SelectFileSave(options ...Option) (string, error) {
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
-	opts := fileoptsParse(options)
+	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -139,7 +139,7 @@ func SelectFileSave(options ...FileOption) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func SelectDirectory(options ...FileOption) (string, error) {
+func SelectDirectory(options ...Option) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -151,7 +151,7 @@ func SelectDirectory(options ...FileOption) (string, error) {
 		defer coUninitialize.Call()
 	}
 
-	opts := fileoptsParse(options)
+	opts := optsParse(options)
 
 	var dialog *_IFileOpenDialog
 	hr, _, _ = coCreateInstance.Call(

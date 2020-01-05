@@ -1,0 +1,28 @@
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+
+var opts = {}
+opts.withPrompt = {{.Prompt}}
+opts.multipleSelectionsAllowed = {{.Multiple}}
+
+{{if .Location -}}
+	opts.defaultLocation = {{.Location}}
+{{end -}}
+{{if .Type -}}
+	opts.ofType = {{.Type}}
+{{end -}}
+
+var res
+try {
+	res = app[{{.Operation}}](opts)
+} catch (e) {
+	if (e.errorNumber !== -128) throw e
+}
+if (Array.isArray(res)) {
+	res.join('\0')
+} else if (res != null) {
+	res.toString()
+} else {
+	void 0
+}

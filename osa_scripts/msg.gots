@@ -1,0 +1,33 @@
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+
+var opts = {}
+
+{{if .Buttons -}}
+  opts.buttons = {{.Buttons}}
+{{end -}}
+{{if .Default -}}
+  opts.defaultButton = {{.Default}}
+{{end -}}
+{{if .Cancel -}}
+  opts.cancelButton = {{.Cancel}}
+{{end -}}
+
+{{if .Dialog -}}
+  {{if .Title -}}
+    opts.withTitle = {{.Title}}
+  {{end -}}
+  {{if .Icon -}}
+    opts.withIcon = {{.Icon}}
+  {{end -}}
+  app.displayDialog({{.Text}}, opts)
+{{else -}}
+  {{if .As -}}
+    opts.as = {{.As}}
+  {{end -}}
+  {{if .Message -}}
+    opts.message = {{.Message}}
+  {{end -}}
+  app.displayAlert({{.Text}}, opts)
+{{end -}}
