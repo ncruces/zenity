@@ -2,6 +2,8 @@ package zenity
 
 import (
 	"os/exec"
+
+	"github.com/ncruces/zenity/internal/osa"
 )
 
 func Error(text string, options ...Option) (bool, error) {
@@ -23,7 +25,7 @@ func Warning(text string, options ...Option) (bool, error) {
 func message(dialog int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
-	data := osaMsg{
+	data := osa.Msg{
 		Text:   text,
 		Title:  opts.title,
 		Dialog: opts.icon != 0 || dialog == 2,
@@ -96,7 +98,7 @@ func message(dialog int, text string, options []Option) (bool, error) {
 		}
 	}
 
-	_, err := osaRun("msg", data)
+	_, err := osa.Run("msg", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}
@@ -104,16 +106,4 @@ func message(dialog int, text string, options []Option) (bool, error) {
 		return false, err
 	}
 	return true, err
-}
-
-type osaMsg struct {
-	Dialog  bool
-	Text    string
-	Message string
-	As      string
-	Title   string
-	Icon    string
-	Buttons []string
-	Cancel  int
-	Default int
 }

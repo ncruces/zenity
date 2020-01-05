@@ -2,11 +2,13 @@ package zenity
 
 import (
 	"strings"
+
+	"github.com/ncruces/zenity/internal/osa"
 )
 
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
-	out, err := osaRun("file", osaFile{
+	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFile",
 		Prompt:    opts.title,
 		Location:  opts.filename,
@@ -23,7 +25,7 @@ func SelectFile(options ...Option) (string, error) {
 
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
-	out, err := osaRun("file", osaFile{
+	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFile",
 		Multiple:  true,
 		Prompt:    opts.title,
@@ -44,7 +46,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
-	out, err := osaRun("file", osaFile{
+	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFileName",
 		Prompt:    opts.title,
 		Location:  opts.filename,
@@ -60,7 +62,7 @@ func SelectFileSave(options ...Option) (string, error) {
 
 func SelectDirectory(options ...Option) (string, error) {
 	opts := optsParse(options)
-	out, err := osaRun("file", osaFile{
+	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFolder",
 		Prompt:    opts.title,
 		Location:  opts.filename,
@@ -82,12 +84,4 @@ func appleFilters(filters []FileFilter) []string {
 		}
 	}
 	return filter
-}
-
-type osaFile struct {
-	Operation string
-	Prompt    string
-	Location  string
-	Type      []string
-	Multiple  bool
 }
