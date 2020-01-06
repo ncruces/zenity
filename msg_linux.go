@@ -55,8 +55,11 @@ func message(arg, text string, options []Option) (bool, error) {
 	}
 
 	cmd := exec.Command("zenity", args...)
-	_, err := cmd.Output()
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+	out, err := cmd.Output()
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
+		if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
+			return false, ErrExtraButton
+		}
 		return false, nil
 	}
 	if err != nil {

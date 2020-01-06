@@ -18,7 +18,7 @@ func SelectFile(options ...Option) (string, error) {
 	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
 	if err != nil {
@@ -43,7 +43,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return nil, nil
 	}
 	if err != nil {
@@ -71,7 +71,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	args = append(args, zenityFilters(opts.filters)...)
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
 	if err != nil {
@@ -95,7 +95,7 @@ func SelectDirectory(options ...Option) (string, error) {
 	}
 	cmd := exec.Command("zenity", args...)
 	out, err := cmd.Output()
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
 	if err != nil {
