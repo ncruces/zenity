@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"os/exec"
 	"strings"
 
 	"github.com/ncruces/zenity/internal/osa"
@@ -14,6 +15,9 @@ func SelectFile(options ...Option) (string, error) {
 		Location:  opts.filename,
 		Type:      appleFilters(opts.filters),
 	})
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -32,6 +36,9 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 		Location:  opts.filename,
 		Type:      appleFilters(opts.filters),
 	})
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +58,9 @@ func SelectFileSave(options ...Option) (string, error) {
 		Prompt:    opts.title,
 		Location:  opts.filename,
 	})
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -67,6 +77,9 @@ func SelectDirectory(options ...Option) (string, error) {
 		Prompt:    opts.title,
 		Location:  opts.filename,
 	})
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}

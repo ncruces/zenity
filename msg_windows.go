@@ -26,15 +26,15 @@ func Warning(text string, options ...Option) (bool, error) {
 	return message(3, text, options)
 }
 
-func message(dialog int, text string, options []Option) (bool, error) {
+func message(typ int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
 	var flags, caption uintptr
 
 	switch {
-	case dialog == 2 && opts.extra != "":
+	case typ == 2 && opts.extra != "":
 		flags |= 0x3 // MB_YESNOCANCEL
-	case dialog == 2 || opts.extra != "":
+	case typ == 2 || opts.extra != "":
 		flags |= 0x1 // MB_OKCANCEL
 	}
 

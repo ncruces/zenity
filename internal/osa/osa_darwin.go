@@ -16,7 +16,7 @@ func Run(script string, data interface{}) ([]byte, error) {
 	}
 
 	res := buf.String()
-	res = res[len("<script>") : len(res)-len("</script>")]
+	res = res[len("<script>") : len(res)-len("\n</script>")]
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = strings.NewReader(res)
 	return cmd.Output()
@@ -25,19 +25,21 @@ func Run(script string, data interface{}) ([]byte, error) {
 type File struct {
 	Operation string
 	Prompt    string
+	Name      string
 	Location  string
 	Type      []string
 	Multiple  bool
+	Separator rune
 }
 
 type Msg struct {
-	Dialog  bool
-	Text    string
-	Message string
-	As      string
-	Title   string
-	Icon    string
-	Buttons []string
-	Cancel  int
-	Default int
+	Operation string
+	Text      string
+	Message   string
+	As        string
+	Title     string
+	Icon      string
+	Buttons   []string
+	Cancel    int
+	Default   int
 }

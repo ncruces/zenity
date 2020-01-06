@@ -1,5 +1,17 @@
 package zenity
 
+// Errors
+
+type constError string
+
+func (e constError) Error() string { return string(e) }
+
+// Message errors
+
+const ErrExtraButton = constError("Extra button pressed.")
+
+// Options
+
 type options struct {
 	// General options
 	title string

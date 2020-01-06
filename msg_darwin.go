@@ -22,16 +22,24 @@ func Warning(text string, options ...Option) (bool, error) {
 	return message(3, text, options)
 }
 
-func message(dialog int, text string, options []Option) (bool, error) {
+func message(typ int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
-	data := osa.Msg{
-		Text:   text,
-		Title:  opts.title,
-		Dialog: opts.icon != 0 || dialog == 2,
+	dialog := opts.icon != 0 || typ == 2
+	var op string
+	if dialog {
+		op = "displayDialog"
+	} else {
+		op = "displayAlert"
 	}
 
-	if data.Dialog {
+	data := osa.Msg{
+		Operation: op,
+		Text:      text,
+		Title:     opts.title,
+	}
+
+	if dialog {
 		switch opts.icon {
 		case ErrorIcon:
 			data.Icon = "stop"
@@ -41,7 +49,7 @@ func message(dialog int, text string, options []Option) (bool, error) {
 			data.Icon = "caution"
 		}
 	} else {
-		switch dialog {
+		switch typ {
 		case 0:
 			data.As = "critical"
 		case 1:
@@ -56,20 +64,20 @@ func message(dialog int, text string, options []Option) (bool, error) {
 		}
 	}
 
-	if dialog != 2 {
-		opts.cancel = ""
-		if data.Dialog {
+	if typ != 2 {
+		if dialog {
 			opts.ok = "OK"
 		}
+		opts.cancel = ""
 	}
-	if opts.ok != "" || opts.cancel != "" || opts.extra != "" || true {
+	if opts.ok != "" || opts.cancel != "" || opts.extra != "" {
 		if opts.ok == "" {
 			opts.ok = "OK"
 		}
 		if opts.cancel == "" {
 			opts.cancel = "Cancel"
 		}
-		if dialog == 2 {
+		if typ == 2 {
 			if opts.extra == "" {
 				data.Buttons = []string{opts.cancel, opts.ok}
 				data.Default = 2
@@ -93,17 +101,20 @@ func message(dialog int, text string, options []Option) (bool, error) {
 		if data.Cancel != 0 {
 			data.Default = data.Cancel
 		}
-		if data.Dialog && data.Buttons == nil {
+		if dialog && data.Buttons == nil {
 			data.Default = 1
 		}
 	}
 
-	_, err := osa.Run("msg", data)
+	out, err := osa.Run("msg", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
+	}
+	if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
+		return false, ErrExtraButton
 	}
 	return true, err
 }

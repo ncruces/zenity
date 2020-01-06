@@ -6,23 +6,19 @@ var opts = {}
 opts.withPrompt = {{.Prompt}}
 opts.multipleSelectionsAllowed = {{.Multiple}}
 
-{{if .Location -}}
-	opts.defaultLocation = {{.Location}}
-{{end -}}
 {{if .Type -}}
 	opts.ofType = {{.Type}}
 {{end -}}
+{{if .Name -}}
+	opts.defaultName = {{.Name}}
+{{end -}}
+{{if .Location -}}
+	opts.defaultLocation = {{.Location}}
+{{end -}}
 
-var res
-try {
-	res = app[{{.Operation}}](opts)
-} catch (e) {
-	if (e.errorNumber !== -128) throw e
-}
+var res = app[{{.Operation}}](opts)
 if (Array.isArray(res)) {
-	res.join('\0')
-} else if (res != null) {
-	res.toString()
+	res.join(String.fromCodePoint({{.Separator}}))
 } else {
-	void 0
+	res.toString()
 }

@@ -4,6 +4,18 @@ app.activate()
 
 var opts = {}
 
+{{if .Message -}}
+  opts.message = {{.Message}}
+{{end -}}
+{{if .As -}}
+  opts.as = {{.As}}
+{{end -}}
+{{if .Title -}}
+  opts.withTitle = {{.Title}}
+{{end -}}
+{{if .Icon -}}
+  opts.withIcon = {{.Icon}}
+{{end -}}
 {{if .Buttons -}}
   opts.buttons = {{.Buttons}}
 {{end -}}
@@ -14,20 +26,4 @@ var opts = {}
   opts.cancelButton = {{.Cancel}}
 {{end -}}
 
-{{if .Dialog -}}
-  {{if .Title -}}
-    opts.withTitle = {{.Title}}
-  {{end -}}
-  {{if .Icon -}}
-    opts.withIcon = {{.Icon}}
-  {{end -}}
-  app.displayDialog({{.Text}}, opts)
-{{else -}}
-  {{if .As -}}
-    opts.as = {{.As}}
-  {{end -}}
-  {{if .Message -}}
-    opts.message = {{.Message}}
-  {{end -}}
-  app.displayAlert({{.Text}}, opts)
-{{end -}}
+app[{{.Operation}}]({{.Text}}, opts).buttonReturned
