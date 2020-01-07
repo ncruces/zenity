@@ -96,6 +96,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 				data.Default = 2
 			}
 		}
+		data.Extra = opts.extra
 	}
 	if opts.defcancel {
 		if data.Cancel != 0 {

@@ -1,1 +1,1 @@
-# Zenity for Golang
+# Zenity dialogs for Golang, Windows and macOS

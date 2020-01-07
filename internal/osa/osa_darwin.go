@@ -1,8 +1,12 @@
 package osa
 
 import (
+	"os"
 	"os/exec"
 	"strings"
+	"syscall"
+
+	"github.com/ncruces/zenity/internal/cmd"
 )
 
 //go:generate go run scripts/generate.go scripts/
@@ -17,6 +21,15 @@ func Run(script string, data interface{}) ([]byte, error) {
 
 	res := buf.String()
 	res = res[len("<script>") : len(res)-len("\n</script>")]
+
+	if cmd.Command {
+		cmd, err := exec.LookPath("osascript")
+		if err == nil {
+			os.Stderr.Close()
+			syscall.Exec(cmd, []string{"osascript", "-l", "JavaScript", "-e", res}, nil)
+		}
+	}
+
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = strings.NewReader(res)
 	return cmd.Output()
@@ -39,6 +52,7 @@ type Msg struct {
 	As        string
 	Title     string
 	Icon      string
+	Extra     string
 	Buttons   []string
 	Cancel    int
 	Default   int

@@ -26,4 +26,5 @@ var opts = {}
   opts.cancelButton = {{.Cancel}}
 {{end -}}
 
-app[{{.Operation}}]({{.Text}}, opts).buttonReturned
+var res = app[{{.Operation}}]({{.Text}}, opts).buttonReturned
+res === {{.Extra}} ? res : void 0
