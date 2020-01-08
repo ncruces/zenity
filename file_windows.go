@@ -11,17 +11,9 @@ import (
 )
 
 var (
-	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
-	ole32    = syscall.NewLazyDLL("ole32.dll")
-	shell32  = syscall.NewLazyDLL("shell32.dll")
-
 	getOpenFileName             = comdlg32.NewProc("GetOpenFileNameW")
 	getSaveFileName             = comdlg32.NewProc("GetSaveFileNameW")
 	commDlgExtendedError        = comdlg32.NewProc("CommDlgExtendedError")
-	coInitializeEx              = ole32.NewProc("CoInitializeEx")
-	coUninitialize              = ole32.NewProc("CoUninitialize")
-	coCreateInstance            = ole32.NewProc("CoCreateInstance")
-	coTaskMemFree               = ole32.NewProc("CoTaskMemFree")
 	shBrowseForFolder           = shell32.NewProc("SHBrowseForFolderW")
 	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
