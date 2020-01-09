@@ -31,7 +31,9 @@ func SelectFile(options ...Option) (string, error) {
 	if opts.filename != "" {
 		args.InitialDir = syscall.StringToUTF16Ptr(opts.filename)
 	}
-	args.Filter = &windowsFilters(opts.filters)[0]
+	if opts.filters != nil {
+		args.Filter = &windowsFilters(opts.filters)[0]
+	}
 
 	res := [32768]uint16{}
 	args.File = &res[0]
@@ -59,7 +61,9 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if opts.filename != "" {
 		args.InitialDir = syscall.StringToUTF16Ptr(opts.filename)
 	}
-	args.Filter = &windowsFilters(opts.filters)[0]
+	if opts.filters != nil {
+		args.Filter = &windowsFilters(opts.filters)[0]
+	}
 
 	res := [32768 + 1024*256]uint16{}
 	args.File = &res[0]
@@ -115,7 +119,9 @@ func SelectFileSave(options ...Option) (string, error) {
 	if opts.overwrite {
 		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
 	}
-	args.Filter = &windowsFilters(opts.filters)[0]
+	if opts.filters != nil {
+		args.Filter = &windowsFilters(opts.filters)[0]
+	}
 
 	res := [32768]uint16{}
 	args.File = &res[0]
@@ -236,9 +242,8 @@ func windowsFilters(filters []FileFilter) []uint16 {
 	for _, f := range filters {
 		res = append(res, utf16.Encode([]rune(f.Name))...)
 		res = append(res, 0)
-		for _, e := range f.Exts {
-			res = append(res, uint16('*'))
-			res = append(res, utf16.Encode([]rune(e))...)
+		for _, p := range f.Patterns {
+			res = append(res, utf16.Encode([]rune(p))...)
 			res = append(res, uint16(';'))
 		}
 		res = append(res, 0)

@@ -9,8 +9,6 @@ import (
 	"github.com/ncruces/zenity/internal/cmd"
 )
 
-//go:generate go run scripts/generate.go scripts/
-
 func Run(script string, data interface{}) ([]byte, error) {
 	var buf strings.Builder
 

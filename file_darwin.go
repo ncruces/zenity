@@ -92,8 +92,8 @@ func SelectDirectory(options ...Option) (string, error) {
 func appleFilters(filters []FileFilter) []string {
 	var filter []string
 	for _, f := range filters {
-		for _, e := range f.Exts {
-			filter = append(filter, strings.TrimPrefix(e, "."))
+		for _, p := range f.Patterns {
+			filter = append(filter, p) // FIXME
 		}
 	}
 	return filter

@@ -61,8 +61,8 @@ func ConfirmOverwrite(o *options) {
 }
 
 type FileFilter struct {
-	Name string
-	Exts []string
+	Name     string
+	Patterns []string
 }
 
 type FileFilters []FileFilter

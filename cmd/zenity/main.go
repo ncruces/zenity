@@ -11,6 +11,8 @@ import (
 	"github.com/ncruces/zenity/internal/cmd"
 )
 
+//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -platform-specific -manifest=win.manifest
+
 var (
 	// Application Options
 	errorDlg         bool
@@ -58,6 +60,18 @@ func main() {
 		msgResult(zenity.Warning(text, opts...))
 	case questionDlg:
 		msgResult(zenity.Question(text, opts...))
+
+	case fileSelectionDlg:
+		switch {
+		default:
+			strResult(zenity.SelectFile(opts...))
+		case save:
+			strResult(zenity.SelectFileSave(opts...))
+		case directory:
+			strResult(zenity.SelectDirectory(opts...))
+		case multiple:
+			lstResult(zenity.SelectFileMutiple(opts...))
+		}
 	}
 
 	flag.Usage()
@@ -95,7 +109,7 @@ func setupFlags() {
 	flag.BoolVar(&directory, "directory", false, "Activate directory-only selection")
 	flag.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
 	flag.StringVar(&filename, "filename", "", "Set the filename")
-	flag.StringVar(&separator, "separator", "", "Set output separator character")
+	flag.StringVar(&separator, "separator", "|", "Set output separator character")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 }
 
@@ -157,6 +171,16 @@ func loadFlags() []zenity.Option {
 		options = append(options, zenity.DefaultCancel)
 	}
 
+	// File selection options
+
+	options = append(options, fileFilters.New())
+	options = append(options, zenity.Filename(filename))
+	if confirmOverwrite {
+		options = append(options, zenity.ConfirmOverwrite)
+	}
+
+	cmd.Separator = separator
+
 	return options
 }
 
@@ -177,8 +201,36 @@ func msgResult(ok bool, err error) {
 	os.Exit(1)
 }
 
+func strResult(s string, err error) {
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString(cmd.LineBreak)
+		os.Exit(-1)
+	}
+	if s == "" {
+		os.Exit(1)
+	}
+	os.Stdout.WriteString(s)
+	os.Stdout.WriteString(cmd.LineBreak)
+	os.Exit(0)
+}
+
+func lstResult(l []string, err error) {
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString(cmd.LineBreak)
+		os.Exit(-1)
+	}
+	os.Stdout.WriteString(strings.Join(l, separator))
+	os.Stdout.WriteString(cmd.LineBreak)
+	if l == nil {
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
 type FileFilters struct {
-	list []zenity.FileFilter
+	zenity.FileFilters
 }
 
 func (f *FileFilters) String() string {
@@ -193,8 +245,8 @@ func (f *FileFilters) Set(s string) error {
 		s = split[1]
 	}
 
-	filter.Exts = strings.Split(s, " ")
-	f.list = append(f.list, filter)
+	filter.Patterns = strings.Split(s, " ")
+	f.FileFilters = append(f.FileFilters, filter)
 
 	return nil
 }

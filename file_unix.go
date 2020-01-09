@@ -118,9 +118,8 @@ func zenityFilters(filters []FileFilter) []string {
 			buf.WriteString(f.Name)
 			buf.WriteRune('|')
 		}
-		for _, e := range f.Exts {
-			buf.WriteRune('*')
-			buf.WriteString(e)
+		for _, p := range f.Patterns {
+			buf.WriteString(p)
 			buf.WriteRune(' ')
 		}
 		res = append(res, buf.String())

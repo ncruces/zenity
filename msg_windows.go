@@ -91,13 +91,12 @@ func message(typ int, text string, options []Option) (bool, error) {
 func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 	tid, _, _ := getCurrentThreadId.Call()
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
-		syscall.NewCallback(func(code int, wparam, lparam uintptr) uintptr {
-			msg := *(*_CWPRETSTRUCT)(unsafe.Pointer(lparam))
-			if msg.Message == 0x0110 { // WM_INITDIALOG
+		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+			if lparam.Message == 0x0110 { // WM_INITDIALOG
 				name := [7]byte{}
-				n, _, _ := getClassName.Call(msg.HWnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+				n, _, _ := getClassName.Call(lparam.HWnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
 				if string(name[:n]) == "#32770" {
-					enumChildWindows.Call(msg.HWnd,
+					enumChildWindows.Call(lparam.HWnd,
 						syscall.NewCallback(func(hwnd, lparam uintptr) uintptr {
 							name := [7]byte{}
 							n, _, _ := getClassName.Call(hwnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
@@ -127,7 +126,7 @@ func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 						}), 0)
 				}
 			}
-			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, lparam)
+			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
 			return next
 		}), 0, tid)
 	return

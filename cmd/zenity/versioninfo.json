@@ -1,0 +1,41 @@
+{
+	"FixedFileInfo": {
+		"FileVersion": {
+			"Major": 0,
+			"Minor": 0,
+			"Patch": 0,
+			"Build": 0
+		},
+		"ProductVersion": {
+			"Major": 0,
+			"Minor": 0,
+			"Patch": 0,
+			"Build": 0
+		},
+		"FileFlagsMask": "3f",
+		"FileFlags ": "00",
+		"FileOS": "040004",
+		"FileType": "01",
+		"FileSubType": "00"
+	},
+	"StringFileInfo": {
+		"Comments": "zenity",
+		"CompanyName": "Nuno Cruces",
+		"FileDescription": "",
+		"FileVersion": "0.0.0.0",
+		"InternalName": "zenity",
+		"LegalCopyright": "© 2020 Nuno Cruces",
+		"LegalTrademarks": "",
+		"OriginalFilename": "zenity.exe",
+		"PrivateBuild": "",
+		"ProductName": "zenity",
+		"ProductVersion": "0.0.0",
+		"SpecialBuild": ""
+	},
+	"VarFileInfo": {
+		"Translation": {
+			"LangID": "0409",
+			"CharsetID": "04B0"
+		}
+	}
+}

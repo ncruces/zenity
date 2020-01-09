@@ -6,9 +6,9 @@ const defaultPath = ""
 
 func TestSelectFile(t *testing.T) {
 	res, err := SelectFile(Filename(defaultPath), FileFilters{
-		{"Go files", []string{".go"}},
-		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
+		{"Go files", []string{"*.go"}},
+		{"Web files", []string{"*.html", "*.js", "*.css"}},
+		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 	}.New())
 
 	if err != nil {
@@ -20,9 +20,9 @@ func TestSelectFile(t *testing.T) {
 
 func TestSelectFileMutiple(t *testing.T) {
 	res, err := SelectFileMutiple(Filename(defaultPath), FileFilters{
-		{"Go files", []string{".go"}},
-		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
+		{"Go files", []string{"*.go"}},
+		{"Web files", []string{"*.html", "*.js", "*.css"}},
+		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 	}.New())
 
 	if err != nil {
@@ -34,9 +34,9 @@ func TestSelectFileMutiple(t *testing.T) {
 
 func TestSelectFileSave(t *testing.T) {
 	res, err := SelectFileSave(Filename(defaultPath), ConfirmOverwrite, FileFilters{
-		{"Go files", []string{".go"}},
-		{"Web files", []string{".html", ".js", ".css"}},
-		{"Image files", []string{".png", ".gif", ".ico", ".jpg", ".webp"}},
+		{"Go files", []string{"*.go"}},
+		{"Web files", []string{"*.html", "*.js", "*.css"}},
+		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 	}.New())
 
 	if err != nil {
