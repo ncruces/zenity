@@ -10,11 +10,12 @@ import (
 
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
+	dir, _ := splitDirAndName(opts.filename)
 	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFile",
 		Prompt:    opts.title,
-		Location:  opts.filename,
 		Type:      appleFilters(opts.filters),
+		Location:  dir,
 	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
@@ -30,13 +31,14 @@ func SelectFile(options ...Option) (string, error) {
 
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
+	dir, _ := splitDirAndName(opts.filename)
 	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFile",
 		Multiple:  true,
 		Prompt:    opts.title,
-		Location:  opts.filename,
 		Separator: cmd.Separator,
 		Type:      appleFilters(opts.filters),
+		Location:  dir,
 	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
@@ -55,10 +57,12 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
+	dir, name := splitDirAndName(opts.filename)
 	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFileName",
 		Prompt:    opts.title,
-		Location:  opts.filename,
+		Location:  dir,
+		Name:      name,
 	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
@@ -74,10 +78,11 @@ func SelectFileSave(options ...Option) (string, error) {
 
 func SelectDirectory(options ...Option) (string, error) {
 	opts := optsParse(options)
+	dir, _ := splitDirAndName(opts.filename)
 	out, err := osa.Run("file", osa.File{
 		Operation: "chooseFolder",
 		Prompt:    opts.title,
-		Location:  opts.filename,
+		Location:  dir,
 	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil

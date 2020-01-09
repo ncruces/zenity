@@ -9,8 +9,8 @@ as well as a *“port”* of the `zenity` command to both Windows and macOS base
 
 Lots of things are missing.
 For now, these are the only implemented dialogs:
-* message (error, info, question, warning); and
-* file selection.
+* message (error, info, question, warning)
+* file selection
 
 Behavior on Windows, macOS and other UNIXes might differ sliglty.
 Some of that is intended (reflecting platform differences),
@@ -28,11 +28,13 @@ Why reinvent this particular wheel?
 * no main loop (or other threading requirements)
 * no initialization
 * on Windows:
-  * Explorer shell not required (works in Server Core)
-  * no other dependencies
+  * no additional dependencies
+    * Explorer shell not required
+    * works in Server Core
   * Unicode support
 * on macOS:
-  * only dependency is `osascript`, JXA
+  * only dependency is `osascript` (with [JXA](https://developer.apple.com/library/archive/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/Introduction.html))
+    * JavaScript is easier to template with `html/template`
 * on other UNIXes:
-  * wraps either one of `matedialog`, `qarma`, `zenity` (in that order of preference)
-  * no command line support
+  * wraps either one of `matedialog`, `qarma`, `zenity`
+    * in that order of preference, most to least specific
