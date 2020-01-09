@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"rsc.io/getopt"
-
 	"github.com/ncruces/zenity"
 	"github.com/ncruces/zenity/internal/cmd"
 )
@@ -46,7 +44,7 @@ var (
 
 func main() {
 	setupFlags()
-	getopt.Parse()
+	flag.Parse()
 	validateFlags()
 	opts := loadFlags()
 	cmd.Command = true
