@@ -38,9 +38,9 @@ type File struct {
 	Prompt    string
 	Name      string
 	Location  string
+	Separator string
 	Type      []string
 	Multiple  bool
-	Separator rune
 }
 
 type Msg struct {

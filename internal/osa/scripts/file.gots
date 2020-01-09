@@ -18,7 +18,7 @@ opts.multipleSelectionsAllowed = {{.Multiple}}
 
 var res = app[{{.Operation}}](opts)
 if (Array.isArray(res)) {
-	res.join(String.fromCodePoint({{.Separator}}))
+	res.join({{.Separator}})
 } else {
 	res.toString()
 }

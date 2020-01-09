@@ -240,7 +240,7 @@ func (f *FileFilters) String() string {
 func (f *FileFilters) Set(s string) error {
 	var filter zenity.FileFilter
 
-	if split := strings.SplitN(s, "|", 2); len(split) > 0 {
+	if split := strings.SplitN(s, "|", 2); len(split) > 1 {
 		filter.Name = split[0]
 		s = split[1]
 	}

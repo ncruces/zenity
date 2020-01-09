@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/ncruces/zenity/internal/cmd"
 	"github.com/ncruces/zenity/internal/osa"
 )
 
@@ -34,6 +35,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 		Multiple:  true,
 		Prompt:    opts.title,
 		Location:  opts.filename,
+		Separator: cmd.Separator,
 		Type:      appleFilters(opts.filters),
 	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -48,7 +50,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if len(out) == 0 {
 		return nil, nil
 	}
-	return strings.Split(string(out), "\x00"), nil
+	return strings.Split(string(out), cmd.Separator), nil
 }
 
 func SelectFileSave(options ...Option) (string, error) {
@@ -93,7 +95,16 @@ func appleFilters(filters []FileFilter) []string {
 	var filter []string
 	for _, f := range filters {
 		for _, p := range f.Patterns {
-			filter = append(filter, p) // FIXME
+			star := strings.LastIndexByte(p, '*')
+			if star >= 0 {
+				dot := strings.LastIndexByte(p, '.')
+				if star > dot {
+					return nil
+				}
+				filter = append(filter, p[dot+1:])
+			} else {
+				filter = append(filter, p)
+			}
 		}
 	}
 	return filter
