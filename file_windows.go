@@ -28,9 +28,6 @@ func SelectFile(options ...Option) (string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.filename != "" {
-		args.InitialDir = syscall.StringToUTF16Ptr(opts.filename)
-	}
 	if opts.filters != nil {
 		args.Filter = &windowsFilters(opts.filters)[0]
 	}
@@ -38,6 +35,7 @@ func SelectFile(options ...Option) (string, error) {
 	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
+	args.InitialDir = initDirAndName(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -58,9 +56,6 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.filename != "" {
-		args.InitialDir = syscall.StringToUTF16Ptr(opts.filename)
-	}
 	if opts.filters != nil {
 		args.Filter = &windowsFilters(opts.filters)[0]
 	}
@@ -68,6 +63,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	res := [32768 + 1024*256]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
+	args.InitialDir = initDirAndName(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -113,9 +109,6 @@ func SelectFileSave(options ...Option) (string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.filename != "" {
-		args.InitialDir = syscall.StringToUTF16Ptr(opts.filename)
-	}
 	if opts.overwrite {
 		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
 	}
@@ -126,6 +119,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
+	args.InitialDir = initDirAndName(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -235,6 +229,19 @@ func browseForFolder(title string) (string, error) {
 	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
 
 	return syscall.UTF16ToString(res[:]), nil
+}
+
+func initDirAndName(filename string, name []uint16) (dir *uint16) {
+	if filename != "" {
+		d, n := splitDirAndName(filename)
+		if n != "" {
+			copy(name, syscall.StringToUTF16(n))
+		}
+		if d != "" {
+			return syscall.StringToUTF16Ptr(d)
+		}
+	}
+	return nil
 }
 
 func windowsFilters(filters []FileFilter) []uint16 {
