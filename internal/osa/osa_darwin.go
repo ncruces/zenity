@@ -21,10 +21,10 @@ func Run(script string, data interface{}) ([]byte, error) {
 	res = res[len("<script>") : len(res)-len("\n</script>")]
 
 	if cmd.Command {
-		cmd, err := exec.LookPath("osascript")
+		path, err := exec.LookPath("osascript")
 		if err == nil {
 			os.Stderr.Close()
-			syscall.Exec(cmd, []string{"osascript", "-l", "JavaScript", "-e", res}, nil)
+			syscall.Exec(path, []string{"osascript", "-l", "JavaScript", "-e", res}, nil)
 		}
 	}
 

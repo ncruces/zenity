@@ -5,6 +5,9 @@ package zenity
 import (
 	"os/exec"
 	"strings"
+
+	"github.com/ncruces/zenity/internal/cmd"
+	"github.com/ncruces/zenity/internal/zen"
 )
 
 func SelectFile(options ...Option) (string, error) {
@@ -18,8 +21,8 @@ func SelectFile(options ...Option) (string, error) {
 		args = append(args, "--filename", opts.filename)
 	}
 	args = append(args, zenityFilters(opts.filters)...)
-	cmd := exec.Command("zenity", args...)
-	out, err := cmd.Output()
+
+	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
@@ -35,7 +38,7 @@ func SelectFile(options ...Option) (string, error) {
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
-	args := []string{"--file-selection", "--multiple", "--separator=\x1e"}
+	args := []string{"--file-selection", "--multiple", "--separator", cmd.Separator}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
@@ -43,8 +46,8 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 		args = append(args, "--filename", opts.filename)
 	}
 	args = append(args, zenityFilters(opts.filters)...)
-	cmd := exec.Command("zenity", args...)
-	out, err := cmd.Output()
+
+	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return nil, nil
 	}
@@ -54,7 +57,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if len(out) > 0 {
 		out = out[:len(out)-1]
 	}
-	return strings.Split(string(out), "\x1e"), nil
+	return strings.Split(string(out), cmd.Separator), nil
 }
 
 func SelectFileSave(options ...Option) (string, error) {
@@ -71,8 +74,8 @@ func SelectFileSave(options ...Option) (string, error) {
 		args = append(args, "--confirm-overwrite")
 	}
 	args = append(args, zenityFilters(opts.filters)...)
-	cmd := exec.Command("zenity", args...)
-	out, err := cmd.Output()
+
+	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
@@ -95,8 +98,8 @@ func SelectDirectory(options ...Option) (string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	cmd := exec.Command("zenity", args...)
-	out, err := cmd.Output()
+
+	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}

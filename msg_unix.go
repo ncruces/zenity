@@ -2,7 +2,11 @@
 
 package zenity
 
-import "os/exec"
+import (
+	"os/exec"
+
+	"github.com/ncruces/zenity/internal/zen"
+)
 
 func Error(text string, options ...Option) (bool, error) {
 	return message("--error", text, options)
@@ -23,7 +27,10 @@ func Warning(text string, options ...Option) (bool, error) {
 func message(arg, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
-	args := []string{arg, "--text", text, "--no-markup"}
+	args := []string{arg}
+	if text != "" {
+		args = append(args, "--text", text, "--no-markup")
+	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
@@ -56,8 +63,7 @@ func message(arg, text string, options []Option) (bool, error) {
 		args = append(args, "--icon-name=dialog-warning")
 	}
 
-	cmd := exec.Command("zenity", args...)
-	out, err := cmd.Output()
+	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
 			return false, ErrExtraButton
