@@ -13,7 +13,7 @@ import (
 var tool, path string
 
 func init() {
-	for _, tool = range [3]string{"matedialog", "qarma", "zenity"} {
+	for _, tool = range [3]string{"qarma", "zenity", "matedialog"} {
 		path, _ = exec.LookPath(tool)
 		if path != "" {
 			return
