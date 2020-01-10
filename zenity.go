@@ -18,6 +18,7 @@ type options struct {
 
 	// File selection options
 	filename  string
+	directory bool
 	overwrite bool
 	filters   []FileFilter
 
@@ -54,6 +55,10 @@ func Filename(filename string) Option {
 	return func(o *options) {
 		o.filename = filename
 	}
+}
+
+func Directory(o *options) {
+	o.directory = true
 }
 
 func ConfirmOverwrite(o *options) {

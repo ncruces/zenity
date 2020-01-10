@@ -10,13 +10,19 @@ import (
 
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
-	dir, _ := splitDirAndName(opts.filename)
-	out, err := osa.Run("file", osa.File{
-		Operation: "chooseFile",
-		Prompt:    opts.title,
-		Type:      appleFilters(opts.filters),
-		Location:  dir,
-	})
+
+	data := osa.File{
+		Prompt: opts.title,
+	}
+	if opts.directory {
+		data.Operation = "chooseFolder"
+	} else {
+		data.Operation = "chooseFile"
+		data.Type = appleFilters(opts.filters)
+	}
+	data.Location, _ = splitDirAndName(opts.filename)
+
+	out, err := osa.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}
@@ -31,15 +37,21 @@ func SelectFile(options ...Option) (string, error) {
 
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
-	dir, _ := splitDirAndName(opts.filename)
-	out, err := osa.Run("file", osa.File{
-		Operation: "chooseFile",
+
+	data := osa.File{
 		Multiple:  true,
 		Prompt:    opts.title,
 		Separator: cmd.Separator,
-		Type:      appleFilters(opts.filters),
-		Location:  dir,
-	})
+	}
+	if opts.directory {
+		data.Operation = "chooseFolder"
+	} else {
+		data.Operation = "chooseFile"
+		data.Type = appleFilters(opts.filters)
+	}
+	data.Location, _ = splitDirAndName(opts.filename)
+
+	out, err := osa.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
@@ -57,33 +69,15 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
-	dir, name := splitDirAndName(opts.filename)
-	out, err := osa.Run("file", osa.File{
+
+	data := osa.File{
 		Operation: "chooseFileName",
 		Prompt:    opts.title,
-		Location:  dir,
-		Name:      name,
-	})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		return "", nil
+		Type:      appleFilters(opts.filters),
 	}
-	if err != nil {
-		return "", err
-	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
-}
+	data.Location, data.Name = splitDirAndName(opts.filename)
 
-func SelectDirectory(options ...Option) (string, error) {
-	opts := optsParse(options)
-	dir, _ := splitDirAndName(opts.filename)
-	out, err := osa.Run("file", osa.File{
-		Operation: "chooseFolder",
-		Prompt:    opts.title,
-		Location:  dir,
-	})
+	out, err := osa.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}

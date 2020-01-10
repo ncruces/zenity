@@ -24,22 +24,13 @@ func Warning(text string, options ...Option) (bool, error) {
 
 func message(typ int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
-
-	dialog := opts.icon != 0 || typ == 2
-	var op string
-	if dialog {
-		op = "displayDialog"
-	} else {
-		op = "displayAlert"
-	}
-
-	data := osa.Msg{
-		Operation: op,
-		Text:      text,
-		Title:     opts.title,
-	}
+	data := osa.Msg{Text: text}
+	dialog := typ == 2 || opts.icon != 0
 
 	if dialog {
+		data.Operation = "displayDialog"
+		data.Title = opts.title
+
 		switch opts.icon {
 		case ErrorIcon:
 			data.Icon = "stop"
@@ -49,6 +40,12 @@ func message(typ int, text string, options []Option) (bool, error) {
 			data.Icon = "caution"
 		}
 	} else {
+		data.Operation = "displayAlert"
+		if opts.title != "" {
+			data.Message = text
+			data.Text = opts.title
+		}
+
 		switch typ {
 		case 0:
 			data.As = "critical"
@@ -56,11 +53,6 @@ func message(typ int, text string, options []Option) (bool, error) {
 			data.As = "informational"
 		case 3:
 			data.As = "warning"
-		}
-
-		if opts.title != "" {
-			data.Text = opts.title
-			data.Message = text
 		}
 	}
 

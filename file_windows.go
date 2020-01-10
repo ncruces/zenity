@@ -20,11 +20,16 @@ var (
 )
 
 func SelectFile(options ...Option) (string, error) {
+	opts := optsParse(options)
+	if opts.directory {
+		res, _, err := pickFolders(opts, false)
+		return res, err
+	}
+
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
-	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -48,11 +53,16 @@ func SelectFile(options ...Option) (string, error) {
 }
 
 func SelectFileMutiple(options ...Option) ([]string, error) {
+	opts := optsParse(options)
+	if opts.directory {
+		_, res, err := pickFolders(opts, true)
+		return res, err
+	}
+
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
 
-	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -101,11 +111,12 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 }
 
 func SelectFileSave(options ...Option) (string, error) {
+	opts := optsParse(options)
+
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
 
-	opts := optsParse(options)
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
@@ -131,19 +142,17 @@ func SelectFileSave(options ...Option) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func SelectDirectory(options ...Option) (string, error) {
+func pickFolders(opts options, multi bool) (str string, lst []string, err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
 	hr, _, _ := coInitializeEx.Call(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
 	if hr != 0x80010106 {                   // RPC_E_CHANGED_MODE
 		if int32(hr) < 0 {
-			return "", syscall.Errno(hr)
+			return "", nil, syscall.Errno(hr)
 		}
 		defer coUninitialize.Call()
 	}
-
-	opts := optsParse(options)
 
 	var dialog *_IFileOpenDialog
 	hr, _, _ = coCreateInstance.Call(
@@ -157,11 +166,14 @@ func SelectDirectory(options ...Option) (string, error) {
 	var flgs int
 	hr, _, _ = dialog.Call(dialog.vtbl.GetOptions, uintptr(unsafe.Pointer(&flgs)))
 	if int32(hr) < 0 {
-		return "", syscall.Errno(hr)
+		return "", nil, syscall.Errno(hr)
+	}
+	if multi {
+		flgs |= 0x200 // FOS_ALLOWMULTISELECT
 	}
 	hr, _, _ = dialog.Call(dialog.vtbl.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
 	if int32(hr) < 0 {
-		return "", syscall.Errno(hr)
+		return "", nil, syscall.Errno(hr)
 	}
 
 	if opts.title != "" {
@@ -185,33 +197,61 @@ func SelectDirectory(options ...Option) (string, error) {
 
 	hr, _, _ = dialog.Call(dialog.vtbl.Show, 0)
 	if hr == 0x800704c7 { // ERROR_CANCELLED
-		return "", nil
+		return "", nil, nil
 	}
 	if int32(hr) < 0 {
-		return "", syscall.Errno(hr)
+		return "", nil, syscall.Errno(hr)
 	}
 
-	var item *_IShellItem
-	hr, _, _ = dialog.Call(dialog.vtbl.GetResult, uintptr(unsafe.Pointer(&item)))
-	if int32(hr) < 0 {
-		return "", syscall.Errno(hr)
-	}
-	defer item.Call(item.vtbl.Release)
+	shellItemPath := func(obj *_COMObject, trap uintptr, a ...uintptr) error {
+		var item *_IShellItem
+		hr, _, _ := obj.Call(trap, append(a, uintptr(unsafe.Pointer(&item)))...)
+		if int32(hr) < 0 {
+			return syscall.Errno(hr)
+		}
+		defer item.Call(item.vtbl.Release)
 
-	var ptr uintptr
-	hr, _, _ = item.Call(item.vtbl.GetDisplayName,
-		0x80058000, // SIGDN_FILESYSPATH
-		uintptr(unsafe.Pointer(&ptr)))
-	if int32(hr) < 0 {
-		return "", syscall.Errno(hr)
-	}
-	defer coTaskMemFree.Call(ptr)
+		var ptr uintptr
+		hr, _, _ = item.Call(item.vtbl.GetDisplayName,
+			0x80058000, // SIGDN_FILESYSPATH
+			uintptr(unsafe.Pointer(&ptr)))
+		if int32(hr) < 0 {
+			return syscall.Errno(hr)
+		}
+		defer coTaskMemFree.Call(ptr)
 
-	res := reflect.SliceHeader{Data: ptr, Len: 32768, Cap: 32768}
-	return syscall.UTF16ToString(*(*[]uint16)(unsafe.Pointer(&res))), nil
+		res := reflect.SliceHeader{Data: ptr, Len: 32768, Cap: 32768}
+		str = syscall.UTF16ToString(*(*[]uint16)(unsafe.Pointer(&res)))
+		lst = append(lst, str)
+		return nil
+	}
+
+	if multi {
+		var items *_IShellItemArray
+		hr, _, _ = dialog.Call(dialog.vtbl.GetResults, uintptr(unsafe.Pointer(&items)))
+		if int32(hr) < 0 {
+			return "", nil, syscall.Errno(hr)
+		}
+		defer items.Call(items.vtbl.Release)
+
+		var count uint32
+		hr, _, _ = items.Call(items.vtbl.GetCount, uintptr(unsafe.Pointer(&count)))
+		if int32(hr) < 0 {
+			return "", nil, syscall.Errno(hr)
+		}
+		for i := uintptr(0); i < uintptr(count); i++ {
+			err = shellItemPath(&items._COMObject, items.vtbl.GetItemAt, i)
+			if err != nil {
+				return
+			}
+		}
+	} else {
+		err = shellItemPath(&dialog._COMObject, dialog.vtbl.GetResult)
+	}
+	return
 }
 
-func browseForFolder(title string) (string, error) {
+func browseForFolder(title string) (string, []string, error) {
 	var args _BROWSEINFO
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
@@ -221,14 +261,15 @@ func browseForFolder(title string) (string, error) {
 
 	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
 	if ptr == 0 {
-		return "", nil
+		return "", nil, nil
 	}
 	defer coTaskMemFree.Call(ptr)
 
 	res := [32768]uint16{}
 	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
 
-	return syscall.UTF16ToString(res[:]), nil
+	str := syscall.UTF16ToString(res[:])
+	return str, []string{str}, nil
 }
 
 func initDirAndName(filename string, name []uint16) (dir *uint16) {
@@ -344,6 +385,11 @@ type _IShellItem struct {
 	vtbl *_IShellItemVtbl
 }
 
+type _IShellItemArray struct {
+	_COMObject
+	vtbl *_IShellItemArrayVtbl
+}
+
 type _IFileOpenDialogVtbl struct {
 	_IFileDialogVtbl
 	GetResults       uintptr
@@ -389,6 +435,17 @@ type _IShellItemVtbl struct {
 	GetDisplayName uintptr
 	GetAttributes  uintptr
 	Compare        uintptr
+}
+
+type _IShellItemArrayVtbl struct {
+	_IUnknownVtbl
+	BindToHandler              uintptr
+	GetPropertyStore           uintptr
+	GetPropertyDescriptionList uintptr
+	GetAttributes              uintptr
+	GetCount                   uintptr
+	GetItemAt                  uintptr
+	EnumItems                  uintptr
 }
 
 type _IUnknownVtbl struct {

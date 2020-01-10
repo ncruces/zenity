@@ -47,7 +47,17 @@ func TestSelectFileSave(t *testing.T) {
 }
 
 func TestSelectDirectory(t *testing.T) {
-	res, err := SelectDirectory(Filename(defaultPath))
+	res, err := SelectFile(Directory, Filename(defaultPath))
+
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("%#v", res)
+	}
+}
+
+func TestSelectDirectoryMultiple(t *testing.T) {
+	res, err := SelectFileMutiple(Directory, Filename(defaultPath))
 
 	if err != nil {
 		t.Error(err)

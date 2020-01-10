@@ -14,6 +14,9 @@ func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection"}
+	if opts.directory {
+		args = append(args, "--directory")
+	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
@@ -39,6 +42,9 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection", "--multiple", "--separator", cmd.Separator}
+	if opts.directory {
+		args = append(args, "--directory")
+	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
@@ -74,30 +80,6 @@ func SelectFileSave(options ...Option) (string, error) {
 		args = append(args, "--confirm-overwrite")
 	}
 	args = append(args, zenityFilters(opts.filters)...)
-
-	out, err := zen.Run(args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		return "", nil
-	}
-	if err != nil {
-		return "", err
-	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
-}
-
-func SelectDirectory(options ...Option) (string, error) {
-	opts := optsParse(options)
-
-	args := []string{"--file-selection", "--directory"}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
-	}
-	if opts.filename != "" {
-		args = append(args, "--filename", opts.filename)
-	}
 
 	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {

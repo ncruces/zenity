@@ -65,8 +65,6 @@ func main() {
 			strResult(zenity.SelectFile(opts...))
 		case save:
 			strResult(zenity.SelectFileSave(opts...))
-		case directory:
-			strResult(zenity.SelectDirectory(opts...))
 		case multiple:
 			lstResult(zenity.SelectFileMutiple(opts...))
 		}
@@ -173,6 +171,9 @@ func loadFlags() []zenity.Option {
 
 	options = append(options, fileFilters.New())
 	options = append(options, zenity.Filename(filename))
+	if directory {
+		options = append(options, zenity.Directory)
+	}
 	if confirmOverwrite {
 		options = append(options, zenity.ConfirmOverwrite)
 	}
