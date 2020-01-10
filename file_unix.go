@@ -10,6 +10,11 @@ import (
 	"github.com/ncruces/zenity/internal/zen"
 )
 
+// Display file selection dialog.
+//
+// Returns an empty string on cancel.
+//
+// Valid options: Title, Directory, Filename, FileFilters.
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
@@ -38,6 +43,11 @@ func SelectFile(options ...Option) (string, error) {
 	return string(out), nil
 }
 
+// Display multiple file selection dialog.
+//
+// Returns a nil slice on cancel.
+//
+// Valid options: Title, Directory, Filename, FileFilters.
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
@@ -66,6 +76,11 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	return strings.Split(string(out), cmd.Separator), nil
 }
 
+// Display save file selection dialog.
+//
+// Returns an empty string on cancel.
+//
+// Valid options: Title, Filename, ConfirmOverwrite, FileFilters.
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 

@@ -12,14 +12,14 @@ For now, these are the only implemented dialogs:
 * message (error, info, question, warning)
 * file selection
 
-Behavior on Windows, macOS and other UNIXes might differ sliglty.
+Behavior on Windows, macOS and other UNIXes might differ slightly.
 Some of that is intended (reflecting platform differences),
 other bits are unfortunate limitations,
-others still open to be fixed.
+others still are open to be fixed.
 
 ## Why?
 
-There are a bunch of other dialog packages for Go.
+There are a bunch of other dialog packages for Go.\
 Why reinvent this particular wheel?
 
 #### Requirements:

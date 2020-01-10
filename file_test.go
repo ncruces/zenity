@@ -1,67 +1,54 @@
-package zenity
+package zenity_test
 
-import "testing"
+import "github.com/ncruces/zenity"
 
 const defaultPath = ""
+const defaultName = ""
 
-func TestSelectFile(t *testing.T) {
-	res, err := SelectFile(Filename(defaultPath), FileFilters{
-		{"Go files", []string{"*.go"}},
-		{"Web files", []string{"*.html", "*.js", "*.css"}},
-		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-	}.New())
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("%#v", res)
-	}
+func ExampleSelectFile() {
+	zenity.SelectFile(
+		zenity.Filename(defaultPath),
+		zenity.FileFilters{
+			{"Go files", []string{"*.go"}},
+			{"Web files", []string{"*.html", "*.js", "*.css"}},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+		}.New())
+	// Output:
 }
 
-func TestSelectFileMutiple(t *testing.T) {
-	res, err := SelectFileMutiple(Filename(defaultPath), FileFilters{
-		{"Go files", []string{"*.go"}},
-		{"Web files", []string{"*.html", "*.js", "*.css"}},
-		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-	}.New())
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("%#v", res)
-	}
+func ExampleSelectFileMutiple() {
+	zenity.SelectFileMutiple(
+		zenity.Filename(defaultPath),
+		zenity.FileFilters{
+			{"Go files", []string{"*.go"}},
+			{"Web files", []string{"*.html", "*.js", "*.css"}},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+		}.New())
+	// Output:
 }
 
-func TestSelectFileSave(t *testing.T) {
-	res, err := SelectFileSave(Filename(defaultPath), ConfirmOverwrite, FileFilters{
-		{"Go files", []string{"*.go"}},
-		{"Web files", []string{"*.html", "*.js", "*.css"}},
-		{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-	}.New())
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("%#v", res)
-	}
+func ExampleSelectFileSave() {
+	zenity.SelectFileSave(
+		zenity.ConfirmOverwrite,
+		zenity.Filename(defaultName),
+		zenity.FileFilters{
+			{"Go files", []string{"*.go"}},
+			{"Web files", []string{"*.html", "*.js", "*.css"}},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+		}.New())
+	// Output:
 }
 
-func TestSelectDirectory(t *testing.T) {
-	res, err := SelectFile(Directory, Filename(defaultPath))
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("%#v", res)
-	}
+func ExampleSelectFile_directory() {
+	zenity.SelectFile(
+		zenity.Filename(defaultPath),
+		zenity.Directory)
+	// Output:
 }
 
-func TestSelectDirectoryMultiple(t *testing.T) {
-	res, err := SelectFileMutiple(Directory, Filename(defaultPath))
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("%#v", res)
-	}
+func ExampleSelectFileMutiple_directory() {
+	zenity.SelectFileMutiple(
+		zenity.Filename(defaultPath),
+		zenity.Directory)
+	// Output:
 }

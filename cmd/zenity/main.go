@@ -90,7 +90,7 @@ func setupFlags() {
 	// Message options
 
 	flag.StringVar(&text, "text", "", "Set the dialog text")
-	flag.StringVar(&iconName, "icon-name", "", "Set the dialog icon (error, information, question, warning)")
+	flag.StringVar(&iconName, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
 	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")

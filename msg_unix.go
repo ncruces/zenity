@@ -8,18 +8,39 @@ import (
 	"github.com/ncruces/zenity/internal/zen"
 )
 
+// Display error dialog.
+//
+// Returns true on OK, false on dismiss, or ErrExtraButton.
+//
+// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
 func Error(text string, options ...Option) (bool, error) {
 	return message("--error", text, options)
 }
 
+// Display info dialog.
+//
+// Returns true on OK, false on dismiss, or ErrExtraButton.
+//
+// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
 func Info(text string, options ...Option) (bool, error) {
 	return message("--info", text, options)
 }
 
+// Display question dialog.
+//
+// Returns true on OK, false on Cancel, or ErrExtraButton.
+//
+// Valid options: Title, Icon, OKLabel, CancelLabel, ExtraButton, NoWrap,
+// Ellipsize, DefaultCancel.
 func Question(text string, options ...Option) (bool, error) {
 	return message("--question", text, options)
 }
 
+// Display warning dialog.
+//
+// Returns true on OK, false on dismiss, or ErrExtraButton.
+//
+// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
 func Warning(text string, options ...Option) (bool, error) {
 	return message("--warning", text, options)
 }

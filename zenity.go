@@ -32,6 +32,7 @@ type options struct {
 	defcancel bool
 }
 
+// Options are arguments you pass to dialog functions to customize their behavior.
 type Option func(*options)
 
 func optsParse(options []Option) (res options) {
@@ -43,6 +44,7 @@ func optsParse(options []Option) (res options) {
 
 // General options
 
+// Option to set the dialog title.
 func Title(title string) Option {
 	return func(o *options) {
 		o.title = title
@@ -51,27 +53,41 @@ func Title(title string) Option {
 
 // File selection options
 
+// Option to set the filename.
+//
+// You can specify a file name, a directory path, or both.
+// Specifying a file name, makes it the default selected file.
+// Specifying a directory path, make it the default dialog location.
 func Filename(filename string) Option {
 	return func(o *options) {
 		o.filename = filename
 	}
 }
 
+// Option to activate directory-only selection.
 func Directory(o *options) {
 	o.directory = true
 }
 
+// Option to confirm file selection if filename already exists.
 func ConfirmOverwrite(o *options) {
 	o.overwrite = true
 }
 
+// FileFilter encapsulates a filename filter.
 type FileFilter struct {
-	Name     string
-	Patterns []string
+	Name     string   // display string that describes the filter (optional)
+	Patterns []string // filter patterns for the display string
 }
 
+// FileFilters is a list of filename filters.
+//
+// macOS hides filename filters from the user,
+// and only supports filtering by extension (or "type").
+// We make an effort to convert any "*.EXT" like patterns.
 type FileFilters []FileFilter
 
+// Creates Option to set the filename filter list.
 func (f FileFilters) New() Option {
 	return func(o *options) {
 		o.filters = f
@@ -80,6 +96,7 @@ func (f FileFilters) New() Option {
 
 // Message options
 
+// MessageIcon is the enumeration for message dialog icons.
 type MessageIcon int
 
 const (
@@ -89,38 +106,45 @@ const (
 	WarningIcon
 )
 
+// Option to set the dialog icon.
 func Icon(icon MessageIcon) Option {
 	return func(o *options) {
 		o.icon = icon
 	}
 }
 
+// Option to set the label of the OK button.
 func OKLabel(ok string) Option {
 	return func(o *options) {
 		o.ok = ok
 	}
 }
 
+// Option to set the label of the Cancel button.
 func CancelLabel(cancel string) Option {
 	return func(o *options) {
 		o.cancel = cancel
 	}
 }
 
+// Option to add an extra button.
 func ExtraButton(extra string) Option {
 	return func(o *options) {
 		o.extra = extra
 	}
 }
 
+// Option to disable enable text wrapping.
 func NoWrap(o *options) {
 	o.nowrap = true
 }
 
+// Option to enable ellipsizing in the dialog text.
 func Ellipsize(o *options) {
 	o.ellipsize = true
 }
 
+// Option to give Cancel button focus by default.
 func DefaultCancel(o *options) {
 	o.defcancel = true
 }
