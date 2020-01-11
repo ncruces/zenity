@@ -33,8 +33,8 @@ Why reinvent this particular wheel?
     * works in Server Core
   * Unicode support
 * on macOS:
-  * only dependency is `osascript` (with [JXA](https://developer.apple.com/library/archive/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/Introduction.html))
-    * JavaScript is easier to template with `html/template`
+  * only dependency is `osascript` (with [JXA](https://developer.apple.com/library/archive/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/Introduction.html))\
+    JavaScript is easier to template (with `html/template`)
 * on other UNIXes:
-  * wraps either one of `qarma`, `zenity`, `matedialog`
-    * in that order of preference
+  * wraps either one of `qarma`, `zenity`, `matedialog`,\
+    in that order of preference
