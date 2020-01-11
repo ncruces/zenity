@@ -1,3 +1,3 @@
 package osa
 
-//go:generate go run scripts/generate.go scripts/
+//go:generate go run generator.go scripts/
