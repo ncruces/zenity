@@ -35,7 +35,7 @@ func SelectFile(options ...Option) (string, error) {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
-		args.Filter = &windowsFilters(opts.filters)[0]
+		args.Filter = &initFilters(opts.filters)[0]
 	}
 
 	res := [32768]uint16{}
@@ -71,7 +71,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
-		args.Filter = &windowsFilters(opts.filters)[0]
+		args.Filter = &initFilters(opts.filters)[0]
 	}
 
 	res := [32768 + 1024*256]uint16{}
@@ -138,7 +138,7 @@ func SelectFileSave(options ...Option) (string, error) {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
-		args.Filter = &windowsFilters(opts.filters)[0]
+		args.Filter = &initFilters(opts.filters)[0]
 	}
 
 	res := [32768]uint16{}
@@ -313,7 +313,7 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	return
 }
 
-func windowsFilters(filters []FileFilter) []uint16 {
+func initFilters(filters []FileFilter) []uint16 {
 	var res []uint16
 	for _, f := range filters {
 		res = append(res, utf16.Encode([]rune(f.Name))...)

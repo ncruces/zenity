@@ -34,13 +34,14 @@ func Run(script string, data interface{}) ([]byte, error) {
 }
 
 type File struct {
-	Operation string
-	Prompt    string
-	Name      string
-	Location  string
-	Separator string
-	Type      []string
-	Multiple  bool
+	Operation  string
+	Prompt     string
+	Name       string
+	Location   string
+	Separator  string
+	Type       []string
+	Invisibles bool
+	Multiple   bool
 }
 
 type Msg struct {

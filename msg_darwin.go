@@ -34,10 +34,10 @@ func message(typ int, text string, options []Option) (bool, error) {
 		switch opts.icon {
 		case ErrorIcon:
 			data.Icon = "stop"
-		case InfoIcon, QuestionIcon:
-			data.Icon = "note"
 		case WarningIcon:
 			data.Icon = "caution"
+		case InfoIcon, QuestionIcon:
+			data.Icon = "note"
 		}
 	} else {
 		data.Operation = "displayAlert"

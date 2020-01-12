@@ -111,9 +111,9 @@ type MessageIcon int
 
 const (
 	ErrorIcon MessageIcon = iota + 1
+	WarningIcon
 	InfoIcon
 	QuestionIcon
-	WarningIcon
 )
 
 // Option to set the dialog icon.

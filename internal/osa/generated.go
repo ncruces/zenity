@@ -11,6 +11,7 @@ app.includeStandardAdditions = true
 app.activate()
 var opts = {}
 opts.withPrompt = {{.Prompt}}
+opts.invisibles = {{.Invisibles}}
 opts.multipleSelectionsAllowed = {{.Multiple}}
 {{if .Type -}}
 opts.ofType = {{.Type}}

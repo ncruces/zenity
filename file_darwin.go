@@ -12,13 +12,14 @@ func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	data := osa.File{
-		Prompt: opts.title,
+		Prompt:     opts.title,
+		Invisibles: opts.hidden,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = appleFilters(opts.filters)
+		data.Type = initFilters(opts.filters)
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
@@ -39,15 +40,16 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
 	data := osa.File{
-		Multiple:  true,
-		Prompt:    opts.title,
-		Separator: cmd.Separator,
+		Prompt:     opts.title,
+		Invisibles: opts.hidden,
+		Multiple:   true,
+		Separator:  cmd.Separator,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = appleFilters(opts.filters)
+		data.Type = initFilters(opts.filters)
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
@@ -71,9 +73,13 @@ func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	data := osa.File{
-		Operation: "chooseFileName",
-		Prompt:    opts.title,
-		Type:      appleFilters(opts.filters),
+		Prompt: opts.title,
+	}
+	if opts.directory {
+		data.Operation = "chooseFolder"
+	} else {
+		data.Operation = "chooseFileName"
+		data.Type = initFilters(opts.filters)
 	}
 	data.Location, data.Name = splitDirAndName(opts.filename)
 
@@ -90,7 +96,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	return string(out), nil
 }
 
-func appleFilters(filters []FileFilter) []string {
+func initFilters(filters []FileFilter) []string {
 	var filter []string
 	for _, f := range filters {
 		for _, p := range f.Patterns {

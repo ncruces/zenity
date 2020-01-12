@@ -76,12 +76,12 @@ func message(arg, text string, options []Option) (bool, error) {
 	switch opts.icon {
 	case ErrorIcon:
 		args = append(args, "--icon-name=dialog-error")
+	case WarningIcon:
+		args = append(args, "--icon-name=dialog-warning")
 	case InfoIcon:
 		args = append(args, "--icon-name=dialog-information")
 	case QuestionIcon:
 		args = append(args, "--icon-name=dialog-question")
-	case WarningIcon:
-		args = append(args, "--icon-name=dialog-warning")
 	}
 
 	out, err := zen.Run(args)

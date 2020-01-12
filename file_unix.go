@@ -28,7 +28,7 @@ func SelectFile(options ...Option) (string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	args = append(args, zenityFilters(opts.filters)...)
+	args = append(args, initFilters(opts.filters)...)
 
 	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
@@ -61,7 +61,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	args = append(args, zenityFilters(opts.filters)...)
+	args = append(args, initFilters(opts.filters)...)
 
 	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
@@ -85,6 +85,9 @@ func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection", "--save"}
+	if opts.directory {
+		args = append(args, "--directory")
+	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
@@ -94,7 +97,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	if opts.overwrite {
 		args = append(args, "--confirm-overwrite")
 	}
-	args = append(args, zenityFilters(opts.filters)...)
+	args = append(args, initFilters(opts.filters)...)
 
 	out, err := zen.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
@@ -109,7 +112,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	return string(out), nil
 }
 
-func zenityFilters(filters []FileFilter) []string {
+func initFilters(filters []FileFilter) []string {
 	var res []string
 	for _, f := range filters {
 		var buf strings.Builder
