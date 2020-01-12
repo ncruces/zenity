@@ -1,7 +1,6 @@
 package zenity
 
 import (
-	"fmt"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -13,7 +12,6 @@ import (
 var (
 	getOpenFileName             = comdlg32.NewProc("GetOpenFileNameW")
 	getSaveFileName             = comdlg32.NewProc("GetSaveFileNameW")
-	commDlgExtendedError        = comdlg32.NewProc("CommDlgExtendedError")
 	shBrowseForFolder           = shell32.NewProc("SHBrowseForFolderW")
 	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
@@ -175,7 +173,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		_CLSID_FileOpenDialog, 0, 0x17, // CLSCTX_ALL
 		_IID_IFileOpenDialog, uintptr(unsafe.Pointer(&dialog)))
 	if int32(hr) < 0 {
-		return browseForFolder(opts.title)
+		return browseForFolder(opts)
 	}
 	defer dialog.Call(dialog.vtbl.Release)
 
@@ -267,12 +265,22 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	return
 }
 
-func browseForFolder(title string) (string, []string, error) {
+func browseForFolder(opts options) (string, []string, error) {
 	var args _BROWSEINFO
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
-	if title != "" {
-		args.Title = syscall.StringToUTF16Ptr(title)
+	if opts.title != "" {
+		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	}
+	if opts.filename != "" {
+		ptr := syscall.StringToUTF16Ptr(opts.filename)
+		args.LParam = uintptr(unsafe.Pointer(ptr))
+		args.CallbackFunc = syscall.NewCallback(func(hwnd uintptr, msg uint32, lparam, data uintptr) uintptr {
+			if msg == 1 { // BFFM_INITIALIZED
+				sendMessage.Call(hwnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
+			}
+			return 0
+		})
 	}
 
 	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
@@ -322,15 +330,6 @@ func windowsFilters(filters []FileFilter) []uint16 {
 	return res
 }
 
-func commDlgError() error {
-	n, _, _ := commDlgExtendedError.Call()
-	if n == 0 {
-		return nil
-	} else {
-		return fmt.Errorf("Common Dialog error: %x", n)
-	}
-}
-
 type _OPENFILENAME struct {
 	StructSize      uint32
 	Owner           uintptr
@@ -377,23 +376,6 @@ var (
 	_IID_IFileOpenDialog  = uuid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
 	_CLSID_FileOpenDialog = uuid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
 )
-
-type _COMObject struct{}
-
-func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	self := uintptr(unsafe.Pointer(o))
-	nargs := uintptr(len(a))
-	switch nargs {
-	case 0:
-		return syscall.Syscall(trap, nargs+1, self, 0, 0)
-	case 1:
-		return syscall.Syscall(trap, nargs+1, self, a[0], 0)
-	case 2:
-		return syscall.Syscall(trap, nargs+1, self, a[0], a[1])
-	default:
-		panic("COM call with too many arguments.")
-	}
-}
 
 type _IFileOpenDialog struct {
 	_COMObject
@@ -466,10 +448,4 @@ type _IShellItemArrayVtbl struct {
 	GetCount                   uintptr
 	GetItemAt                  uintptr
 	EnumItems                  uintptr
-}
-
-type _IUnknownVtbl struct {
-	QueryInterface uintptr
-	AddRef         uintptr
-	Release        uintptr
 }

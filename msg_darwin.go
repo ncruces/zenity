@@ -6,7 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/osa"
 )
 
-func Error(text string, options ...Option) (bool, error) {
+func Question(text string, options ...Option) (bool, error) {
 	return message(0, text, options)
 }
 
@@ -14,18 +14,18 @@ func Info(text string, options ...Option) (bool, error) {
 	return message(1, text, options)
 }
 
-func Question(text string, options ...Option) (bool, error) {
+func Warning(text string, options ...Option) (bool, error) {
 	return message(2, text, options)
 }
 
-func Warning(text string, options ...Option) (bool, error) {
+func Error(text string, options ...Option) (bool, error) {
 	return message(3, text, options)
 }
 
 func message(typ int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 	data := osa.Msg{Text: text}
-	dialog := typ == 2 || opts.icon != 0
+	dialog := typ == 0 || opts.icon != 0
 
 	if dialog {
 		data.Operation = "displayDialog"
@@ -47,16 +47,16 @@ func message(typ int, text string, options []Option) (bool, error) {
 		}
 
 		switch typ {
-		case 0:
-			data.As = "critical"
 		case 1:
 			data.As = "informational"
-		case 3:
+		case 2:
 			data.As = "warning"
+		case 3:
+			data.As = "critical"
 		}
 	}
 
-	if typ != 2 {
+	if typ != 0 {
 		if dialog {
 			opts.ok = "OK"
 		}
@@ -69,7 +69,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		if opts.cancel == "" {
 			opts.cancel = "Cancel"
 		}
-		if typ == 2 {
+		if typ == 0 {
 			if opts.extra == "" {
 				data.Buttons = []string{opts.cancel, opts.ok}
 				data.Default = 2

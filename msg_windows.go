@@ -10,7 +10,7 @@ var (
 	messageBox = user32.NewProc("MessageBoxW")
 )
 
-func Error(text string, options ...Option) (bool, error) {
+func Question(text string, options ...Option) (bool, error) {
 	return message(0, text, options)
 }
 
@@ -18,11 +18,11 @@ func Info(text string, options ...Option) (bool, error) {
 	return message(1, text, options)
 }
 
-func Question(text string, options ...Option) (bool, error) {
+func Warning(text string, options ...Option) (bool, error) {
 	return message(2, text, options)
 }
 
-func Warning(text string, options ...Option) (bool, error) {
+func Error(text string, options ...Option) (bool, error) {
 	return message(3, text, options)
 }
 
@@ -32,9 +32,9 @@ func message(typ int, text string, options []Option) (bool, error) {
 	var flags, caption uintptr
 
 	switch {
-	case typ == 2 && opts.extra != "":
+	case typ == 0 && opts.extra != "":
 		flags |= 0x3 // MB_YESNOCANCEL
-	case typ == 2 || opts.extra != "":
+	case typ == 0 || opts.extra != "":
 		flags |= 0x1 // MB_OKCANCEL
 	}
 
@@ -49,7 +49,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		flags |= 0x40 // MB_ICONINFORMATION
 	}
 
-	if typ == 2 && opts.defcancel {
+	if typ == 0 && opts.defcancel {
 		if opts.extra == "" {
 			flags |= 0x100 // MB_DEFBUTTON2
 		} else {
@@ -79,7 +79,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 	if n == 0 {
 		return false, err
 	}
-	if n == 7 || n == 2 && typ != 2 { // IDNO
+	if n == 7 || n == 2 && typ != 0 { // IDNO
 		return false, ErrExtraButton
 	}
 	if n == 1 || n == 6 { // IDOK, IDYES
@@ -107,7 +107,7 @@ func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 								case 1, 6: // IDOK, IDYES
 									text = opts.ok
 								case 2: // IDCANCEL
-									if typ == 2 {
+									if typ == 0 {
 										text = opts.cancel
 									} else if opts.extra != "" {
 										text = opts.extra
