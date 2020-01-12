@@ -37,6 +37,8 @@ var (
 	multiple         bool
 	directory        bool
 	confirmOverwrite bool
+	confirmCreate    bool
+	showHidden       bool
 	filename         string
 	separator        string
 	fileFilters      FileFilters
@@ -104,6 +106,8 @@ func setupFlags() {
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple files to be selected")
 	flag.BoolVar(&directory, "directory", false, "Activate directory-only selection")
 	flag.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
+	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
+	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the filename")
 	flag.StringVar(&separator, "separator", "|", "Set output separator character")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
@@ -158,24 +162,30 @@ func loadFlags() []zenity.Option {
 	options = append(options, zenity.CancelLabel(cancelLabel))
 	options = append(options, zenity.ExtraButton(extraButton))
 	if noWrap {
-		options = append(options, zenity.NoWrap)
+		options = append(options, zenity.NoWrap())
 	}
 	if ellipsize {
-		options = append(options, zenity.Ellipsize)
+		options = append(options, zenity.Ellipsize())
 	}
 	if defaultCancel {
-		options = append(options, zenity.DefaultCancel)
+		options = append(options, zenity.DefaultCancel())
 	}
 
 	// File selection options
 
-	options = append(options, fileFilters.New())
+	options = append(options, fileFilters.Build())
 	options = append(options, zenity.Filename(filename))
 	if directory {
-		options = append(options, zenity.Directory)
+		options = append(options, zenity.Directory())
 	}
 	if confirmOverwrite {
-		options = append(options, zenity.ConfirmOverwrite)
+		options = append(options, zenity.ConfirmOverwrite())
+	}
+	if confirmCreate {
+		options = append(options, zenity.ConfirmCreate())
+	}
+	if showHidden {
+		options = append(options, zenity.ShowHidden())
 	}
 
 	cmd.Separator = separator

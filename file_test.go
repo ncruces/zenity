@@ -12,7 +12,7 @@ func ExampleSelectFile() {
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.New())
+		}.Build())
 	// Output:
 }
 
@@ -23,32 +23,32 @@ func ExampleSelectFileMutiple() {
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.New())
+		}.Build())
 	// Output:
 }
 
 func ExampleSelectFileSave() {
 	zenity.SelectFileSave(
-		zenity.ConfirmOverwrite,
+		zenity.ConfirmOverwrite(),
 		zenity.Filename(defaultName),
 		zenity.FileFilters{
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.New())
+		}.Build())
 	// Output:
 }
 
 func ExampleSelectFile_directory() {
 	zenity.SelectFile(
 		zenity.Filename(defaultPath),
-		zenity.Directory)
+		zenity.Directory())
 	// Output:
 }
 
 func ExampleSelectFileMutiple_directory() {
 	zenity.SelectFileMutiple(
 		zenity.Filename(defaultPath),
-		zenity.Directory)
+		zenity.Directory())
 	// Output:
 }

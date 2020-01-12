@@ -14,7 +14,7 @@ import (
 //
 // Returns an empty string on cancel.
 //
-// Valid options: Title, Directory, Filename, FileFilters.
+// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
@@ -47,7 +47,7 @@ func SelectFile(options ...Option) (string, error) {
 //
 // Returns a nil slice on cancel.
 //
-// Valid options: Title, Directory, Filename, FileFilters.
+// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
@@ -80,7 +80,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 //
 // Returns an empty string on cancel.
 //
-// Valid options: Title, Filename, ConfirmOverwrite, FileFilters.
+// Valid options: Title, Filename, ConfirmOverwrite, ConfirmCreate, ShowHidden, FileFilter(s).
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 

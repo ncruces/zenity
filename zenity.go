@@ -20,6 +20,8 @@ type options struct {
 	filename  string
 	directory bool
 	overwrite bool
+	create    bool
+	hidden    bool
 	filters   []FileFilter
 
 	// Message options
@@ -32,7 +34,7 @@ type options struct {
 	defcancel bool
 }
 
-// Options are arguments you pass to dialog functions to customize their behavior.
+// Options are arguments passed to dialog functions to customize their behavior.
 type Option func(*options)
 
 func optsParse(options []Option) (res options) {
@@ -46,9 +48,7 @@ func optsParse(options []Option) (res options) {
 
 // Option to set the dialog title.
 func Title(title string) Option {
-	return func(o *options) {
-		o.title = title
-	}
+	return func(o *options) { o.title = title }
 }
 
 // File selection options
@@ -57,41 +57,51 @@ func Title(title string) Option {
 //
 // You can specify a file name, a directory path, or both.
 // Specifying a file name, makes it the default selected file.
-// Specifying a directory path, make it the default dialog location.
+// Specifying a directory path, makes it the default dialog location.
 func Filename(filename string) Option {
-	return func(o *options) {
-		o.filename = filename
-	}
+	return func(o *options) { o.filename = filename }
 }
 
 // Option to activate directory-only selection.
-func Directory(o *options) {
-	o.directory = true
+func Directory() Option {
+	return func(o *options) { o.directory = true }
 }
 
 // Option to confirm file selection if filename already exists.
-func ConfirmOverwrite(o *options) {
-	o.overwrite = true
+func ConfirmOverwrite() Option {
+	return func(o *options) { o.overwrite = true }
+}
+
+// Option to confirm file selection if filename does not yet exist (Windows only).
+func ConfirmCreate() Option {
+	return func(o *options) { o.create = true }
+}
+
+// Option to show hidden files (Windows and macOS only).
+func ShowHidden() Option {
+	return func(o *options) { o.hidden = true }
 }
 
 // FileFilter encapsulates a filename filter.
+//
+// macOS hides filename filters from the user,
+// and only supports filtering by extension (or "type").
 type FileFilter struct {
 	Name     string   // display string that describes the filter (optional)
 	Patterns []string // filter patterns for the display string
 }
 
+// Build option to set a filename filter.
+func (f FileFilter) Build() Option {
+	return func(o *options) { o.filters = append(o.filters, f) }
+}
+
 // FileFilters is a list of filename filters.
-//
-// macOS hides filename filters from the user,
-// and only supports filtering by extension (or "type").
-// We make an effort to convert any "*.EXT" like patterns.
 type FileFilters []FileFilter
 
-// Creates Option to set the filename filter list.
-func (f FileFilters) New() Option {
-	return func(o *options) {
-		o.filters = f
-	}
+// Build option to set filename filters.
+func (f FileFilters) Build() Option {
+	return func(o *options) { o.filters = append(o.filters, f...) }
 }
 
 // Message options
@@ -108,43 +118,35 @@ const (
 
 // Option to set the dialog icon.
 func Icon(icon MessageIcon) Option {
-	return func(o *options) {
-		o.icon = icon
-	}
+	return func(o *options) { o.icon = icon }
 }
 
 // Option to set the label of the OK button.
 func OKLabel(ok string) Option {
-	return func(o *options) {
-		o.ok = ok
-	}
+	return func(o *options) { o.ok = ok }
 }
 
 // Option to set the label of the Cancel button.
 func CancelLabel(cancel string) Option {
-	return func(o *options) {
-		o.cancel = cancel
-	}
+	return func(o *options) { o.cancel = cancel }
 }
 
 // Option to add an extra button.
 func ExtraButton(extra string) Option {
-	return func(o *options) {
-		o.extra = extra
-	}
+	return func(o *options) { o.extra = extra }
 }
 
 // Option to disable enable text wrapping.
-func NoWrap(o *options) {
-	o.nowrap = true
+func NoWrap() Option {
+	return func(o *options) { o.nowrap = true }
 }
 
 // Option to enable ellipsizing in the dialog text.
-func Ellipsize(o *options) {
-	o.ellipsize = true
+func Ellipsize() Option {
+	return func(o *options) { o.ellipsize = true }
 }
 
 // Option to give Cancel button focus by default.
-func DefaultCancel(o *options) {
-	o.defcancel = true
+func DefaultCancel() Option {
+	return func(o *options) { o.defcancel = true }
 }

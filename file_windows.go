@@ -28,10 +28,13 @@ func SelectFile(options ...Option) (string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
+	args.Flags = 0x81008 // OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_EXPLORER
 
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	}
+	if opts.hidden {
+		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
 		args.Filter = &windowsFilters(opts.filters)[0]
@@ -40,7 +43,7 @@ func SelectFile(options ...Option) (string, error) {
 	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
-	args.InitialDir = initDirAndName(opts.filename, res[:])
+	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -61,10 +64,13 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x80208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_EXPLORER
+	args.Flags = 0x81208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_FILEMUSTEXIST|OFN_EXPLORER
 
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	}
+	if opts.hidden {
+		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
 		args.Filter = &windowsFilters(opts.filters)[0]
@@ -73,7 +79,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	res := [32768 + 1024*256]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
-	args.InitialDir = initDirAndName(opts.filename, res[:])
+	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -112,16 +118,26 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
+	if opts.directory {
+		res, _, err := pickFolders(opts, false)
+		return res, err
+	}
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x80008 // OFN_NOCHANGEDIR|OFN_EXPLORER
+	args.Flags = 0x88808 // OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|OFN_NOREADONLYRETURN|OFN_EXPLORER
 
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
 	if opts.overwrite {
 		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
+	}
+	if opts.create {
+		args.Flags |= 0x2000 // OFN_CREATEPROMPT
+	}
+	if opts.hidden {
+		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
 	if opts.filters != nil {
 		args.Filter = &windowsFilters(opts.filters)[0]
@@ -130,7 +146,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	res := [32768]uint16{}
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
-	args.InitialDir = initDirAndName(opts.filename, res[:])
+	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -170,6 +186,9 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 	if multi {
 		flgs |= 0x200 // FOS_ALLOWMULTISELECT
+	}
+	if opts.hidden {
+		flgs |= 0x10000000 // FOS_FORCESHOWHIDDEN
 	}
 	hr, _, _ = dialog.Call(dialog.vtbl.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
 	if int32(hr) < 0 {
@@ -239,11 +258,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		if int32(hr) < 0 {
 			return "", nil, syscall.Errno(hr)
 		}
-		for i := uintptr(0); i < uintptr(count); i++ {
+		for i := uintptr(0); i < uintptr(count) && err == nil; i++ {
 			err = shellItemPath(&items._COMObject, items.vtbl.GetItemAt, i)
-			if err != nil {
-				return
-			}
 		}
 	} else {
 		err = shellItemPath(&dialog._COMObject, dialog.vtbl.GetResult)
@@ -272,17 +288,21 @@ func browseForFolder(title string) (string, []string, error) {
 	return str, []string{str}, nil
 }
 
-func initDirAndName(filename string, name []uint16) (dir *uint16) {
+func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	if filename != "" {
 		d, n := splitDirAndName(filename)
+		e := filepath.Ext(n)
 		if n != "" {
 			copy(name, syscall.StringToUTF16(n))
 		}
 		if d != "" {
-			return syscall.StringToUTF16Ptr(d)
+			dir = syscall.StringToUTF16Ptr(d)
+		}
+		if e != "" {
+			ext = syscall.StringToUTF16Ptr(e[1:])
 		}
 	}
-	return nil
+	return
 }
 
 func windowsFilters(filters []FileFilter) []uint16 {

@@ -23,33 +23,33 @@ func main() {
 	var str strings.Builder
 
 	for _, file := range files {
-		if name := file.Name(); filepath.Ext(name) == ".gots" {
-			str.WriteString("\n" + `{{define "`)
-			str.WriteString(strings.TrimSuffix(name, ".gots"))
-			str.WriteString(`"}}<script>`)
+		name := file.Name()
 
-			func() {
-				in, err := os.Open(filepath.Join(dir, name))
-				if err != nil {
-					log.Fatal(err)
-				}
-				defer in.Close()
+		str.WriteString("\n" + `{{define "`)
+		str.WriteString(strings.TrimSuffix(name, filepath.Ext(name)))
+		str.WriteString(`"}}<script>`)
 
-				scanner := bufio.NewScanner(in)
-				for scanner.Scan() {
-					line := strings.TrimSpace(scanner.Text())
-					if line != "" {
-						str.WriteString(line)
-						str.WriteRune('\n')
-					}
-				}
-				if err := scanner.Err(); err != nil {
-					log.Fatal(err)
-				}
-			}()
+		func() {
+			in, err := os.Open(filepath.Join(dir, name))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer in.Close()
 
-			str.WriteString("</script>{{end}}")
-		}
+			scanner := bufio.NewScanner(in)
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if line != "" {
+					str.WriteString(line)
+					str.WriteRune('\n')
+				}
+			}
+			if err := scanner.Err(); err != nil {
+				log.Fatal(err)
+			}
+		}()
+
+		str.WriteString("</script>{{end}}")
 	}
 
 	out, err := os.Create("generated.go")
