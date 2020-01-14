@@ -9,8 +9,8 @@ as well as a *“port”* of the `zenity` command to both Windows and macOS base
 
 Lots of things are missing.
 For now, these are the only implemented dialogs:
-* message (error, info, question, warning)
-* file selection
+* [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
+* [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
 
 Behavior on Windows, macOS and other UNIXes might differ slightly.
 Some of that is intended (reflecting platform differences),
