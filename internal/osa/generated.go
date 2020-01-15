@@ -10,9 +10,9 @@ var scripts = template.Must(template.New("").Parse(`
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}
+{{if .Prompt -}}
 opts.withPrompt = {{.Prompt}}
-opts.invisibles = {{.Invisibles}}
-opts.multipleSelectionsAllowed = {{.Multiple}}
+{{end -}}
 {{if .Type -}}
 opts.ofType = {{.Type}}
 {{end -}}
@@ -21,6 +21,12 @@ opts.defaultName = {{.Name}}
 {{end -}}
 {{if .Location -}}
 opts.defaultLocation = {{.Location}}
+{{end -}}
+{{if .Invisibles -}}
+opts.invisibles = {{.Invisibles}}
+{{end -}}
+{{if .Multiple -}}
+opts.multipleSelectionsAllowed = {{.Multiple}}
 {{end -}}
 var res = app[{{.Operation}}](opts)
 if (Array.isArray(res)) {

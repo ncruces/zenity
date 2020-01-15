@@ -3,10 +3,10 @@ app.includeStandardAdditions = true
 app.activate()
 
 var opts = {}
-opts.withPrompt = {{.Prompt}}
-opts.invisibles = {{.Invisibles}}
-opts.multipleSelectionsAllowed = {{.Multiple}}
 
+{{if .Prompt -}}
+	opts.withPrompt = {{.Prompt}}
+{{end -}}
 {{if .Type -}}
 	opts.ofType = {{.Type}}
 {{end -}}
@@ -15,6 +15,12 @@ opts.multipleSelectionsAllowed = {{.Multiple}}
 {{end -}}
 {{if .Location -}}
 	opts.defaultLocation = {{.Location}}
+{{end -}}
+{{if .Invisibles -}}
+	opts.invisibles = {{.Invisibles}}
+{{end -}}
+{{if .Multiple -}}
+	opts.multipleSelectionsAllowed = {{.Multiple}}
 {{end -}}
 
 var res = app[{{.Operation}}](opts)
