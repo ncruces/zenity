@@ -12,7 +12,7 @@ For now, these are the only implemented dialogs:
 * [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
 * [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
 
-Behavior on Windows, macOS and other UNIXes might differ slightly.
+Behavior on Windows, macOS and other Unixes might differ slightly.
 Some of that is intended (reflecting platform differences),
 other bits are unfortunate limitations,
 others still are open to be fixed.
@@ -35,6 +35,6 @@ Why reinvent this particular wheel?
 * on macOS:
   * only dependency is `osascript` (with [JXA](https://developer.apple.com/library/archive/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/Introduction.html))\
     JavaScript is easier to template (with `html/template`)
-* on other UNIXes:
+* on other Unixes:
   * wraps either one of `qarma`, `zenity`, `matedialog`,\
     in that order of preference
