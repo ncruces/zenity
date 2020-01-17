@@ -275,9 +275,9 @@ func browseForFolder(opts options) (string, []string, error) {
 	if opts.filename != "" {
 		ptr := syscall.StringToUTF16Ptr(opts.filename)
 		args.LParam = uintptr(unsafe.Pointer(ptr))
-		args.CallbackFunc = syscall.NewCallback(func(hwnd uintptr, msg uint32, lparam, data uintptr) uintptr {
+		args.CallbackFunc = syscall.NewCallback(func(wnd uintptr, msg uint32, lparam, data uintptr) uintptr {
 			if msg == 1 { // BFFM_INITIALIZED
-				sendMessage.Call(hwnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
+				sendMessage.Call(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
 			}
 			return 0
 		})

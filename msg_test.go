@@ -3,7 +3,7 @@ package zenity_test
 import "github.com/ncruces/zenity"
 
 func ExampleError() {
-	zenity.Error("An error has occured.",
+	zenity.Error("An error has occurred.",
 		zenity.Title("Error"),
 		zenity.Icon(zenity.ErrorIcon))
 	// Output:

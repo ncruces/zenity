@@ -23,7 +23,7 @@ var (
 	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
 
 	sendMessage         = user32.NewProc("SendMessageW")
-	getClassName        = user32.NewProc("GetClassNameA")
+	getClassName        = user32.NewProc("GetClassNameW")
 	setWindowsHookEx    = user32.NewProc("SetWindowsHookExW")
 	unhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
 	callNextHookEx      = user32.NewProc("CallNextHookEx")
@@ -46,7 +46,7 @@ type _CWPRETSTRUCT struct {
 	LParam  uintptr
 	WParam  uintptr
 	Message uint32
-	HWnd    uintptr
+	Wnd     uintptr
 }
 
 type _COMObject struct{}

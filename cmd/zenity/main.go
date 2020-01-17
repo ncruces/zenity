@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/ncruces/zenity"
@@ -42,6 +45,10 @@ var (
 	filename         string
 	separator        string
 	fileFilters      FileFilters
+
+	// Windows specific options
+	cygpath bool
+	wslpath bool
 )
 
 func main() {
@@ -64,11 +71,11 @@ func main() {
 	case fileSelectionDlg:
 		switch {
 		default:
-			strResult(zenity.SelectFile(opts...))
+			strResult(egestPath(zenity.SelectFile(opts...)))
 		case save:
-			strResult(zenity.SelectFileSave(opts...))
+			strResult(egestPath(zenity.SelectFileSave(opts...)))
 		case multiple:
-			lstResult(zenity.SelectFileMutiple(opts...))
+			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
 		}
 	}
 
@@ -111,6 +118,12 @@ func setupFlags() {
 	flag.StringVar(&filename, "filename", "", "Set the filename")
 	flag.StringVar(&separator, "separator", "|", "Set output separator character")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
+
+	// Windows specific options
+	if runtime.GOOS == "windows" {
+		flag.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
+		flag.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
+	}
 }
 
 func validateFlags() {
@@ -174,7 +187,7 @@ func loadFlags() []zenity.Option {
 	// File selection options
 
 	options = append(options, fileFilters.Build())
-	options = append(options, zenity.Filename(filename))
+	options = append(options, zenity.Filename(ingestPath(filename)))
 	if directory {
 		options = append(options, zenity.Directory())
 	}
@@ -238,12 +251,66 @@ func lstResult(l []string, err error) {
 	os.Exit(0)
 }
 
+func ingestPath(path string) string {
+	if runtime.GOOS == "windows" && path != "" {
+		var args []string
+		switch {
+		case wslpath:
+			args = []string{"wsl", "wslpath", "-m"}
+		case cygpath:
+			args = []string{"cygpath", "-C", "UTF8", "-m"}
+		}
+		if args != nil {
+			args = append(args, path)
+			out, err := exec.Command(args[0], args[1:]...).Output()
+			if len(out) > 0 && err == nil {
+				path = string(out[:len(out)-1])
+			}
+		}
+	}
+	return path
+}
+
+func egestPath(path string, err error) (string, error) {
+	if runtime.GOOS == "windows" && path != "" && err == nil {
+		var args []string
+		switch {
+		case wslpath:
+			args = []string{"wsl", "wslpath", "-u"}
+		case cygpath:
+			args = []string{"cygpath", "-C", "UTF8", "-u"}
+		}
+		if args != nil {
+			var out []byte
+			args = append(args, filepath.ToSlash(path))
+			out, err = exec.Command(args[0], args[1:]...).Output()
+			if len(out) > 0 && err == nil {
+				path = string(out[:len(out)-1])
+			}
+		}
+	}
+	return path, err
+}
+
+func egestPaths(paths []string, err error) ([]string, error) {
+	if runtime.GOOS == "windows" && err == nil && (wslpath || cygpath) {
+		paths = append(paths[:0:0], paths...)
+		for i, p := range paths {
+			paths[i], err = egestPath(p, nil)
+			if err != nil {
+				break
+			}
+		}
+	}
+	return paths, err
+}
+
 type FileFilters struct {
 	zenity.FileFilters
 }
 
 func (f *FileFilters) String() string {
-	return "filename filter"
+	return "zenity.FileFilters"
 }
 
 func (f *FileFilters) Set(s string) error {

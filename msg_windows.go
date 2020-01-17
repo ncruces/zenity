@@ -93,15 +93,15 @@ func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			if lparam.Message == 0x0110 { // WM_INITDIALOG
-				name := [7]byte{}
-				n, _, _ := getClassName.Call(lparam.HWnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-				if string(name[:n]) == "#32770" {
-					enumChildWindows.Call(lparam.HWnd,
-						syscall.NewCallback(func(hwnd, lparam uintptr) uintptr {
-							name := [7]byte{}
-							n, _, _ := getClassName.Call(hwnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-							if string(name[:n]) == "Button" {
-								ctl, _, _ := getDlgCtrlID.Call(hwnd)
+				name := [7]uint16{}
+				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
+					enumChildWindows.Call(lparam.Wnd,
+						syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
+							name := [7]uint16{}
+							getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+							if syscall.UTF16ToString(name[:]) == "Button" {
+								ctl, _, _ := getDlgCtrlID.Call(wnd)
 								var text string
 								switch ctl {
 								case 1, 6: // IDOK, IDYES
@@ -119,7 +119,7 @@ func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 								}
 								if text != "" {
 									ptr := syscall.StringToUTF16Ptr(text)
-									setWindowText.Call(hwnd, uintptr(unsafe.Pointer(ptr)))
+									setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
 								}
 							}
 							return 1
