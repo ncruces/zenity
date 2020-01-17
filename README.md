@@ -32,6 +32,7 @@ Why reinvent this particular wheel?
     * Explorer shell not required
     * works in Server Core
   * Unicode support
+  * WSL/Cygwin/MSYS2 [support](https://github.com/ncruces/zenity/wiki/Zenity-for-WSL,-Cygwin,-MSYS2)
 * on macOS:
   * only dependency is `osascript` (with [JXA](https://developer.apple.com/library/archive/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/Introduction.html))\
     JavaScript is easier to template (with `html/template`)
