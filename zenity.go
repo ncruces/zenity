@@ -1,5 +1,7 @@
 package zenity
 
+import "image/color"
+
 // Errors
 
 type constError string
@@ -23,6 +25,10 @@ type options struct {
 	create    bool
 	hidden    bool
 	filters   []FileFilter
+
+	// Color selection options
+	color   color.Color
+	palette bool
 
 	// Message options
 	icon      MessageIcon
@@ -102,6 +108,16 @@ type FileFilters []FileFilter
 // Build option to set filename filters.
 func (f FileFilters) Build() Option {
 	return func(o *options) { o.filters = append(o.filters, f...) }
+}
+
+// Color selection options
+
+func Color(c color.Color) Option {
+	return func(o *options) { o.color = c }
+}
+
+func ShowPalette() Option {
+	return func(o *options) { o.palette = true }
 }
 
 // Message options
