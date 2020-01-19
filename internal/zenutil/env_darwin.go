@@ -1,4 +1,4 @@
-package cmd
+package zenutil
 
 const LineBreak = "\n"
 

@@ -4,14 +4,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ncruces/zenity/internal/cmd"
-	"github.com/ncruces/zenity/internal/osa"
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 func SelectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
-	data := osa.File{
+	data := zenutil.File{
 		Prompt:     opts.title,
 		Invisibles: opts.hidden,
 	}
@@ -23,7 +22,7 @@ func SelectFile(options ...Option) (string, error) {
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
-	out, err := osa.Run("file", data)
+	out, err := zenutil.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}
@@ -39,11 +38,11 @@ func SelectFile(options ...Option) (string, error) {
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
-	data := osa.File{
+	data := zenutil.File{
 		Prompt:     opts.title,
 		Invisibles: opts.hidden,
 		Multiple:   true,
-		Separator:  cmd.Separator,
+		Separator:  zenutil.Separator,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
@@ -53,7 +52,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
-	out, err := osa.Run("file", data)
+	out, err := zenutil.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
@@ -66,13 +65,13 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if len(out) == 0 {
 		return nil, nil
 	}
-	return strings.Split(string(out), cmd.Separator), nil
+	return strings.Split(string(out), zenutil.Separator), nil
 }
 
 func SelectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 
-	data := osa.File{
+	data := zenutil.File{
 		Prompt: opts.title,
 	}
 	if opts.directory {
@@ -83,7 +82,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	}
 	data.Location, data.Name = splitDirAndName(opts.filename)
 
-	out, err := osa.Run("file", data)
+	out, err := zenutil.Run("file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}

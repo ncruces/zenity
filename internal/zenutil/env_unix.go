@@ -1,6 +1,6 @@
 // +build !windows,!darwin
 
-package cmd
+package zenutil
 
 const LineBreak = "\n"
 

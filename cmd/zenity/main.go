@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/zenity"
-	"github.com/ncruces/zenity/internal/cmd"
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 //go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -platform-specific -manifest=win.manifest
@@ -56,7 +56,7 @@ func main() {
 	flag.Parse()
 	validateFlags()
 	opts := loadFlags()
-	cmd.Command = true
+	zenutil.Command = true
 
 	switch {
 	case errorDlg:
@@ -201,7 +201,7 @@ func loadFlags() []zenity.Option {
 		options = append(options, zenity.ShowHidden())
 	}
 
-	cmd.Separator = separator
+	zenutil.Separator = separator
 
 	return options
 }
@@ -209,12 +209,12 @@ func loadFlags() []zenity.Option {
 func msgResult(ok bool, err error) {
 	if err == zenity.ErrExtraButton {
 		os.Stdout.WriteString(extraButton)
-		os.Stdout.WriteString(cmd.LineBreak)
+		os.Stdout.WriteString(zenutil.LineBreak)
 		os.Exit(1)
 	}
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(cmd.LineBreak)
+		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
 	if ok {
@@ -226,25 +226,25 @@ func msgResult(ok bool, err error) {
 func strResult(s string, err error) {
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(cmd.LineBreak)
+		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
 	if s == "" {
 		os.Exit(1)
 	}
 	os.Stdout.WriteString(s)
-	os.Stdout.WriteString(cmd.LineBreak)
+	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
 func lstResult(l []string, err error) {
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(cmd.LineBreak)
+		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
 	os.Stdout.WriteString(strings.Join(l, separator))
-	os.Stdout.WriteString(cmd.LineBreak)
+	os.Stdout.WriteString(zenutil.LineBreak)
 	if l == nil {
 		os.Exit(1)
 	}

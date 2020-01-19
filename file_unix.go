@@ -6,8 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ncruces/zenity/internal/cmd"
-	"github.com/ncruces/zenity/internal/zen"
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 // Display file selection dialog.
@@ -30,7 +29,7 @@ func SelectFile(options ...Option) (string, error) {
 	}
 	args = append(args, initFilters(opts.filters)...)
 
-	out, err := zen.Run(args)
+	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
@@ -51,7 +50,7 @@ func SelectFile(options ...Option) (string, error) {
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
-	args := []string{"--file-selection", "--multiple", "--separator", cmd.Separator}
+	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
 	if opts.directory {
 		args = append(args, "--directory")
 	}
@@ -63,7 +62,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	}
 	args = append(args, initFilters(opts.filters)...)
 
-	out, err := zen.Run(args)
+	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return nil, nil
 	}
@@ -73,7 +72,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	if len(out) > 0 {
 		out = out[:len(out)-1]
 	}
-	return strings.Split(string(out), cmd.Separator), nil
+	return strings.Split(string(out), zenutil.Separator), nil
 }
 
 // Display save file selection dialog.
@@ -99,7 +98,7 @@ func SelectFileSave(options ...Option) (string, error) {
 	}
 	args = append(args, initFilters(opts.filters)...)
 
-	out, err := zen.Run(args)
+	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}

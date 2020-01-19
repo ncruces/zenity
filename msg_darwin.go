@@ -3,7 +3,7 @@ package zenity
 import (
 	"os/exec"
 
-	"github.com/ncruces/zenity/internal/osa"
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 func Question(text string, options ...Option) (bool, error) {
@@ -24,7 +24,7 @@ func Error(text string, options ...Option) (bool, error) {
 
 func message(typ int, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
-	data := osa.Msg{Text: text}
+	data := zenutil.Msg{Text: text}
 	dialog := typ == 0 || opts.icon != 0
 
 	if dialog {
@@ -99,7 +99,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		}
 	}
 
-	out, err := osa.Run("msg", data)
+	out, err := zenutil.Run("msg", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}

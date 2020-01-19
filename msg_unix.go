@@ -5,7 +5,7 @@ package zenity
 import (
 	"os/exec"
 
-	"github.com/ncruces/zenity/internal/zen"
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 // Display question dialog.
@@ -84,7 +84,7 @@ func message(arg, text string, options []Option) (bool, error) {
 		args = append(args, "--icon-name=dialog-question")
 	}
 
-	out, err := zen.Run(args)
+	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
 			return false, ErrExtraButton

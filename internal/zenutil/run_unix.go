@@ -1,13 +1,11 @@
 // +build !windows,!darwin
 
-package zen
+package zenutil
 
 import (
 	"os"
 	"os/exec"
 	"syscall"
-
-	"github.com/ncruces/zenity/internal/cmd"
 )
 
 var tool, path string
@@ -23,7 +21,7 @@ func init() {
 }
 
 func Run(args []string) ([]byte, error) {
-	if cmd.Command && path != "" {
+	if Command && path != "" {
 		syscall.Exec(path, append([]string{tool}, args...), os.Environ())
 	}
 	return exec.Command(tool, args...).Output()

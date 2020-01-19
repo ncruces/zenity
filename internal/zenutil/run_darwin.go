@@ -1,12 +1,10 @@
-package osa
+package zenutil
 
 import (
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
-
-	"github.com/ncruces/zenity/internal/cmd"
 )
 
 func Run(script string, data interface{}) ([]byte, error) {
@@ -20,7 +18,7 @@ func Run(script string, data interface{}) ([]byte, error) {
 	res := buf.String()
 	res = res[len("<script>") : len(res)-len("\n</script>")]
 
-	if cmd.Command {
+	if Command {
 		path, err := exec.LookPath("osascript")
 		if err == nil {
 			os.Stderr.Close()

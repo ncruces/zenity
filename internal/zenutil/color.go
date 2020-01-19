@@ -1,4 +1,4 @@
-package zen
+package zenutil
 
 import (
 	"fmt"
