@@ -6,6 +6,21 @@ package osa
 import "html/template"
 
 var scripts = template.Must(template.New("").Parse(`
+{{define "color"}}<script>var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+var opts = {}
+{{if .Color -}}
+opts.defaultColor = {{.Color}}
+{{end -}}
+var res = app.chooseColor(opts)
+if (Array.isArray(res)) {
+res[0] = Math.round(255*res[0])
+res[1] = Math.round(255*res[1])
+res[2] = Math.round(255*res[2])
+'rgb('+res+')'
+}
+</script>{{end}}
 {{define "file"}}<script>var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()

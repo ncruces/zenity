@@ -44,6 +44,10 @@ type File struct {
 	Multiple   bool
 }
 
+type Color struct {
+	Color []float32
+}
+
 type Msg struct {
 	Operation string
 	Text      string
