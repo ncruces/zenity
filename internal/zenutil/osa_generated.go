@@ -3,78 +3,77 @@
 
 package zenutil
 
-import "html/template"
+import "encoding/json"
+import "text/template"
 
-var scripts = template.Must(template.New("").Parse(`
-{{define "color"}}<script>var app = Application.currentApplication()
-app.includeStandardAdditions = true
-app.activate()
-var opts = {}
+var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
+	b, err := json.Marshal(v)
+	return string(b), err
+}}).Parse(`
+{{define "color" -}}tell application (path to frontmost application as text)
+activate
 {{if .Color -}}
-opts.defaultColor = {{.Color}}
-{{end -}}
-var res = app.chooseColor(opts)
-if (Array.isArray(res)) {
-res[0] = Math.round(255*res[0])
-res[1] = Math.round(255*res[1])
-res[2] = Math.round(255*res[2])
-'rgb('+res+')'
-}
-</script>{{end}}
-{{define "file"}}<script>var app = Application.currentApplication()
+set c to choose color default color { {{index .Color 0}}, {{index .Color 1}}, {{index .Color 2}} }
+{{else -}}
+set c to choose color
+{{end}}
+"rgb(" & (item 1 of c) div 257 & "," & (item 2 of c) div 257 & "," & (item 3 of c) div 257 & ")"
+end tell
+{{- end}}
+{{define "file" -}}var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}
 {{if .Prompt -}}
-opts.withPrompt = {{.Prompt}}
+opts.withPrompt = {{json .Prompt}}
 {{end -}}
 {{if .Type -}}
-opts.ofType = {{.Type}}
+opts.ofType = {{json .Type}}
 {{end -}}
 {{if .Name -}}
-opts.defaultName = {{.Name}}
+opts.defaultName = {{json .Name}}
 {{end -}}
 {{if .Location -}}
-opts.defaultLocation = {{.Location}}
+opts.defaultLocation = {{json .Location}}
 {{end -}}
 {{if .Invisibles -}}
-opts.invisibles = {{.Invisibles}}
+opts.invisibles = {{json .Invisibles}}
 {{end -}}
 {{if .Multiple -}}
-opts.multipleSelectionsAllowed = {{.Multiple}}
+opts.multipleSelectionsAllowed = {{json .Multiple}}
 {{end -}}
-var res = app[{{.Operation}}](opts)
+var res = app[{{json .Operation}}](opts)
 if (Array.isArray(res)) {
-res.join({{.Separator}})
+res.join({{json .Separator}})
 } else {
 res.toString()
 }
-</script>{{end}}
-{{define "msg"}}<script>var app = Application.currentApplication()
+{{- end}}
+{{define "msg" -}}var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}
 {{if .Message -}}
-opts.message = {{.Message}}
+opts.message = {{json .Message}}
 {{end -}}
 {{if .As -}}
-opts.as = {{.As}}
+opts.as = {{json .As}}
 {{end -}}
 {{if .Title -}}
-opts.withTitle = {{.Title}}
+opts.withTitle = {{json .Title}}
 {{end -}}
 {{if .Icon -}}
-opts.withIcon = {{.Icon}}
+opts.withIcon = {{json .Icon}}
 {{end -}}
 {{if .Buttons -}}
-opts.buttons = {{.Buttons}}
+opts.buttons = {{json .Buttons}}
 {{end -}}
 {{if .Default -}}
-opts.defaultButton = {{.Default}}
+opts.defaultButton = {{json .Default}}
 {{end -}}
 {{if .Cancel -}}
-opts.cancelButton = {{.Cancel}}
+opts.cancelButton = {{json .Cancel}}
 {{end -}}
-var res = app[{{.Operation}}]({{.Text}}, opts).buttonReturned
-res === {{.Extra}} ? res : void 0
-</script>{{end}}`))
+var res = app[{{json .Operation}}]({{json .Text}}, opts).buttonReturned
+res === {{json .Extra}} ? res : void 0
+{{- end}}`))

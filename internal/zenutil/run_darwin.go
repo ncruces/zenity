@@ -15,19 +15,22 @@ func Run(script string, data interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	res := buf.String()
-	res = res[len("<script>") : len(res)-len("\n</script>")]
+	script = buf.String()
+	lang := "AppleScript"
+	if strings.HasPrefix(script, "var app") {
+		lang = "JavaScript"
+	}
 
 	if Command {
 		path, err := exec.LookPath("osascript")
 		if err == nil {
 			os.Stderr.Close()
-			syscall.Exec(path, []string{"osascript", "-l", "JavaScript", "-e", res}, nil)
+			syscall.Exec(path, []string{"osascript", "-l", lang, "-e", script}, nil)
 		}
 	}
 
-	cmd := exec.Command("osascript", "-l", "JavaScript")
-	cmd.Stdin = strings.NewReader(res)
+	cmd := exec.Command("osascript", "-l", lang)
+	cmd.Stdin = strings.NewReader(script)
 	return cmd.Output()
 }
 
@@ -43,7 +46,7 @@ type File struct {
 }
 
 type Color struct {
-	Color []float32
+	Color []uint32
 }
 
 type Msg struct {

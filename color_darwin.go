@@ -13,7 +13,7 @@ func SelectColor(options ...Option) (color.Color, error) {
 	var data zenutil.Color
 	if opts.color != nil {
 		r, g, b, _ := opts.color.RGBA()
-		data.Color = []float32{float32(r) / 0xffff, float32(g) / 0xffff, float32(b) / 0xffff}
+		data.Color = []uint32{r, g, b}
 	}
 
 	out, err := zenutil.Run("color", data)

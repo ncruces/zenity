@@ -5,27 +5,27 @@ app.activate()
 var opts = {}
 
 {{if .Prompt -}}
-	opts.withPrompt = {{.Prompt}}
+	opts.withPrompt = {{json .Prompt}}
 {{end -}}
 {{if .Type -}}
-	opts.ofType = {{.Type}}
+	opts.ofType = {{json .Type}}
 {{end -}}
 {{if .Name -}}
-	opts.defaultName = {{.Name}}
+	opts.defaultName = {{json .Name}}
 {{end -}}
 {{if .Location -}}
-	opts.defaultLocation = {{.Location}}
+	opts.defaultLocation = {{json .Location}}
 {{end -}}
 {{if .Invisibles -}}
-	opts.invisibles = {{.Invisibles}}
+	opts.invisibles = {{json .Invisibles}}
 {{end -}}
 {{if .Multiple -}}
-	opts.multipleSelectionsAllowed = {{.Multiple}}
+	opts.multipleSelectionsAllowed = {{json .Multiple}}
 {{end -}}
 
-var res = app[{{.Operation}}](opts)
+var res = app[{{json .Operation}}](opts)
 if (Array.isArray(res)) {
-	res.join({{.Separator}})
+	res.join({{json .Separator}})
 } else {
 	res.toString()
 }
