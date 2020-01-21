@@ -39,6 +39,18 @@ func ParseColor(s string) color.Color {
 		}
 	}
 
-	c, _ := colornames.Map[strings.ToLower(s)]
-	return c
+	c, ok := colornames.Map[strings.ToLower(s)]
+	if ok {
+		return c
+	}
+	return nil
+}
+
+func UnparseColor(c color.Color) string {
+	n := color.NRGBAModel.Convert(c).(color.NRGBA)
+	if n.A == 255 {
+		return fmt.Sprintf("rgb(%d,%d,%d)", n.R, n.G, n.B)
+	} else {
+		return fmt.Sprintf("rgba(%d,%d,%d,%f)", n.R, n.G, n.B, float32(n.A)/255)
+	}
 }

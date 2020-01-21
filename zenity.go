@@ -112,10 +112,12 @@ func (f FileFilters) Build() Option {
 
 // Color selection options
 
+// Option to set the color.
 func Color(c color.Color) Option {
 	return func(o *options) { o.color = c }
 }
 
+// Option to show the palette.
 func ShowPalette() Option {
 	return func(o *options) { o.palette = true }
 }

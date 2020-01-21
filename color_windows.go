@@ -34,8 +34,8 @@ func SelectColor(options ...Option) (color.Color, error) {
 
 	if opts.color != nil {
 		args.Flags |= 0x1 // CC_RGBINIT
-		r, g, b, _ := opts.color.RGBA()
-		args.RgbResult = (r >> 8 << 0) | (g >> 8 << 8) | (b >> 8 << 16)
+		n := color.NRGBAModel.Convert(opts.color).(color.NRGBA)
+		args.RgbResult = uint32(n.R) | (uint32(n.G) << 8) | (uint32(n.B) << 16)
 	}
 	if opts.palette {
 		args.Flags |= 4 // CC_PREVENTFULLOPEN

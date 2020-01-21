@@ -46,7 +46,7 @@ type File struct {
 }
 
 type Color struct {
-	Color []uint32
+	Color []uint16
 }
 
 type Msg struct {

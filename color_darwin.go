@@ -12,8 +12,8 @@ func SelectColor(options ...Option) (color.Color, error) {
 
 	var data zenutil.Color
 	if opts.color != nil {
-		r, g, b, _ := opts.color.RGBA()
-		data.Color = []uint32{r, g, b}
+		n := color.NRGBA64Model.Convert(opts.color).(color.NRGBA64)
+		data.Color = []uint16{n.R, n.G, n.B}
 	}
 
 	out, err := zenutil.Run("color", data)

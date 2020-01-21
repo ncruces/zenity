@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"image/color"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,11 +17,12 @@ import (
 
 var (
 	// Application Options
-	errorDlg         bool
-	infoDlg          bool
-	warningDlg       bool
-	questionDlg      bool
-	fileSelectionDlg bool
+	errorDlg          bool
+	infoDlg           bool
+	warningDlg        bool
+	questionDlg       bool
+	fileSelectionDlg  bool
+	colorSelectionDlg bool
 
 	// General options
 	title string
@@ -45,6 +47,10 @@ var (
 	filename         string
 	separator        string
 	fileFilters      FileFilters
+
+	// Color selection options
+	initColor string
+	palette   bool
 
 	// Windows specific options
 	cygpath bool
@@ -77,6 +83,9 @@ func main() {
 		case multiple:
 			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
 		}
+
+	case colorSelectionDlg:
+		clrResult(zenity.SelectColor(opts...))
 	}
 
 	flag.Usage()
@@ -91,6 +100,7 @@ func setupFlags() {
 	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
+	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
 
 	// General options
 
@@ -119,6 +129,10 @@ func setupFlags() {
 	flag.StringVar(&separator, "separator", "|", "Set output separator character")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 
+	// Color selection options
+	flag.StringVar(&initColor, "color", "", "Set the color")
+	flag.BoolVar(&palette, "show-palette", false, "Show the palette")
+
 	// Windows specific options
 	if runtime.GOOS == "windows" {
 		flag.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
@@ -141,6 +155,9 @@ func validateFlags() {
 		n++
 	}
 	if fileSelectionDlg {
+		n++
+	}
+	if colorSelectionDlg {
 		n++
 	}
 	if n != 1 {
@@ -187,7 +204,9 @@ func loadFlags() []zenity.Option {
 	// File selection options
 
 	options = append(options, fileFilters.Build())
-	options = append(options, zenity.Filename(ingestPath(filename)))
+	if filename != "" {
+		options = append(options, zenity.Filename(ingestPath(filename)))
+	}
 	if directory {
 		options = append(options, zenity.Directory())
 	}
@@ -202,6 +221,15 @@ func loadFlags() []zenity.Option {
 	}
 
 	zenutil.Separator = separator
+
+	// Color selection options
+
+	if initColor != "" {
+		options = append(options, zenity.Color(zenutil.ParseColor(initColor)))
+	}
+	if palette {
+		options = append(options, zenity.ShowPalette())
+	}
 
 	return options
 }
@@ -248,6 +276,20 @@ func lstResult(l []string, err error) {
 	if l == nil {
 		os.Exit(1)
 	}
+	os.Exit(0)
+}
+
+func clrResult(c color.Color, err error) {
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString(zenutil.LineBreak)
+		os.Exit(-1)
+	}
+	if c == nil {
+		os.Exit(1)
+	}
+	os.Stdout.WriteString(zenutil.UnparseColor(c))
+	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
