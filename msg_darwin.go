@@ -6,26 +6,10 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func Question(text string, options ...Option) (bool, error) {
-	return message(0, text, options)
-}
-
-func Info(text string, options ...Option) (bool, error) {
-	return message(1, text, options)
-}
-
-func Warning(text string, options ...Option) (bool, error) {
-	return message(2, text, options)
-}
-
-func Error(text string, options ...Option) (bool, error) {
-	return message(3, text, options)
-}
-
-func message(typ int, text string, options []Option) (bool, error) {
+func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 	data := zenutil.Msg{Text: text}
-	dialog := typ == 0 || opts.icon != 0
+	dialog := kind == questionKind || opts.icon != 0
 
 	if dialog {
 		data.Operation = "displayDialog"
@@ -46,17 +30,17 @@ func message(typ int, text string, options []Option) (bool, error) {
 			data.Text = opts.title
 		}
 
-		switch typ {
-		case 1:
+		switch kind {
+		case infoKind:
 			data.As = "informational"
-		case 2:
+		case warningKind:
 			data.As = "warning"
-		case 3:
+		case errorKind:
 			data.As = "critical"
 		}
 	}
 
-	if typ != 0 {
+	if kind != questionKind {
 		if dialog {
 			opts.ok = "OK"
 		}
@@ -69,7 +53,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		if opts.cancel == "" {
 			opts.cancel = "Cancel"
 		}
-		if typ == 0 {
+		if kind == questionKind {
 			if opts.extra == "" {
 				data.Buttons = []string{opts.cancel, opts.ok}
 				data.Default = 2

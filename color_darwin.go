@@ -7,7 +7,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func SelectColor(options ...Option) (color.Color, error) {
+func selectColor(options ...Option) (color.Color, error) {
 	opts := optsParse(options)
 
 	var data zenutil.Color

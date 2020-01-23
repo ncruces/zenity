@@ -9,12 +9,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-// Display color selection dialog.
-//
-// Returns nil on cancel.
-//
-// Valid options: Title, Color, ShowPalette.
-func SelectColor(options ...Option) (color.Color, error) {
+func selectColor(options ...Option) (color.Color, error) {
 	opts := optsParse(options)
 
 	args := []string{"--color-selection"}

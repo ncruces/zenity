@@ -10,31 +10,15 @@ var (
 	messageBox = user32.NewProc("MessageBoxW")
 )
 
-func Question(text string, options ...Option) (bool, error) {
-	return message(0, text, options)
-}
-
-func Info(text string, options ...Option) (bool, error) {
-	return message(1, text, options)
-}
-
-func Warning(text string, options ...Option) (bool, error) {
-	return message(2, text, options)
-}
-
-func Error(text string, options ...Option) (bool, error) {
-	return message(3, text, options)
-}
-
-func message(typ int, text string, options []Option) (bool, error) {
+func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
 	var flags, caption uintptr
 
 	switch {
-	case typ == 0 && opts.extra != "":
+	case kind == questionKind && opts.extra != "":
 		flags |= 0x3 // MB_YESNOCANCEL
-	case typ == 0 || opts.extra != "":
+	case kind == questionKind || opts.extra != "":
 		flags |= 0x1 // MB_OKCANCEL
 	}
 
@@ -49,7 +33,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		flags |= 0x40 // MB_ICONINFORMATION
 	}
 
-	if typ == 0 && opts.defcancel {
+	if kind == questionKind && opts.defcancel {
 		if opts.extra == "" {
 			flags |= 0x100 // MB_DEFBUTTON2
 		} else {
@@ -65,7 +49,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
-		hook, err := hookMessageLabels(typ, opts)
+		hook, err := hookMessageLabels(kind, opts)
 		if hook == 0 {
 			return false, err
 		}
@@ -79,7 +63,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 	if n == 0 {
 		return false, err
 	}
-	if n == 7 || n == 2 && typ != 0 { // IDNO
+	if n == 7 || n == 2 && kind != questionKind { // IDNO
 		return false, ErrExtraButton
 	}
 	if n == 1 || n == 6 { // IDOK, IDYES
@@ -88,7 +72,7 @@ func message(typ int, text string, options []Option) (bool, error) {
 	return false, nil
 }
 
-func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
+func hookMessageLabels(kind messageKind, opts options) (hook uintptr, err error) {
 	tid, _, _ := getCurrentThreadId.Call()
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
@@ -107,7 +91,7 @@ func hookMessageLabels(typ int, opts options) (hook uintptr, err error) {
 								case 1, 6: // IDOK, IDYES
 									text = opts.ok
 								case 2: // IDCANCEL
-									if typ == 0 {
+									if kind == questionKind {
 										text = opts.cancel
 									} else if opts.extra != "" {
 										text = opts.extra

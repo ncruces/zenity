@@ -9,12 +9,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-// Display file selection dialog.
-//
-// Returns an empty string on cancel.
-//
-// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
-func SelectFile(options ...Option) (string, error) {
+func selectFile(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection"}
@@ -42,12 +37,7 @@ func SelectFile(options ...Option) (string, error) {
 	return string(out), nil
 }
 
-// Display multiple file selection dialog.
-//
-// Returns a nil slice on cancel.
-//
-// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
-func SelectFileMutiple(options ...Option) ([]string, error) {
+func selectFileMutiple(options ...Option) ([]string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
@@ -75,12 +65,7 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 	return strings.Split(string(out), zenutil.Separator), nil
 }
 
-// Display save file selection dialog.
-//
-// Returns an empty string on cancel.
-//
-// Valid options: Title, Filename, ConfirmOverwrite, ConfirmCreate, ShowHidden, FileFilter(s).
-func SelectFileSave(options ...Option) (string, error) {
+func selectFileSave(options ...Option) (string, error) {
 	opts := optsParse(options)
 
 	args := []string{"--file-selection", "--save"}

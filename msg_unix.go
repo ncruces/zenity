@@ -8,47 +8,20 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-// Display question dialog.
-//
-// Returns true on OK, false on Cancel, or ErrExtraButton.
-//
-// Valid options: Title, Icon, OKLabel, CancelLabel, ExtraButton, NoWrap,
-// Ellipsize, DefaultCancel.
-func Question(text string, options ...Option) (bool, error) {
-	return message("--question", text, options)
-}
-
-// Display info dialog.
-//
-// Returns true on OK, false on dismiss, or ErrExtraButton.
-//
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
-func Info(text string, options ...Option) (bool, error) {
-	return message("--info", text, options)
-}
-
-// Display warning dialog.
-//
-// Returns true on OK, false on dismiss, or ErrExtraButton.
-//
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
-func Warning(text string, options ...Option) (bool, error) {
-	return message("--warning", text, options)
-}
-
-// Display error dialog.
-//
-// Returns true on OK, false on dismiss, or ErrExtraButton.
-//
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
-func Error(text string, options ...Option) (bool, error) {
-	return message("--error", text, options)
-}
-
-func message(arg, text string, options []Option) (bool, error) {
+func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := optsParse(options)
 
-	args := []string{arg}
+	var args []string
+	switch kind {
+	case questionKind:
+		args = append(args, "--question")
+	case infoKind:
+		args = append(args, "--info")
+	case warningKind:
+		args = append(args, "--warning")
+	case errorKind:
+		args = append(args, "--error")
+	}
 	if text != "" {
 		args = append(args, "--text", text, "--no-markup")
 	}
