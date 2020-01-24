@@ -7,7 +7,7 @@ import (
 )
 
 func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 	data := zenutil.Msg{Text: text}
 	dialog := kind == questionKind || opts.icon != 0
 
@@ -42,39 +42,39 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 
 	if kind != questionKind {
 		if dialog {
-			opts.ok = "OK"
+			opts.okLabel = "OK"
 		}
-		opts.cancel = ""
+		opts.cancelLabel = ""
 	}
-	if opts.ok != "" || opts.cancel != "" || opts.extra != "" {
-		if opts.ok == "" {
-			opts.ok = "OK"
+	if opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
+		if opts.okLabel == "" {
+			opts.okLabel = "OK"
 		}
-		if opts.cancel == "" {
-			opts.cancel = "Cancel"
+		if opts.cancelLabel == "" {
+			opts.cancelLabel = "Cancel"
 		}
 		if kind == questionKind {
-			if opts.extra == "" {
-				data.Buttons = []string{opts.cancel, opts.ok}
+			if opts.extraButton == "" {
+				data.Buttons = []string{opts.cancelLabel, opts.okLabel}
 				data.Default = 2
 				data.Cancel = 1
 			} else {
-				data.Buttons = []string{opts.extra, opts.cancel, opts.ok}
+				data.Buttons = []string{opts.extraButton, opts.cancelLabel, opts.okLabel}
 				data.Default = 3
 				data.Cancel = 2
 			}
 		} else {
-			if opts.extra == "" {
-				data.Buttons = []string{opts.ok}
+			if opts.extraButton == "" {
+				data.Buttons = []string{opts.okLabel}
 				data.Default = 1
 			} else {
-				data.Buttons = []string{opts.extra, opts.ok}
+				data.Buttons = []string{opts.extraButton, opts.okLabel}
 				data.Default = 2
 			}
 		}
-		data.Extra = opts.extra
+		data.Extra = opts.extraButton
 	}
-	if opts.defcancel {
+	if opts.defaultCancel {
 		if data.Cancel != 0 {
 			data.Default = data.Cancel
 		}
@@ -90,7 +90,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
+	if len(out) > 0 && string(out[:len(out)-1]) == opts.extraButton {
 		return false, ErrExtraButton
 	}
 	return true, err

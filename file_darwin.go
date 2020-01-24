@@ -8,17 +8,17 @@ import (
 )
 
 func selectFile(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	data := zenutil.File{
 		Prompt:     opts.title,
-		Invisibles: opts.hidden,
+		Invisibles: opts.showHidden,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = initFilters(opts.filters)
+		data.Type = initFilters(opts.fileFilters)
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
@@ -36,11 +36,11 @@ func selectFile(options ...Option) (string, error) {
 }
 
 func selectFileMutiple(options ...Option) ([]string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	data := zenutil.File{
 		Prompt:     opts.title,
-		Invisibles: opts.hidden,
+		Invisibles: opts.showHidden,
 		Multiple:   true,
 		Separator:  zenutil.Separator,
 	}
@@ -48,7 +48,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = initFilters(opts.filters)
+		data.Type = initFilters(opts.fileFilters)
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
@@ -69,7 +69,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 }
 
 func selectFileSave(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	data := zenutil.File{
 		Prompt: opts.title,
@@ -78,7 +78,7 @@ func selectFileSave(options ...Option) (string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFileName"
-		data.Type = initFilters(opts.filters)
+		data.Type = initFilters(opts.fileFilters)
 	}
 	data.Location, data.Name = splitDirAndName(opts.filename)
 

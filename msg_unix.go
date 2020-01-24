@@ -9,7 +9,7 @@ import (
 )
 
 func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	var args []string
 	switch kind {
@@ -28,22 +28,22 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
-	if opts.ok != "" {
-		args = append(args, "--ok-label", opts.ok)
+	if opts.okLabel != "" {
+		args = append(args, "--ok-label", opts.okLabel)
 	}
-	if opts.cancel != "" {
-		args = append(args, "--cancel-label", opts.cancel)
+	if opts.cancelLabel != "" {
+		args = append(args, "--cancel-label", opts.cancelLabel)
 	}
-	if opts.extra != "" {
-		args = append(args, "--extra-button", opts.extra)
+	if opts.extraButton != "" {
+		args = append(args, "--extra-button", opts.extraButton)
 	}
-	if opts.nowrap {
+	if opts.noWrap {
 		args = append(args, "--no-wrap")
 	}
 	if opts.ellipsize {
 		args = append(args, "--ellipsize")
 	}
-	if opts.defcancel {
+	if opts.defaultCancel {
 		args = append(args, "--default-cancel")
 	}
 	switch opts.icon {
@@ -59,7 +59,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 
 	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		if len(out) > 0 && string(out[:len(out)-1]) == opts.extra {
+		if len(out) > 0 && string(out[:len(out)-1]) == opts.extraButton {
 			return false, ErrExtraButton
 		}
 		return false, nil

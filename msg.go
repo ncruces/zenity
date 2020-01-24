@@ -63,35 +63,35 @@ const (
 
 // Icon returns an Option to set the dialog icon.
 func Icon(icon MessageIcon) Option {
-	return func(o *options) { o.icon = icon }
+	return funcOption(func(o *options) { o.icon = icon })
 }
 
 // OKLabel returns an Option to set the label of the OK button.
 func OKLabel(ok string) Option {
-	return func(o *options) { o.ok = ok }
+	return funcOption(func(o *options) { o.okLabel = ok })
 }
 
 // CancelLabel returns an Option to set the label of the Cancel button.
 func CancelLabel(cancel string) Option {
-	return func(o *options) { o.cancel = cancel }
+	return funcOption(func(o *options) { o.cancelLabel = cancel })
 }
 
 // ExtraButton returns an Option to add an extra button.
 func ExtraButton(extra string) Option {
-	return func(o *options) { o.extra = extra }
+	return funcOption(func(o *options) { o.extraButton = extra })
 }
 
 // NoWrap returns an Option to disable enable text wrapping.
 func NoWrap() Option {
-	return func(o *options) { o.nowrap = true }
+	return funcOption(func(o *options) { o.noWrap = true })
 }
 
 // Ellipsize returns an Option to enable ellipsizing in the dialog text.
 func Ellipsize() Option {
-	return func(o *options) { o.ellipsize = true }
+	return funcOption(func(o *options) { o.ellipsize = true })
 }
 
 // DefaultCancel returns an Option to give Cancel button focus by default.
 func DefaultCancel() Option {
-	return func(o *options) { o.defcancel = true }
+	return funcOption(func(o *options) { o.defaultCancel = true })
 }

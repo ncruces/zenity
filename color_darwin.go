@@ -8,7 +8,7 @@ import (
 )
 
 func selectColor(options ...Option) (color.Color, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	var data zenutil.Color
 	if opts.color != nil {

@@ -39,32 +39,32 @@ func SelectFileSave(options ...Option) (string, error) {
 // Specifying a file name, makes it the default selected file.
 // Specifying a directory path, makes it the default dialog location.
 func Filename(filename string) Option {
-	return func(o *options) { o.filename = filename }
+	return funcOption(func(o *options) { o.filename = filename })
 }
 
 // Directory returns an Option to activate directory-only selection.
 func Directory() Option {
-	return func(o *options) { o.directory = true }
+	return funcOption(func(o *options) { o.directory = true })
 }
 
 // ConfirmOverwrite returns an Option to confirm file selection if filename
 // already exists.
 func ConfirmOverwrite() Option {
-	return func(o *options) { o.overwrite = true }
+	return funcOption(func(o *options) { o.confirmOverwrite = true })
 }
 
 // ConfirmCreate returns an Option to confirm file selection if filename does
 // not yet exist (Windows only).
 func ConfirmCreate() Option {
-	return func(o *options) { o.create = true }
+	return funcOption(func(o *options) { o.confirmCreate = true })
 }
 
 // ShowHidden returns an Option to show hidden files (Windows and macOS only).
 func ShowHidden() Option {
-	return func(o *options) { o.hidden = true }
+	return funcOption(func(o *options) { o.showHidden = true })
 }
 
-// FileFilter encapsulates a filename filter.
+// FileFilter is an Option that sets a filename filter.
 //
 // macOS hides filename filters from the user,
 // and only supports filtering by extension (or "type").
@@ -73,17 +73,15 @@ type FileFilter struct {
 	Patterns []string // filter patterns for the display string
 }
 
-// Build returns an Option to set a filename filter.
-func (f FileFilter) Build() Option {
-	return func(o *options) { o.filters = append(o.filters, f) }
+func (f FileFilter) apply(o *options) {
+	o.fileFilters = append(o.fileFilters, f)
 }
 
-// FileFilters is a list of filename filters.
+// FileFilters is an Option that sets multiple filename filters.
 type FileFilters []FileFilter
 
-// Build returns an Option to set filename filters.
-func (f FileFilters) Build() Option {
-	return func(o *options) { o.filters = append(o.filters, f...) }
+func (f FileFilters) apply(o *options) {
+	o.fileFilters = append(o.fileFilters, f...)
 }
 
 func splitDirAndName(path string) (dir, name string) {

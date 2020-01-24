@@ -10,7 +10,7 @@ import (
 )
 
 func selectColor(options ...Option) (color.Color, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	args := []string{"--color-selection"}
 
@@ -20,7 +20,7 @@ func selectColor(options ...Option) (color.Color, error) {
 	if opts.color != nil {
 		args = append(args, "--color", zenutil.UnparseColor(opts.color))
 	}
-	if opts.palette {
+	if opts.showPalette {
 		args = append(args, "--show-palette")
 	}
 

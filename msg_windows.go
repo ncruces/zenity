@@ -11,14 +11,14 @@ var (
 )
 
 func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	var flags, caption uintptr
 
 	switch {
-	case kind == questionKind && opts.extra != "":
+	case kind == questionKind && opts.extraButton != "":
 		flags |= 0x3 // MB_YESNOCANCEL
-	case kind == questionKind || opts.extra != "":
+	case kind == questionKind || opts.extraButton != "":
 		flags |= 0x1 // MB_OKCANCEL
 	}
 
@@ -33,8 +33,8 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		flags |= 0x40 // MB_ICONINFORMATION
 	}
 
-	if kind == questionKind && opts.defcancel {
-		if opts.extra == "" {
+	if kind == questionKind && opts.defaultCancel {
+		if opts.extraButton == "" {
 			flags |= 0x100 // MB_DEFBUTTON2
 		} else {
 			flags |= 0x200 // MB_DEFBUTTON3
@@ -45,7 +45,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		caption = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title)))
 	}
 
-	if opts.ok != "" || opts.cancel != "" || opts.extra != "" {
+	if opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
@@ -89,17 +89,17 @@ func hookMessageLabels(kind messageKind, opts options) (hook uintptr, err error)
 								var text string
 								switch ctl {
 								case 1, 6: // IDOK, IDYES
-									text = opts.ok
+									text = opts.okLabel
 								case 2: // IDCANCEL
 									if kind == questionKind {
-										text = opts.cancel
-									} else if opts.extra != "" {
-										text = opts.extra
+										text = opts.cancelLabel
+									} else if opts.extraButton != "" {
+										text = opts.extraButton
 									} else {
-										text = opts.ok
+										text = opts.okLabel
 									}
 								case 7: // IDNO
-									text = opts.extra
+									text = opts.extraButton
 								}
 								if text != "" {
 									ptr := syscall.StringToUTF16Ptr(text)

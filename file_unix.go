@@ -10,7 +10,7 @@ import (
 )
 
 func selectFile(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	args := []string{"--file-selection"}
 	if opts.directory {
@@ -22,7 +22,7 @@ func selectFile(options ...Option) (string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	args = append(args, initFilters(opts.filters)...)
+	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
@@ -38,7 +38,7 @@ func selectFile(options ...Option) (string, error) {
 }
 
 func selectFileMutiple(options ...Option) ([]string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
 	if opts.directory {
@@ -50,7 +50,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	args = append(args, initFilters(opts.filters)...)
+	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
@@ -66,7 +66,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 }
 
 func selectFileSave(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	args := []string{"--file-selection", "--save"}
 	if opts.directory {
@@ -78,10 +78,10 @@ func selectFileSave(options ...Option) (string, error) {
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
-	if opts.overwrite {
+	if opts.confirmOverwrite {
 		args = append(args, "--confirm-overwrite")
 	}
-	args = append(args, initFilters(opts.filters)...)
+	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {

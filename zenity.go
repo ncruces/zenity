@@ -21,39 +21,45 @@ type options struct {
 	title string
 
 	// File selection options
-	filename  string
-	directory bool
-	overwrite bool
-	create    bool
-	hidden    bool
-	filters   []FileFilter
+	filename         string
+	directory        bool
+	confirmOverwrite bool
+	confirmCreate    bool
+	showHidden       bool
+	fileFilters      []FileFilter
 
 	// Color selection options
-	color   color.Color
-	palette bool
+	color       color.Color
+	showPalette bool
 
 	// Message options
-	icon      MessageIcon
-	ok        string
-	cancel    string
-	extra     string
-	nowrap    bool
-	ellipsize bool
-	defcancel bool
+	icon          MessageIcon
+	okLabel       string
+	cancelLabel   string
+	extraButton   string
+	noWrap        bool
+	ellipsize     bool
+	defaultCancel bool
 }
 
 // An Option is an argument passed to dialog functions to customize their
 // behavior.
-type Option func(*options)
+type Option interface {
+	apply(*options)
+}
 
-func optsParse(options []Option) (res options) {
+type funcOption func(*options)
+
+func (f funcOption) apply(o *options) { f(o) }
+
+func applyOptions(options []Option) (res options) {
 	for _, o := range options {
-		o(&res)
+		o.apply(&res)
 	}
 	return
 }
 
 // Title returns an Option to set the dialog title.
 func Title(title string) Option {
-	return func(o *options) { o.title = title }
+	return funcOption(func(o *options) { o.title = title })
 }

@@ -49,8 +49,8 @@ var (
 	fileFilters      FileFilters
 
 	// Color selection options
-	initColor string
-	palette   bool
+	defaultColor string
+	showPalette  bool
 
 	// Windows specific options
 	cygpath bool
@@ -130,8 +130,8 @@ func setupFlags() {
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 
 	// Color selection options
-	flag.StringVar(&initColor, "color", "", "Set the color")
-	flag.BoolVar(&palette, "show-palette", false, "Show the palette")
+	flag.StringVar(&defaultColor, "color", "", "Set the color")
+	flag.BoolVar(&showPalette, "show-palette", false, "Show the palette")
 
 	// Windows specific options
 	if runtime.GOOS == "windows" {
@@ -203,7 +203,7 @@ func loadFlags() []zenity.Option {
 
 	// File selection options
 
-	options = append(options, fileFilters.Build())
+	options = append(options, fileFilters)
 	if filename != "" {
 		options = append(options, zenity.Filename(ingestPath(filename)))
 	}
@@ -224,10 +224,10 @@ func loadFlags() []zenity.Option {
 
 	// Color selection options
 
-	if initColor != "" {
-		options = append(options, zenity.Color(zenutil.ParseColor(initColor)))
+	if defaultColor != "" {
+		options = append(options, zenity.Color(zenutil.ParseColor(defaultColor)))
 	}
-	if palette {
+	if showPalette {
 		options = append(options, zenity.ShowPalette())
 	}
 

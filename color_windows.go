@@ -21,7 +21,7 @@ func init() {
 }
 
 func selectColor(options ...Option) (color.Color, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 
 	// load custom colors
 	colorsMutex.Lock()
@@ -37,7 +37,7 @@ func selectColor(options ...Option) (color.Color, error) {
 		n := color.NRGBAModel.Convert(opts.color).(color.NRGBA)
 		args.RgbResult = uint32(n.R) | (uint32(n.G) << 8) | (uint32(n.B) << 16)
 	}
-	if opts.palette {
+	if opts.showPalette {
 		args.Flags |= 4 // CC_PREVENTFULLOPEN
 	} else {
 		args.Flags |= 2 // CC_FULLOPEN

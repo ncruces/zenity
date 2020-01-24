@@ -18,7 +18,7 @@ var (
 )
 
 func selectFile(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
 		return res, err
@@ -31,11 +31,11 @@ func selectFile(options ...Option) (string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.hidden {
+	if opts.showHidden {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
-	if opts.filters != nil {
-		args.Filter = &initFilters(opts.filters)[0]
+	if opts.fileFilters != nil {
+		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
 	res := [32768]uint16{}
@@ -54,7 +54,7 @@ func selectFile(options ...Option) (string, error) {
 }
 
 func selectFileMutiple(options ...Option) ([]string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 	if opts.directory {
 		_, res, err := pickFolders(opts, true)
 		return res, err
@@ -67,11 +67,11 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.hidden {
+	if opts.showHidden {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
-	if opts.filters != nil {
-		args.Filter = &initFilters(opts.filters)[0]
+	if opts.fileFilters != nil {
+		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
 	res := [32768 + 1024*256]uint16{}
@@ -115,7 +115,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 }
 
 func selectFileSave(options ...Option) (string, error) {
-	opts := optsParse(options)
+	opts := applyOptions(options)
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
 		return res, err
@@ -128,17 +128,17 @@ func selectFileSave(options ...Option) (string, error) {
 	if opts.title != "" {
 		args.Title = syscall.StringToUTF16Ptr(opts.title)
 	}
-	if opts.overwrite {
+	if opts.confirmOverwrite {
 		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
 	}
-	if opts.create {
+	if opts.confirmCreate {
 		args.Flags |= 0x2000 // OFN_CREATEPROMPT
 	}
-	if opts.hidden {
+	if opts.showHidden {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
 	}
-	if opts.filters != nil {
-		args.Filter = &initFilters(opts.filters)[0]
+	if opts.fileFilters != nil {
+		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
 	res := [32768]uint16{}
@@ -185,7 +185,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if multi {
 		flgs |= 0x200 // FOS_ALLOWMULTISELECT
 	}
-	if opts.hidden {
+	if opts.showHidden {
 		flgs |= 0x10000000 // FOS_FORCESHOWHIDDEN
 	}
 	hr, _, _ = dialog.Call(dialog.vtbl.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM

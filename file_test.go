@@ -12,7 +12,7 @@ func ExampleSelectFile() {
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.Build())
+		})
 	// Output:
 }
 
@@ -23,7 +23,7 @@ func ExampleSelectFileMutiple() {
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.Build())
+		})
 	// Output:
 }
 
@@ -35,7 +35,7 @@ func ExampleSelectFileSave() {
 			{"Go files", []string{"*.go"}},
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
-		}.Build())
+		})
 	// Output:
 }
 
