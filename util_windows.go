@@ -49,6 +49,24 @@ type _CWPRETSTRUCT struct {
 	Wnd     uintptr
 }
 
+func hookDialogTitle(title string) (hook uintptr, err error) {
+	tid, _, _ := getCurrentThreadId.Call()
+	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
+		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+			if lparam.Message == 0x0110 { // WM_INITDIALOG
+				name := [7]uint16{}
+				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
+					ptr := syscall.StringToUTF16Ptr(title)
+					setWindowText.Call(lparam.Wnd, uintptr(unsafe.Pointer(ptr)))
+				}
+			}
+			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
+			return next
+		}), 0, tid)
+	return
+}
+
 type _COMObject struct{}
 
 func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {

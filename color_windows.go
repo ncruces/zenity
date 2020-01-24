@@ -46,6 +46,14 @@ func selectColor(options ...Option) (color.Color, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	if opts.title != "" {
+		hook, err := hookDialogTitle(opts.title)
+		if hook == 0 {
+			return nil, err
+		}
+		defer unhookWindowsHookEx.Call(hook)
+	}
+
 	n, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
 
 	// save custom colors back
