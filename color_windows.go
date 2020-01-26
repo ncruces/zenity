@@ -20,7 +20,7 @@ func init() {
 	}
 }
 
-func selectColor(options ...Option) (color.Color, error) {
+func selectColor(options []Option) (color.Color, error) {
 	opts := applyOptions(options)
 
 	// load custom colors

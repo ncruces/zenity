@@ -4,7 +4,7 @@
 // It is inspired by, and closely follows the API of, the zenity program, which
 // it uses to provide the functionality on various Unixes. See:
 //
-// https://help.gnome.org/users/zenity/
+// https://help.gnome.org/users/zenity/stable/
 //
 // This package does not require cgo, and it does not impose any threading or
 // initialization requirements.

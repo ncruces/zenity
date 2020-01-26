@@ -17,7 +17,7 @@ var (
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
 )
 
-func selectFile(options ...Option) (string, error) {
+func selectFile(options []Option) (string, error) {
 	opts := applyOptions(options)
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
@@ -53,7 +53,7 @@ func selectFile(options ...Option) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func selectFileMutiple(options ...Option) ([]string, error) {
+func selectFileMutiple(options []Option) ([]string, error) {
 	opts := applyOptions(options)
 	if opts.directory {
 		_, res, err := pickFolders(opts, true)
@@ -114,7 +114,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 	return split, nil
 }
 
-func selectFileSave(options ...Option) (string, error) {
+func selectFileSave(options []Option) (string, error) {
 	opts := applyOptions(options)
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)

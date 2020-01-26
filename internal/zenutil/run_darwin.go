@@ -61,3 +61,9 @@ type Msg struct {
 	Cancel    int
 	Default   int
 }
+
+type Notify struct {
+	Text     string
+	Title    string
+	Subtitle string
+}

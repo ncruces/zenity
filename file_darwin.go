@@ -7,7 +7,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func selectFile(options ...Option) (string, error) {
+func selectFile(options []Option) (string, error) {
 	opts := applyOptions(options)
 
 	data := zenutil.File{
@@ -35,7 +35,7 @@ func selectFile(options ...Option) (string, error) {
 	return string(out), nil
 }
 
-func selectFileMutiple(options ...Option) ([]string, error) {
+func selectFileMutiple(options []Option) ([]string, error) {
 	opts := applyOptions(options)
 
 	data := zenutil.File{
@@ -68,7 +68,7 @@ func selectFileMutiple(options ...Option) ([]string, error) {
 	return strings.Split(string(out), zenutil.Separator), nil
 }
 
-func selectFileSave(options ...Option) (string, error) {
+func selectFileSave(options []Option) (string, error) {
 	opts := applyOptions(options)
 
 	data := zenutil.File{

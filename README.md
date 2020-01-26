@@ -3,7 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/ncruces/zenity?status.svg)](https://godoc.org/github.com/ncruces/zenity)
 
 This repo includes both a cross-platform Go package providing
-[Zenity](https://help.gnome.org/users/zenity/)-like dialogs
+[Zenity](https://help.gnome.org/users/zenity/stable/)-like dialogs
 (simple dialogs that interact graphically with the user),
 as well as a *“port”* of the `zenity` command to both Windows and macOS based on that library.
 

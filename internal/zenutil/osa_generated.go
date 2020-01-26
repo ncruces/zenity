@@ -76,4 +76,16 @@ opts.cancelButton = {{json .Cancel}}
 {{end -}}
 var res = app[{{json .Operation}}]({{json .Text}}, opts).buttonReturned
 res === {{json .Extra}} ? res : void 0
+{{- end}}
+{{define "notify" -}}var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+var opts = {}
+{{if .Title -}}
+opts.withTitle = {{json .Title}}
+{{end -}}
+{{if .Subtitle -}}
+opts.subtitle = {{json .Subtitle}}
+{{end -}}
+void app.displayNotification({{json .Text}}, opts)
 {{- end}}`))
