@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -33,8 +34,14 @@ func notify(text string, options []Option) error {
 		args.InfoFlags |= 0x3 // NIIF_ERROR
 	}
 
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	n, _, err := shellNotifyIcon.Call(0 /* NIM_ADD */, uintptr(unsafe.Pointer(&args)))
 	if n == 0 {
+		if errno, ok := err.(syscall.Errno); ok && errno == 0 {
+			_, err = Info(text, Title(opts.title), Icon(opts.icon))
+		}
 		return err
 	}
 

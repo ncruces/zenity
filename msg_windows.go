@@ -13,7 +13,7 @@ var (
 func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := applyOptions(options)
 
-	var flags, caption uintptr
+	var flags uintptr
 
 	switch {
 	case kind == questionKind && opts.extraButton != "":
@@ -41,10 +41,6 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 	}
 
-	if opts.title != "" {
-		caption = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title)))
-	}
-
 	if opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
@@ -58,7 +54,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 
 	n, _, err := messageBox.Call(0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
-		caption, flags)
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title))), flags)
 
 	if n == 0 {
 		return false, err
