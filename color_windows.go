@@ -38,9 +38,9 @@ func selectColor(options []Option) (color.Color, error) {
 		args.RgbResult = uint32(n.R) | (uint32(n.G) << 8) | (uint32(n.B) << 16)
 	}
 	if opts.showPalette {
-		args.Flags |= 4 // CC_PREVENTFULLOPEN
+		args.Flags |= 0x4 // CC_PREVENTFULLOPEN
 	} else {
-		args.Flags |= 2 // CC_FULLOPEN
+		args.Flags |= 0x2 // CC_FULLOPEN
 	}
 
 	runtime.LockOSThread()
@@ -55,15 +55,14 @@ func selectColor(options []Option) (color.Color, error) {
 	}
 
 	n, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
+	if n == 0 {
+		return nil, commDlgError()
+	}
 
 	// save custom colors back
 	colorsMutex.Lock()
 	savedColors = customColors
 	colorsMutex.Unlock()
-
-	if n == 0 {
-		return nil, commDlgError()
-	}
 
 	r := uint8(args.RgbResult >> 0)
 	g := uint8(args.RgbResult >> 8)
