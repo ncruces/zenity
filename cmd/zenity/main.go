@@ -17,6 +17,7 @@ import (
 
 var (
 	// Application Options
+	notification      bool
 	errorDlg          bool
 	infoDlg           bool
 	warningDlg        bool
@@ -29,7 +30,7 @@ var (
 
 	// Message options
 	text          string
-	iconName      string
+	icon          string
 	okLabel       string
 	cancelLabel   string
 	extraButton   string
@@ -65,6 +66,9 @@ func main() {
 	zenutil.Command = true
 
 	switch {
+	case notification:
+		errResult(zenity.Notify(text, opts...))
+
 	case errorDlg:
 		msgResult(zenity.Error(text, opts...))
 	case infoDlg:
@@ -81,11 +85,11 @@ func main() {
 		case save:
 			strResult(egestPath(zenity.SelectFileSave(opts...)))
 		case multiple:
-			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
+			listResult(egestPaths(zenity.SelectFileMutiple(opts...)))
 		}
 
 	case colorSelectionDlg:
-		clrResult(zenity.SelectColor(opts...))
+		colorResult(zenity.SelectColor(opts...))
 	}
 
 	flag.Usage()
@@ -95,6 +99,7 @@ func main() {
 func setupFlags() {
 	// Application Options
 
+	flag.BoolVar(&notification, "notification", false, "Display notification")
 	flag.BoolVar(&errorDlg, "error", false, "Display error dialog")
 	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
 	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
@@ -105,11 +110,12 @@ func setupFlags() {
 	// General options
 
 	flag.StringVar(&title, "title", "", "Set the dialog title")
+	flag.StringVar(&icon, "window-icon", "", "Set the window icon (error, info, question, warning)")
 
 	// Message options
 
 	flag.StringVar(&text, "text", "", "Set the dialog text")
-	flag.StringVar(&iconName, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
+	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
 	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
@@ -142,6 +148,9 @@ func setupFlags() {
 
 func validateFlags() {
 	var n int
+	if notification {
+		n++
+	}
 	if errorDlg {
 		n++
 	}
@@ -175,19 +184,19 @@ func loadFlags() []zenity.Option {
 
 	// Message options
 
-	var icon zenity.MessageIcon
-	switch iconName {
+	var ico zenity.DialogIcon
+	switch icon {
 	case "error", "dialog-error":
-		icon = zenity.ErrorIcon
+		ico = zenity.ErrorIcon
 	case "info", "dialog-information":
-		icon = zenity.InfoIcon
+		ico = zenity.InfoIcon
 	case "question", "dialog-question":
-		icon = zenity.QuestionIcon
-	case "warning", "dialog-warning":
-		icon = zenity.WarningIcon
+		ico = zenity.QuestionIcon
+	case "important", "warning", "dialog-warning":
+		ico = zenity.WarningIcon
 	}
 
-	options = append(options, zenity.Icon(icon))
+	options = append(options, zenity.Icon(ico))
 	options = append(options, zenity.OKLabel(okLabel))
 	options = append(options, zenity.CancelLabel(cancelLabel))
 	options = append(options, zenity.ExtraButton(extraButton))
@@ -234,6 +243,15 @@ func loadFlags() []zenity.Option {
 	return options
 }
 
+func errResult(err error) {
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString(zenutil.LineBreak)
+		os.Exit(-1)
+	}
+	os.Exit(0)
+}
+
 func msgResult(ok bool, err error) {
 	if err == zenity.ErrExtraButton {
 		os.Stdout.WriteString(extraButton)
@@ -265,7 +283,7 @@ func strResult(s string, err error) {
 	os.Exit(0)
 }
 
-func lstResult(l []string, err error) {
+func listResult(l []string, err error) {
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		os.Stderr.WriteString(zenutil.LineBreak)
@@ -279,7 +297,7 @@ func lstResult(l []string, err error) {
 	os.Exit(0)
 }
 
-func clrResult(c color.Color, err error) {
+func colorResult(c color.Color, err error) {
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		os.Stderr.WriteString(zenutil.LineBreak)

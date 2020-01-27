@@ -50,22 +50,6 @@ const (
 	errorKind
 )
 
-// MessageIcon is the enumeration for message dialog icons.
-type MessageIcon int
-
-// Icons for
-const (
-	ErrorIcon MessageIcon = iota + 1
-	WarningIcon
-	InfoIcon
-	QuestionIcon
-)
-
-// Icon returns an Option to set the dialog icon.
-func Icon(icon MessageIcon) Option {
-	return funcOption(func(o *options) { o.icon = icon })
-}
-
 // OKLabel returns an Option to set the label of the OK button.
 func OKLabel(ok string) Option {
 	return funcOption(func(o *options) { o.okLabel = ok })

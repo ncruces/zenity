@@ -33,7 +33,7 @@ type options struct {
 	showPalette bool
 
 	// Message options
-	icon          MessageIcon
+	icon          DialogIcon
 	okLabel       string
 	cancelLabel   string
 	extraButton   string
@@ -62,4 +62,20 @@ func applyOptions(options []Option) (res options) {
 // Title returns an Option to set the dialog title.
 func Title(title string) Option {
 	return funcOption(func(o *options) { o.title = title })
+}
+
+// DialogIcon is the enumeration for dialog icons.
+type DialogIcon int
+
+// Icons for
+const (
+	ErrorIcon DialogIcon = iota + 1
+	WarningIcon
+	InfoIcon
+	QuestionIcon
+)
+
+// Icon returns an Option to set the dialog icon.
+func Icon(icon DialogIcon) Option {
+	return funcOption(func(o *options) { o.icon = icon })
 }
