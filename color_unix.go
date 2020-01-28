@@ -24,7 +24,7 @@ func selectColor(options []Option) (color.Color, error) {
 		args = append(args, "--show-palette")
 	}
 
-	out, err := zenutil.Run(args)
+	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return nil, nil
 	}

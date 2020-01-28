@@ -24,7 +24,7 @@ func selectFile(options []Option) (string, error) {
 	}
 	args = append(args, initFilters(opts.fileFilters)...)
 
-	out, err := zenutil.Run(args)
+	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}
@@ -52,7 +52,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	}
 	args = append(args, initFilters(opts.fileFilters)...)
 
-	out, err := zenutil.Run(args)
+	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return nil, nil
 	}
@@ -83,7 +83,7 @@ func selectFileSave(options []Option) (string, error) {
 	}
 	args = append(args, initFilters(opts.fileFilters)...)
 
-	out, err := zenutil.Run(args)
+	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		return "", nil
 	}

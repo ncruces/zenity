@@ -8,7 +8,10 @@ import (
 
 func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := applyOptions(options)
-	data := zenutil.Msg{Text: text}
+	data := zenutil.Msg{
+		Text:    text,
+		Timeout: zenutil.Timeout,
+	}
 	dialog := kind == questionKind || opts.icon != 0
 
 	if dialog {
@@ -83,7 +86,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 	}
 
-	out, err := zenutil.Run("msg", data)
+	out, err := zenutil.Run(opts.ctx, "msg", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}

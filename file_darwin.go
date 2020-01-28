@@ -22,7 +22,7 @@ func selectFile(options []Option) (string, error) {
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
-	out, err := zenutil.Run("file", data)
+	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}
@@ -41,8 +41,8 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	data := zenutil.File{
 		Prompt:     opts.title,
 		Invisibles: opts.showHidden,
-		Multiple:   true,
 		Separator:  zenutil.Separator,
+		Multiple:   true,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
@@ -52,7 +52,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	}
 	data.Location, _ = splitDirAndName(opts.filename)
 
-	out, err := zenutil.Run("file", data)
+	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
@@ -82,7 +82,7 @@ func selectFileSave(options []Option) (string, error) {
 	}
 	data.Location, data.Name = splitDirAndName(opts.filename)
 
-	out, err := zenutil.Run("file", data)
+	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}

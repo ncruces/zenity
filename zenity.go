@@ -10,7 +10,10 @@
 // initialization requirements.
 package zenity
 
-import "image/color"
+import (
+	"context"
+	"image/color"
+)
 
 type constError string
 
@@ -40,6 +43,9 @@ type options struct {
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
+
+	// Context for timeout
+	ctx context.Context
 }
 
 // An Option is an argument passed to dialog functions to customize their
@@ -78,4 +84,8 @@ const (
 // Icon returns an Option to set the dialog icon.
 func Icon(icon DialogIcon) Option {
 	return funcOption(func(o *options) { o.icon = icon })
+}
+
+func Context(ctx context.Context) Option {
+	return funcOption(func(o *options) { o.ctx = ctx })
 }

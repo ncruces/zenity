@@ -28,7 +28,7 @@ func notify(text string, options []Option) error {
 		args = append(args, "--window-icon=question")
 	}
 
-	_, err := zenutil.Run(args)
+	_, err := zenutil.Run(opts.ctx, args)
 	if err != nil {
 		return err
 	}

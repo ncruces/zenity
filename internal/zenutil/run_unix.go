@@ -3,8 +3,10 @@
 package zenutil
 
 import (
+	"context"
 	"os"
 	"os/exec"
+	"strconv"
 	"syscall"
 )
 
@@ -20,9 +22,16 @@ func init() {
 	tool = "zenity"
 }
 
-func Run(args []string) ([]byte, error) {
+func Run(ctx context.Context, args []string) ([]byte, error) {
 	if Command && path != "" {
+		if Timeout > 0 {
+			args = append(args, "--timeout", strconv.Itoa(Timeout))
+		}
 		syscall.Exec(path, append([]string{tool}, args...), os.Environ())
+	}
+
+	if ctx != nil {
+		return exec.CommandContext(ctx, tool, args...).Output()
 	}
 	return exec.Command(tool, args...).Output()
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"image/color"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/ncruces/zenity"
 	"github.com/ncruces/zenity/internal/zenutil"
@@ -46,7 +48,6 @@ var (
 	confirmCreate    bool
 	showHidden       bool
 	filename         string
-	separator        string
 	fileFilters      FileFilters
 
 	// Color selection options
@@ -58,12 +59,25 @@ var (
 	wslpath bool
 )
 
+func init() {
+	prevUsage := flag.Usage
+	flag.Usage = func() {
+		prevUsage()
+		os.Exit(-1)
+	}
+}
+
 func main() {
 	setupFlags()
 	flag.Parse()
 	validateFlags()
 	opts := loadFlags()
 	zenutil.Command = true
+	if zenutil.Timeout > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(zenutil.Timeout)*time.Second)
+		opts = append(opts, zenity.Context(ctx))
+		_ = cancel
+	}
 
 	switch {
 	case notification:
@@ -93,12 +107,10 @@ func main() {
 	}
 
 	flag.Usage()
-	os.Exit(-1)
 }
 
 func setupFlags() {
 	// Application Options
-
 	flag.BoolVar(&notification, "notification", false, "Display notification")
 	flag.BoolVar(&errorDlg, "error", false, "Display error dialog")
 	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
@@ -108,12 +120,10 @@ func setupFlags() {
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
 
 	// General options
-
 	flag.StringVar(&title, "title", "", "Set the dialog title")
 	flag.StringVar(&icon, "window-icon", "", "Set the window icon (error, info, question, warning)")
 
 	// Message options
-
 	flag.StringVar(&text, "text", "", "Set the dialog text")
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
@@ -124,7 +134,6 @@ func setupFlags() {
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
 	// File selection options
-
 	flag.BoolVar(&save, "save", false, "Activate save mode")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple files to be selected")
 	flag.BoolVar(&directory, "directory", false, "Activate directory-only selection")
@@ -132,7 +141,6 @@ func setupFlags() {
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the filename")
-	flag.StringVar(&separator, "separator", "|", "Set output separator character")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 
 	// Color selection options
@@ -144,6 +152,10 @@ func setupFlags() {
 		flag.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
 		flag.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
 	}
+
+	// Internal options
+	flag.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog timeout in seconds")
+	flag.StringVar(&zenutil.Separator, "separator", "|", "Set output separator character")
 }
 
 func validateFlags() {
@@ -171,16 +183,15 @@ func validateFlags() {
 	}
 	if n != 1 {
 		flag.Usage()
-		os.Exit(-1)
 	}
 }
 
 func loadFlags() []zenity.Option {
-	var options []zenity.Option
+	var opts []zenity.Option
 
 	// General options
 
-	options = append(options, zenity.Title(title))
+	opts = append(opts, zenity.Title(title))
 
 	// Message options
 
@@ -196,51 +207,49 @@ func loadFlags() []zenity.Option {
 		ico = zenity.WarningIcon
 	}
 
-	options = append(options, zenity.Icon(ico))
-	options = append(options, zenity.OKLabel(okLabel))
-	options = append(options, zenity.CancelLabel(cancelLabel))
-	options = append(options, zenity.ExtraButton(extraButton))
+	opts = append(opts, zenity.Icon(ico))
+	opts = append(opts, zenity.OKLabel(okLabel))
+	opts = append(opts, zenity.CancelLabel(cancelLabel))
+	opts = append(opts, zenity.ExtraButton(extraButton))
 	if noWrap {
-		options = append(options, zenity.NoWrap())
+		opts = append(opts, zenity.NoWrap())
 	}
 	if ellipsize {
-		options = append(options, zenity.Ellipsize())
+		opts = append(opts, zenity.Ellipsize())
 	}
 	if defaultCancel {
-		options = append(options, zenity.DefaultCancel())
+		opts = append(opts, zenity.DefaultCancel())
 	}
 
 	// File selection options
 
-	options = append(options, fileFilters)
+	opts = append(opts, fileFilters)
 	if filename != "" {
-		options = append(options, zenity.Filename(ingestPath(filename)))
+		opts = append(opts, zenity.Filename(ingestPath(filename)))
 	}
 	if directory {
-		options = append(options, zenity.Directory())
+		opts = append(opts, zenity.Directory())
 	}
 	if confirmOverwrite {
-		options = append(options, zenity.ConfirmOverwrite())
+		opts = append(opts, zenity.ConfirmOverwrite())
 	}
 	if confirmCreate {
-		options = append(options, zenity.ConfirmCreate())
+		opts = append(opts, zenity.ConfirmCreate())
 	}
 	if showHidden {
-		options = append(options, zenity.ShowHidden())
+		opts = append(opts, zenity.ShowHidden())
 	}
-
-	zenutil.Separator = separator
 
 	// Color selection options
 
 	if defaultColor != "" {
-		options = append(options, zenity.Color(zenutil.ParseColor(defaultColor)))
+		opts = append(opts, zenity.Color(zenutil.ParseColor(defaultColor)))
 	}
 	if showPalette {
-		options = append(options, zenity.ShowPalette())
+		opts = append(opts, zenity.ShowPalette())
 	}
 
-	return options
+	return opts
 }
 
 func errResult(err error) {
@@ -289,7 +298,7 @@ func listResult(l []string, err error) {
 		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
-	os.Stdout.WriteString(strings.Join(l, separator))
+	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
 	os.Stdout.WriteString(zenutil.LineBreak)
 	if l == nil {
 		os.Exit(1)

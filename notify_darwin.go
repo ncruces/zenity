@@ -16,7 +16,7 @@ func notify(text string, options []Option) error {
 		data.Subtitle = text[:i]
 		data.Text = text[i+1:]
 	}
-	_, err := zenutil.Run("notify", data)
+	_, err := zenutil.Run(opts.ctx, "notify", data)
 	if err != nil {
 		return err
 	}

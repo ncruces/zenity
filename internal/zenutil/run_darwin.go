@@ -1,13 +1,14 @@
 package zenutil
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 )
 
-func Run(script string, data interface{}) ([]byte, error) {
+func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	var buf strings.Builder
 
 	err := scripts.ExecuteTemplate(&buf, script, data)
@@ -29,6 +30,11 @@ func Run(script string, data interface{}) ([]byte, error) {
 		}
 	}
 
+	if ctx != nil {
+		cmd := exec.CommandContext(ctx, "osascript", "-l", lang)
+		cmd.Stdin = strings.NewReader(script)
+		return cmd.Output()
+	}
 	cmd := exec.Command("osascript", "-l", lang)
 	cmd.Stdin = strings.NewReader(script)
 	return cmd.Output()
@@ -60,6 +66,7 @@ type Msg struct {
 	Buttons   []string
 	Cancel    int
 	Default   int
+	Timeout   int
 }
 
 type Notify struct {

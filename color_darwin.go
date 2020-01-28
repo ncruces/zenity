@@ -16,7 +16,7 @@ func selectColor(options []Option) (color.Color, error) {
 		data.Color = []uint16{n.R, n.G, n.B}
 	}
 
-	out, err := zenutil.Run("color", data)
+	out, err := zenutil.Run(opts.ctx, "color", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}

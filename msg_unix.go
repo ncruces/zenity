@@ -57,7 +57,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		args = append(args, "--window-icon=question", "--icon-name=dialog-question")
 	}
 
-	out, err := zenutil.Run(args)
+	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
 		if len(out) > 0 && string(out[:len(out)-1]) == opts.extraButton {
 			return false, ErrExtraButton

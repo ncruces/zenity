@@ -19,12 +19,23 @@ var opts = {}
 {{if .Buttons -}}
 	opts.buttons = {{json .Buttons}}
 {{end -}}
-{{if .Default -}}
-	opts.defaultButton = {{json .Default}}
-{{end -}}
 {{if .Cancel -}}
 	opts.cancelButton = {{json .Cancel}}
 {{end -}}
+{{if .Default -}}
+	opts.defaultButton = {{json .Default}}
+{{end -}}
+{{if .Timeout -}}
+	opts.givingUpAfter = {{json .Timeout}}
+{{end -}}
 
-var res = app[{{json .Operation}}]({{json .Text}}, opts).buttonReturned
-res === {{json .Extra}} ? res : void 0
+var res = app[{{json .Operation}}]({{json .Text}}, opts)
+if (res.gaveUp) {
+	ObjC.import("stdlib")
+	$.exit(5)
+}
+if (res.buttonReturned === {{json .Extra}}) {
+	res
+} else {
+	void 0
+}
