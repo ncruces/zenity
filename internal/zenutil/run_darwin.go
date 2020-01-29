@@ -33,7 +33,11 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	if ctx != nil {
 		cmd := exec.CommandContext(ctx, "osascript", "-l", lang)
 		cmd.Stdin = strings.NewReader(script)
-		return cmd.Output()
+		out, err := cmd.Output()
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+		return out, err
 	}
 	cmd := exec.Command("osascript", "-l", lang)
 	cmd.Stdin = strings.NewReader(script)

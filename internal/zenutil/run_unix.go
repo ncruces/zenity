@@ -31,7 +31,11 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 	}
 
 	if ctx != nil {
-		return exec.CommandContext(ctx, tool, args...).Output()
+		out, err := exec.CommandContext(ctx, tool, args...).Output()
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+		return out, err
 	}
 	return exec.Command(tool, args...).Output()
 }

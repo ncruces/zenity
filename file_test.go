@@ -1,6 +1,14 @@
 package zenity_test
 
-import "github.com/ncruces/zenity"
+import (
+	"context"
+	"errors"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/ncruces/zenity"
+)
 
 const defaultPath = ""
 const defaultName = ""
@@ -51,4 +59,45 @@ func ExampleSelectFileMutiple_directory() {
 		zenity.Filename(defaultPath),
 		zenity.Directory())
 	// Output:
+}
+
+var fileFuncs = []func(...zenity.Option) (string, error){
+	zenity.SelectFile,
+	zenity.SelectFileSave,
+	func(o ...zenity.Option) (string, error) {
+		return zenity.SelectFile(append(o, zenity.Directory())...)
+	},
+	func(o ...zenity.Option) (string, error) {
+		_, err := zenity.SelectFileMutiple(append(o, zenity.Directory())...)
+		return "", err
+	},
+	func(o ...zenity.Option) (string, error) {
+		_, err := zenity.SelectFileMutiple(o...)
+		return "", err
+	},
+}
+
+func TestFileTimeout(t *testing.T) {
+	for _, f := range fileFuncs {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+
+		_, err := f(zenity.Context(ctx))
+		if !os.IsTimeout(err) {
+			t.Error("did not timeout", err)
+		}
+
+		cancel()
+	}
+}
+
+func TestFileCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for _, f := range fileFuncs {
+		_, err := f(zenity.Context(ctx))
+		if !errors.Is(err, context.Canceled) {
+			t.Error("not canceled", err)
+		}
+	}
 }
