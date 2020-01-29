@@ -8,6 +8,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+// ParseColor is internal.
 func ParseColor(s string) color.Color {
 	if len(s) == 4 || len(s) == 5 {
 		c := color.NRGBA{A: 0xf}
@@ -46,6 +47,7 @@ func ParseColor(s string) color.Color {
 	return nil
 }
 
+// UnparseColor is internal.
 func UnparseColor(c color.Color) string {
 	n := color.NRGBAModel.Convert(c).(color.NRGBA)
 	if n.A == 255 {

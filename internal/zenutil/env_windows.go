@@ -1,7 +1,13 @@
 package zenutil
 
-const LineBreak = "\r\n"
+// These are internal.
+const (
+	LineBreak = "\r\n"
+)
 
-var Command bool
-var Timeout int
-var Separator string
+// These are internal.
+var (
+	Command   bool
+	Timeout   int
+	Separator string
+)

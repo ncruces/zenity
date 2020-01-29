@@ -374,14 +374,17 @@ func egestPaths(paths []string, err error) ([]string, error) {
 	return paths, err
 }
 
+// FileFilters is internal.
 type FileFilters struct {
 	zenity.FileFilters
 }
 
+// String is internal.
 func (f *FileFilters) String() string {
 	return "zenity.FileFilters"
 }
 
+// Set is internal.
 func (f *FileFilters) Set(s string) error {
 	var filter zenity.FileFilter
 

@@ -8,6 +8,7 @@ import (
 	"syscall"
 )
 
+// Run is internal.
 func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	var buf strings.Builder
 

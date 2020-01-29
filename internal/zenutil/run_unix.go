@@ -22,6 +22,7 @@ func init() {
 	tool = "zenity"
 }
 
+// Run is internal.
 func Run(ctx context.Context, args []string) ([]byte, error) {
 	if Command && path != "" {
 		if Timeout > 0 {
