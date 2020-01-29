@@ -21,6 +21,6 @@ func TestNotifyCancel(t *testing.T) {
 
 	err := zenity.Notify("text", zenity.Context(ctx))
 	if !errors.Is(err, context.Canceled) {
-		t.Error("not canceled", err)
+		t.Error("was not canceled:", err)
 	}
 }

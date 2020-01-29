@@ -83,7 +83,7 @@ func TestFileTimeout(t *testing.T) {
 
 		_, err := f(zenity.Context(ctx))
 		if !os.IsTimeout(err) {
-			t.Error("did not timeout", err)
+			t.Error("did not timeout:", err)
 		}
 
 		cancel()
@@ -97,7 +97,7 @@ func TestFileCancel(t *testing.T) {
 	for _, f := range fileFuncs {
 		_, err := f(zenity.Context(ctx))
 		if !errors.Is(err, context.Canceled) {
-			t.Error("not canceled", err)
+			t.Error("was not canceled:", err)
 		}
 	}
 }

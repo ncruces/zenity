@@ -86,6 +86,7 @@ func Icon(icon DialogIcon) Option {
 	return funcOption(func(o *options) { o.icon = icon })
 }
 
+// Context returns an Option to set a Context that can dismiss the dialog.
 func Context(ctx context.Context) Option {
 	return funcOption(func(o *options) { o.ctx = ctx })
 }

@@ -52,17 +52,17 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		defer unhookWindowsHookEx.Call(hook)
 	}
 
-	n, _, err := messageBox.Call(0,
+	s, _, err := messageBox.Call(0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title))), flags)
 
-	if n == 0 {
+	if s == 0 {
 		return false, err
 	}
-	if n == 7 || n == 2 && kind != questionKind { // IDNO
+	if s == 7 || s == 2 && kind != questionKind { // IDNO
 		return false, ErrExtraButton
 	}
-	if n == 1 || n == 6 { // IDOK, IDYES
+	if s == 1 || s == 6 { // IDOK, IDYES
 		return true, nil
 	}
 	return false, nil

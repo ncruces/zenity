@@ -37,8 +37,8 @@ func notify(text string, options []Option) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	n, _, err := shellNotifyIcon.Call(0 /* NIM_ADD */, uintptr(unsafe.Pointer(&args)))
-	if n == 0 {
+	s, _, err := shellNotifyIcon.Call(0 /* NIM_ADD */, uintptr(unsafe.Pointer(&args)))
+	if s == 0 {
 		if errno, ok := err.(syscall.Errno); ok && errno == 0 {
 			_, err = Info(text, Title(opts.title), Icon(opts.icon))
 		}

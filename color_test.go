@@ -29,7 +29,7 @@ func TestSelectColorTimeout(t *testing.T) {
 
 	_, err := zenity.SelectColor(zenity.Context(ctx))
 	if !os.IsTimeout(err) {
-		t.Error("did not timeout", err)
+		t.Error("did not timeout:", err)
 	}
 
 	cancel()
@@ -41,6 +41,6 @@ func TestSelectColorCancel(t *testing.T) {
 
 	_, err := zenity.SelectColor(zenity.Context(ctx))
 	if !errors.Is(err, context.Canceled) {
-		t.Error("not canceled", err)
+		t.Error("was not canceled:", err)
 	}
 }

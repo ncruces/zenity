@@ -33,11 +33,11 @@ var (
 )
 
 func commDlgError() error {
-	n, _, _ := commDlgExtendedError.Call()
-	if n == 0 {
+	s, _, _ := commDlgExtendedError.Call()
+	if s == 0 {
 		return nil
 	} else {
-		return fmt.Errorf("Common Dialog error: %x", n)
+		return fmt.Errorf("Common Dialog error: %x", s)
 	}
 }
 

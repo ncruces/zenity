@@ -54,8 +54,8 @@ func selectColor(options []Option) (color.Color, error) {
 		defer unhookWindowsHookEx.Call(hook)
 	}
 
-	n, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
-	if n == 0 {
+	s, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
+	if s == 0 {
 		return nil, commDlgError()
 	}
 

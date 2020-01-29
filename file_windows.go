@@ -46,8 +46,8 @@ func selectFile(options []Option) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	n, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
-	if n == 0 {
+	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if s == 0 {
 		return "", commDlgError()
 	}
 	return syscall.UTF16ToString(res[:]), nil
@@ -82,8 +82,8 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	n, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
-	if n == 0 {
+	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if s == 0 {
 		return nil, commDlgError()
 	}
 
@@ -149,8 +149,8 @@ func selectFileSave(options []Option) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	n, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
-	if n == 0 {
+	s, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if s == 0 {
 		return "", commDlgError()
 	}
 	return syscall.UTF16ToString(res[:]), nil

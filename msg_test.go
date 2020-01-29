@@ -51,7 +51,7 @@ func TestMessageTimeout(t *testing.T) {
 
 		_, err := f("text", zenity.Context(ctx))
 		if !os.IsTimeout(err) {
-			t.Error("did not timeout", err)
+			t.Error("did not timeout:", err)
 		}
 
 		cancel()
@@ -65,7 +65,7 @@ func TestMessageCancel(t *testing.T) {
 	for _, f := range msgFuncs {
 		_, err := f("text", zenity.Context(ctx))
 		if !errors.Is(err, context.Canceled) {
-			t.Error("not canceled", err)
+			t.Error("was not canceled:", err)
 		}
 	}
 }
