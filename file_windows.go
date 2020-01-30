@@ -46,7 +46,18 @@ func selectFile(options []Option) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	if opts.ctx != nil {
+		unhook, err := hookDialog(opts.ctx, nil)
+		if err != nil {
+			return "", err
+		}
+		defer unhook()
+	}
+
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", opts.ctx.Err()
+	}
 	if s == 0 {
 		return "", commDlgError()
 	}
@@ -82,7 +93,18 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	if opts.ctx != nil {
+		unhook, err := hookDialog(opts.ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer unhook()
+	}
+
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return nil, opts.ctx.Err()
+	}
 	if s == 0 {
 		return nil, commDlgError()
 	}
@@ -149,7 +171,18 @@ func selectFileSave(options []Option) (string, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	if opts.ctx != nil {
+		unhook, err := hookDialog(opts.ctx, nil)
+		if err != nil {
+			return "", err
+		}
+		defer unhook()
+	}
+
 	s, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", opts.ctx.Err()
+	}
 	if s == 0 {
 		return "", commDlgError()
 	}

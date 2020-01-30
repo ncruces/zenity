@@ -46,15 +46,18 @@ func selectColor(options []Option) (color.Color, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if opts.title != "" {
-		hook, err := hookDialogTitle(opts.title)
-		if hook == 0 {
+	if opts.ctx != nil || opts.title != "" {
+		unhook, err := hookDialogTitle(opts.ctx, opts.title)
+		if err != nil {
 			return nil, err
 		}
-		defer unhookWindowsHookEx.Call(hook)
+		defer unhook()
 	}
 
 	s, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return nil, opts.ctx.Err()
+	}
 	if s == 0 {
 		return nil, commDlgError()
 	}

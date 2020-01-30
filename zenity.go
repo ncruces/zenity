@@ -73,7 +73,7 @@ func Title(title string) Option {
 // DialogIcon is the enumeration for dialog icons.
 type DialogIcon int
 
-// Icons for
+// The stock dialog icons.
 const (
 	ErrorIcon DialogIcon = iota + 1
 	WarningIcon
@@ -87,6 +87,8 @@ func Icon(icon DialogIcon) Option {
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
+//
+// Dialogs dismissed by the Context return Context.Err.
 func Context(ctx context.Context) Option {
 	return funcOption(func(o *options) { o.ctx = ctx })
 }

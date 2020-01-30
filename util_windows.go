@@ -1,7 +1,9 @@
 package zenity
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"syscall"
 	"unsafe"
 )
@@ -49,22 +51,73 @@ type _CWPRETSTRUCT struct {
 	Wnd     uintptr
 }
 
-func hookDialogTitle(title string) (hook uintptr, err error) {
+func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook context.CancelFunc, err error) {
+	if ctx != nil && ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	var mtx sync.Mutex
+	var hook, wnd uintptr
 	tid, _, _ := getCurrentThreadId.Call()
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			if lparam.Message == 0x0110 { // WM_INITDIALOG
-				name := [7]uint16{}
+				name := [8]uint16{}
 				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
 				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
-					ptr := syscall.StringToUTF16Ptr(title)
-					setWindowText.Call(lparam.Wnd, uintptr(unsafe.Pointer(ptr)))
+					var close bool
+
+					mtx.Lock()
+					if ctx != nil && ctx.Err() != nil {
+						close = true
+					} else {
+						wnd = lparam.Wnd
+					}
+					mtx.Unlock()
+
+					if close {
+						sendMessage.Call(lparam.Wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+					} else if initDialog != nil {
+						initDialog(lparam.Wnd)
+					}
 				}
 			}
 			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
 			return next
 		}), 0, tid)
-	return
+
+	if hook == 0 {
+		return nil, err
+	}
+	if ctx == nil {
+		return func() { unhookWindowsHookEx.Call(hook) }, nil
+	}
+
+	wait := make(chan struct{})
+	go func() {
+		select {
+		case <-ctx.Done():
+			mtx.Lock()
+			w := wnd
+			mtx.Unlock()
+
+			if w != 0 {
+				sendMessage.Call(w, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+			}
+		case <-wait:
+		}
+	}()
+	return func() {
+		unhookWindowsHookEx.Call(hook)
+		close(wait)
+	}, nil
+}
+
+func hookDialogTitle(ctx context.Context, title string) (unhook context.CancelFunc, err error) {
+	return hookDialog(ctx, func(wnd uintptr) {
+		ptr := syscall.StringToUTF16Ptr(title)
+		setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
+	})
 }
 
 type _COMObject struct{}

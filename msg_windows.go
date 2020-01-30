@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"context"
 	"runtime"
 	"syscall"
 	"unsafe"
@@ -41,21 +42,24 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 	}
 
-	if opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
+	if opts.ctx != nil || opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
-		hook, err := hookMessageLabels(kind, opts)
-		if hook == 0 {
+		unhook, err := hookMessageLabels(kind, opts)
+		if err != nil {
 			return false, err
 		}
-		defer unhookWindowsHookEx.Call(hook)
+		defer unhook()
 	}
 
 	s, _, err := messageBox.Call(0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title))), flags)
 
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return false, opts.ctx.Err()
+	}
 	if s == 0 {
 		return false, err
 	}
@@ -68,46 +72,35 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	return false, nil
 }
 
-func hookMessageLabels(kind messageKind, opts options) (hook uintptr, err error) {
-	tid, _, _ := getCurrentThreadId.Call()
-	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
-		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
-			if lparam.Message == 0x0110 { // WM_INITDIALOG
-				name := [7]uint16{}
-				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
-					enumChildWindows.Call(lparam.Wnd,
-						syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
-							name := [7]uint16{}
-							getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-							if syscall.UTF16ToString(name[:]) == "Button" {
-								ctl, _, _ := getDlgCtrlID.Call(wnd)
-								var text string
-								switch ctl {
-								case 1, 6: // IDOK, IDYES
-									text = opts.okLabel
-								case 2: // IDCANCEL
-									if kind == questionKind {
-										text = opts.cancelLabel
-									} else if opts.extraButton != "" {
-										text = opts.extraButton
-									} else {
-										text = opts.okLabel
-									}
-								case 7: // IDNO
-									text = opts.extraButton
-								}
-								if text != "" {
-									ptr := syscall.StringToUTF16Ptr(text)
-									setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
-								}
-							}
-							return 1
-						}), 0)
+func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFunc, err error) {
+	return hookDialog(opts.ctx, func(wnd uintptr) {
+		enumChildWindows.Call(wnd,
+			syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
+				name := [8]uint16{}
+				getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+				if syscall.UTF16ToString(name[:]) == "Button" {
+					ctl, _, _ := getDlgCtrlID.Call(wnd)
+					var text string
+					switch ctl {
+					case 1, 6: // IDOK, IDYES
+						text = opts.okLabel
+					case 2: // IDCANCEL
+						if kind == questionKind {
+							text = opts.cancelLabel
+						} else if opts.extraButton != "" {
+							text = opts.extraButton
+						} else {
+							text = opts.okLabel
+						}
+					case 7: // IDNO
+						text = opts.extraButton
+					}
+					if text != "" {
+						ptr := syscall.StringToUTF16Ptr(text)
+						setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
+					}
 				}
-			}
-			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
-			return next
-		}), 0, tid)
-	return
+				return 1
+			}), 0)
+	})
 }
