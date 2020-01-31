@@ -27,11 +27,11 @@ others still are open to be fixed.
 There are a bunch of other dialog packages for Go.\
 Why reinvent this particular wheel?
 
-#### Requirements:
+#### Benefits:
 
 * no `cgo` (see [benefits](https://dave.cheney.net/2016/01/18/cgo-is-not-go), mostly cross-compilation)
-* no main loop (or other threading requirements)
-* no initialization
+* no main loop (or any other threading or initialization requirements)
+* cancelation through [`context`](https://golang.org/pkg/context/)
 * on Windows:
   * no additional dependencies
     * Explorer shell not required
