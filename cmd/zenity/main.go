@@ -84,13 +84,13 @@ func main() {
 		errResult(zenity.Notify(text, opts...))
 
 	case errorDlg:
-		msgResult(zenity.Error(text, opts...))
+		okResult(zenity.Error(text, opts...))
 	case infoDlg:
-		msgResult(zenity.Info(text, opts...))
+		okResult(zenity.Info(text, opts...))
 	case warningDlg:
-		msgResult(zenity.Warning(text, opts...))
+		okResult(zenity.Warning(text, opts...))
 	case questionDlg:
-		msgResult(zenity.Question(text, opts...))
+		okResult(zenity.Question(text, opts...))
 
 	case fileSelectionDlg:
 		switch {
@@ -253,15 +253,9 @@ func loadFlags() []zenity.Option {
 }
 
 func errResult(err error) {
-	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(zenutil.LineBreak)
-		os.Exit(-1)
+	if os.IsTimeout(err) {
+		os.Exit(5)
 	}
-	os.Exit(0)
-}
-
-func msgResult(ok bool, err error) {
 	if err == zenity.ErrExtraButton {
 		os.Stdout.WriteString(extraButton)
 		os.Stdout.WriteString(zenutil.LineBreak)
@@ -272,6 +266,13 @@ func msgResult(ok bool, err error) {
 		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
+	os.Exit(0)
+}
+
+func okResult(ok bool, err error) {
+	if err != nil {
+		errResult(err)
+	}
 	if ok {
 		os.Exit(0)
 	}
@@ -280,9 +281,7 @@ func msgResult(ok bool, err error) {
 
 func strResult(s string, err error) {
 	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(zenutil.LineBreak)
-		os.Exit(-1)
+		errResult(err)
 	}
 	if s == "" {
 		os.Exit(1)
@@ -294,9 +293,7 @@ func strResult(s string, err error) {
 
 func listResult(l []string, err error) {
 	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(zenutil.LineBreak)
-		os.Exit(-1)
+		errResult(err)
 	}
 	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
 	os.Stdout.WriteString(zenutil.LineBreak)
@@ -308,9 +305,7 @@ func listResult(l []string, err error) {
 
 func colorResult(c color.Color, err error) {
 	if err != nil {
-		os.Stderr.WriteString(err.Error())
-		os.Stderr.WriteString(zenutil.LineBreak)
-		os.Exit(-1)
+		errResult(err)
 	}
 	if c == nil {
 		os.Exit(1)

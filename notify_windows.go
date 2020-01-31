@@ -13,6 +13,10 @@ var (
 func notify(text string, options []Option) error {
 	opts := applyOptions(options)
 
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return opts.ctx.Err()
+	}
+
 	var args _NOTIFYICONDATA
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.ID = 0x378eb49c    // random

@@ -245,7 +245,18 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		}
 	}
 
+	if opts.ctx != nil {
+		unhook, err := hookDialog(opts.ctx, nil)
+		if err != nil {
+			return "", nil, err
+		}
+		defer unhook()
+	}
+
 	hr, _, _ = dialog.Call(dialog.vtbl.Show, 0)
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", nil, opts.ctx.Err()
+	}
 	if hr == 0x800704c7 { // ERROR_CANCELLED
 		return "", nil, nil
 	}
@@ -316,7 +327,18 @@ func browseForFolder(opts options) (string, []string, error) {
 		})
 	}
 
+	if opts.ctx != nil {
+		unhook, err := hookDialog(opts.ctx, nil)
+		if err != nil {
+			return "", nil, err
+		}
+		defer unhook()
+	}
+
 	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", nil, opts.ctx.Err()
+	}
 	if ptr == 0 {
 		return "", nil, nil
 	}
