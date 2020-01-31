@@ -4,10 +4,13 @@ import (
 	"runtime"
 	"syscall"
 	"unsafe"
+
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 var (
 	shellNotifyIcon = shell32.NewProc("Shell_NotifyIconW")
+	wtsSendMessage  = wtsapi32.NewProc("WTSSendMessageW")
 )
 
 func notify(text string, options []Option) error {
@@ -44,12 +47,53 @@ func notify(text string, options []Option) error {
 	s, _, err := shellNotifyIcon.Call(0 /* NIM_ADD */, uintptr(unsafe.Pointer(&args)))
 	if s == 0 {
 		if errno, ok := err.(syscall.Errno); ok && errno == 0 {
-			_, err = Info(text, Title(opts.title), Icon(opts.icon))
+			return wtsMessage(text, opts)
 		}
 		return err
 	}
 
 	shellNotifyIcon.Call(2 /* NIM_DELETE */, uintptr(unsafe.Pointer(&args)))
+	return nil
+}
+
+func wtsMessage(text string, opts options) error {
+	var flags uintptr
+
+	switch opts.icon {
+	case ErrorIcon:
+		flags |= 0x10 // MB_ICONERROR
+	case QuestionIcon:
+		flags |= 0x20 // MB_ICONQUESTION
+	case WarningIcon:
+		flags |= 0x30 // MB_ICONWARNING
+	case InfoIcon:
+		flags |= 0x40 // MB_ICONINFORMATION
+	}
+
+	title := opts.title
+	if title == "" {
+		title = "Notification"
+	}
+
+	timeout := zenutil.Timeout
+	if timeout == 0 {
+		timeout = 10
+	}
+
+	ptext := syscall.StringToUTF16(text)
+	ptitle := syscall.StringToUTF16(title)
+
+	var res uint32
+	s, _, err := wtsSendMessage.Call(
+		0,          // WTS_CURRENT_SERVER_HANDLE
+		0xffffffff, // WTS_CURRENT_SESSION
+		uintptr(unsafe.Pointer(&ptitle[0])), uintptr(2*len(ptitle)),
+		uintptr(unsafe.Pointer(&ptext[0])), uintptr(2*len(ptext)),
+		flags, uintptr(timeout), uintptr(unsafe.Pointer(&res)), 0)
+
+	if s == 0 {
+		return err
+	}
 	return nil
 }
 
