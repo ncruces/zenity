@@ -10,7 +10,8 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 	b, err := json.Marshal(v)
 	return string(b), err
 }}).Parse(`
-{{define "color" -}}tell application (path to frontmost application as text)
+{{define "color" -}}
+tell application (path to frontmost application as text)
 activate
 {{if .Color -}}
 set c to choose color default color { {{index .Color 0}},{{index .Color 1}},{{index .Color 2}} }
@@ -20,7 +21,8 @@ set c to choose color
 "rgb(" & (item 1 of c) div 256 & "," & (item 2 of c) div 256 & "," & (item 3 of c) div 256 & ")"
 end tell
 {{- end}}
-{{define "file" -}}var app = Application.currentApplication()
+{{define "file" -}}
+var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}
@@ -49,7 +51,8 @@ res.join({{json .Separator}})
 res.toString()
 }
 {{- end}}
-{{define "msg" -}}var app = Application.currentApplication()
+{{define "msg" -}}
+var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}
@@ -88,7 +91,8 @@ res
 void 0
 }
 {{- end}}
-{{define "notify" -}}var app = Application.currentApplication()
+{{define "notify" -}}
+var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 var opts = {}

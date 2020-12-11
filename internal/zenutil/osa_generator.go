@@ -27,7 +27,7 @@ func main() {
 
 		str.WriteString("\n" + `{{define "`)
 		str.WriteString(strings.TrimSuffix(name, filepath.Ext(name)))
-		str.WriteString(`" -}}`)
+		str.WriteString(`" -}}` + "\n")
 
 		func() {
 			in, err := os.Open(filepath.Join(dir, name))
