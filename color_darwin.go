@@ -10,13 +10,15 @@ import (
 func selectColor(options []Option) (color.Color, error) {
 	opts := applyOptions(options)
 
-	var data zenutil.Color
+	var col color.Color
 	if opts.color != nil {
-		n := color.NRGBA64Model.Convert(opts.color).(color.NRGBA64)
-		data.Color = []uint16{n.R, n.G, n.B}
+		col = opts.color
+	} else {
+		col = color.White
 	}
+	r, g, b, _ := col.RGBA()
 
-	out, err := zenutil.Run(opts.ctx, "color", data)
+	out, err := zenutil.Run(opts.ctx, "color", []uint32{r, g, b})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
