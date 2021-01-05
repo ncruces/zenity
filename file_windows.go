@@ -285,8 +285,10 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		}
 		defer coTaskMemFree.Call(ptr)
 
-		res := reflect.SliceHeader{Data: ptr, Len: 32768, Cap: 32768}
-		str = syscall.UTF16ToString(*(*[]uint16)(unsafe.Pointer(&res)))
+		var res []uint16
+		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&res))
+		hdr.Data, hdr.Len, hdr.Cap = ptr, 32768, 32768
+		str = syscall.UTF16ToString(res)
 		lst = append(lst, str)
 		return nil
 	}
