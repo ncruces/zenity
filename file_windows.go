@@ -54,6 +54,7 @@ func selectFile(options []Option) (string, error) {
 		defer unhook()
 	}
 
+	activate()
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
@@ -101,6 +102,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 		defer unhook()
 	}
 
+	activate()
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
@@ -179,6 +181,7 @@ func selectFileSave(options []Option) (string, error) {
 		defer unhook()
 	}
 
+	activate()
 	s, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
@@ -253,6 +256,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		defer unhook()
 	}
 
+	activate()
 	hr, _, _ = dialog.Call(dialog.vtbl.Show, 0)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
@@ -335,6 +339,7 @@ func browseForFolder(opts options) (string, []string, error) {
 		defer unhook()
 	}
 
+	activate()
 	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()

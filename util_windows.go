@@ -3,6 +3,7 @@ package zenity
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -19,21 +20,44 @@ var (
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
 
 	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
+	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
 
 	coInitializeEx   = ole32.NewProc("CoInitializeEx")
 	coUninitialize   = ole32.NewProc("CoUninitialize")
 	coCreateInstance = ole32.NewProc("CoCreateInstance")
 	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
 
-	sendMessage         = user32.NewProc("SendMessageW")
-	getClassName        = user32.NewProc("GetClassNameW")
-	setWindowsHookEx    = user32.NewProc("SetWindowsHookExW")
-	unhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
-	callNextHookEx      = user32.NewProc("CallNextHookEx")
-	enumChildWindows    = user32.NewProc("EnumChildWindows")
-	getDlgCtrlID        = user32.NewProc("GetDlgCtrlID")
-	setWindowText       = user32.NewProc("SetWindowTextW")
+	sendMessage              = user32.NewProc("SendMessageW")
+	getClassName             = user32.NewProc("GetClassNameW")
+	setWindowsHookEx         = user32.NewProc("SetWindowsHookExW")
+	unhookWindowsHookEx      = user32.NewProc("UnhookWindowsHookEx")
+	callNextHookEx           = user32.NewProc("CallNextHookEx")
+	enumWindows              = user32.NewProc("EnumWindows")
+	enumChildWindows         = user32.NewProc("EnumChildWindows")
+	getDlgCtrlID             = user32.NewProc("GetDlgCtrlID")
+	setWindowText            = user32.NewProc("SetWindowTextW")
+	setForegroundWindow      = user32.NewProc("SetForegroundWindow")
+	getWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
 )
+
+func activate() {
+	var hwnd uintptr
+	enumWindows.Call(syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
+		var pid uintptr
+		getWindowThreadProcessId.Call(wnd, uintptr(unsafe.Pointer(&pid)))
+		if int(pid) == os.Getpid() {
+			hwnd = wnd
+			return 0
+		}
+		return 1
+	}), 0)
+	if hwnd == 0 {
+		hwnd, _, _ = getConsoleWindow.Call()
+	}
+	if hwnd != 0 {
+		setForegroundWindow.Call(hwnd)
+	}
+}
 
 func commDlgError() error {
 	s, _, _ := commDlgExtendedError.Call()

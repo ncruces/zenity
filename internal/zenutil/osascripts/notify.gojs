@@ -1,6 +1,5 @@
 var app = Application.currentApplication()
 app.includeStandardAdditions = true
-app.activate()
 
 var opts = {}
 

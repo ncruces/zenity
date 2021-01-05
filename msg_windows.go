@@ -53,6 +53,7 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		defer unhook()
 	}
 
+	activate()
 	s, _, err := messageBox.Call(0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(opts.title))), flags)

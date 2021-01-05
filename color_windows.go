@@ -54,6 +54,7 @@ func selectColor(options []Option) (color.Color, error) {
 		defer unhook()
 	}
 
+	activate()
 	s, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
