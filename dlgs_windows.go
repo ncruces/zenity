@@ -589,10 +589,5 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 		return out, false, err
 	}
 
-	ret := false
-	if out != "" {
-		ret = true
-	}
-
-	return out, ret, nil
+	return out, true, nil
 }
