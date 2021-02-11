@@ -520,6 +520,8 @@ func stringFromUtf16Ptr(p *uint16) string {
 // editBox displays textedit/inputbox dialog.
 func editBox(title, text, defaultText, className string, password bool) (string, bool, error) {
 	var out string
+	notCancledOrClosed := true
+
 	var hwndEdit syscall.Handle
 
 	instance, err := getModuleHandle()
@@ -530,11 +532,13 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 	fn := func(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
 		switch msg {
 		case wmClose:
+			notCancledOrClosed = false
 			destroyWindow(hwnd)
 		case wmDestroy:
 			postQuitMessage(0)
 		case wmKeydown:
 			if wparam == vkEscape {
+				notCancledOrClosed = false
 				destroyWindow(hwnd)
 			}
 		case wmCommand:
@@ -542,6 +546,7 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 				out = getWindowText(hwndEdit)
 				destroyWindow(hwnd)
 			} else if wparam == 110 {
+				notCancledOrClosed = false
 				destroyWindow(hwnd)
 			}
 		default:
@@ -589,5 +594,5 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 		return out, false, err
 	}
 
-	return out, true, nil
+	return out, notCancledOrClosed, nil
 }
