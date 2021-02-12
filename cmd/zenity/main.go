@@ -28,7 +28,9 @@ var (
 	colorSelectionDlg bool
 
 	// General options
-	title string
+	title  string
+	width  uint
+	height uint
 
 	// Message options
 	text          string
@@ -121,6 +123,8 @@ func setupFlags() {
 
 	// General options
 	flag.StringVar(&title, "title", "", "Set the dialog title")
+	flag.UintVar(&width, "width", 0, "Set the dialog width (> 0)")
+	flag.UintVar(&height, "height", 0, "Set the dialog height (> 0)")
 	flag.StringVar(&icon, "window-icon", "", "Set the window icon (error, info, question, warning)")
 
 	// Message options
@@ -192,6 +196,8 @@ func loadFlags() []zenity.Option {
 	// General options
 
 	opts = append(opts, zenity.Title(title))
+	opts = append(opts, zenity.Width(width))
+	opts = append(opts, zenity.Height(height))
 
 	// Message options
 

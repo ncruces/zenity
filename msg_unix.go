@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/ncruces/zenity/internal/zenutil"
@@ -27,6 +28,12 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprintf("%d", opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprintf("%d", opts.height))
 	}
 	if opts.okLabel != "" {
 		args = append(args, "--ok-label", opts.okLabel)

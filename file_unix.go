@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -18,6 +19,12 @@ func selectFile(options []Option) (string, error) {
 	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprint(opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprint(opts.height))
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
@@ -53,6 +60,12 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
 	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprint(opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprint(opts.height))
+	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
 	}
@@ -86,6 +99,12 @@ func selectFileSave(options []Option) (string, error) {
 	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprint(opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprint(opts.height))
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)

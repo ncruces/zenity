@@ -3,6 +3,8 @@
 package zenity
 
 import (
+	"fmt"
+
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -16,6 +18,12 @@ func notify(text string, options []Option) error {
 	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprint(opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprint(opts.height))
 	}
 	switch opts.icon {
 	case ErrorIcon:

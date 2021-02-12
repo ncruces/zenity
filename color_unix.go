@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"fmt"
 	"image/color"
 	"os/exec"
 
@@ -16,6 +17,12 @@ func selectColor(options []Option) (color.Color, error) {
 
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", fmt.Sprint(opts.width))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", fmt.Sprint(opts.height))
 	}
 	if opts.color != nil {
 		args = append(args, "--color", zenutil.UnparseColor(opts.color))
