@@ -29,6 +29,9 @@ type options struct {
 	width  uint
 	height uint
 
+	// General error reporting
+	cancelOrCloseAsError bool
+
 	// File selection options
 	filename         string
 	directory        bool

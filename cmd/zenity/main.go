@@ -26,13 +26,14 @@ var (
 	questionDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
+	listSelectionDlg  bool
 
 	// General options
 	title  string
 	width  uint
 	height uint
 
-	// Message options
+	// Message & list options
 	text          string
 	icon          string
 	okLabel       string
@@ -41,6 +42,8 @@ var (
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
+
+	multipleSelections bool
 
 	// File selection options
 	save             bool
@@ -120,6 +123,7 @@ func setupFlags() {
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
+	flag.BoolVar(&listSelectionDlg, "list-selection", false, "Display list selection dialog")
 
 	// General options
 	flag.StringVar(&title, "title", "", "Set the dialog title")
@@ -127,7 +131,7 @@ func setupFlags() {
 	flag.UintVar(&height, "height", 0, "Set the dialog height (> 0)")
 	flag.StringVar(&icon, "window-icon", "", "Set the window icon (error, info, question, warning)")
 
-	// Message options
+	// Message & list options
 	flag.StringVar(&text, "text", "", "Set the dialog text")
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
@@ -136,6 +140,9 @@ func setupFlags() {
 	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
+
+	// List option
+	flag.BoolVar(&multipleSelections, "multiple-selections", false, "Enable multiple list selections.")
 
 	// File selection options
 	flag.BoolVar(&save, "save", false, "Activate save mode")
@@ -185,6 +192,9 @@ func validateFlags() {
 	if colorSelectionDlg {
 		n++
 	}
+	if listSelectionDlg {
+		n++
+	}
 	if n != 1 {
 		flag.Usage()
 	}
@@ -194,7 +204,6 @@ func loadFlags() []zenity.Option {
 	var opts []zenity.Option
 
 	// General options
-
 	opts = append(opts, zenity.Title(title))
 	opts = append(opts, zenity.Width(width))
 	opts = append(opts, zenity.Height(height))
@@ -225,6 +234,11 @@ func loadFlags() []zenity.Option {
 	}
 	if defaultCancel {
 		opts = append(opts, zenity.DefaultCancel())
+	}
+
+	// List options
+	if multipleSelections {
+		opts = append(opts, zenity.MultipleSelection())
 	}
 
 	// File selection options
