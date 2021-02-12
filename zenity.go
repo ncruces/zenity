@@ -19,6 +19,10 @@ type constError string
 
 func (e constError) Error() string { return string(e) }
 
+// ErrCancelOrClosed is returned by certain dialog functions when the cancel
+// button is pressed or the dialog is closed.
+const ErrCancelOrClosed = constError("Canceled or closed")
+
 type options struct {
 	// General options
 	title string
@@ -35,7 +39,7 @@ type options struct {
 	color       color.Color
 	showPalette bool
 
-	// Message options
+	// Message & List options
 	icon          DialogIcon
 	okLabel       string
 	cancelLabel   string
@@ -43,6 +47,9 @@ type options struct {
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
+
+	// List options
+	multipleSelection bool
 
 	// Context for timeout
 	ctx context.Context

@@ -25,16 +25,22 @@ func selectFile(options []Option) (string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		return "", nil
+
+	if err == nil {
+		if len(out) > 0 {
+			out = out[:len(out)-1]
+		}
+		return string(out), nil
 	}
-	if err != nil {
-		return "", err
+
+	if err, ok := err.(*exec.ExitError); ok {
+		switch err.ExitCode() {
+		case 1:
+			return "", ErrCancelOrClosed
+		}
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+
+	return "", err
 }
 
 func selectFileMutiple(options []Option) ([]string, error) {
@@ -53,16 +59,22 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		return nil, nil
+
+	if err == nil {
+		if len(out) > 0 {
+			out = out[:len(out)-1]
+		}
+		return strings.Split(string(out), zenutil.Separator), nil
 	}
-	if err != nil {
-		return nil, err
+
+	if err, ok := err.(*exec.ExitError); ok {
+		switch err.ExitCode() {
+		case 1:
+			return nil, ErrCancelOrClosed
+		}
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return strings.Split(string(out), zenutil.Separator), nil
+
+	return nil, err
 }
 
 func selectFileSave(options []Option) (string, error) {
@@ -84,16 +96,22 @@ func selectFileSave(options []Option) (string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		return "", nil
+
+	if err == nil {
+		if len(out) > 0 {
+			out = out[:len(out)-1]
+		}
+		return string(out), nil
 	}
-	if err != nil {
-		return "", err
+
+	if err, ok := err.(*exec.ExitError); ok {
+		switch err.ExitCode() {
+		case 1:
+			return "", ErrCancelOrClosed
+		}
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+
+	return "", err
 }
 
 func initFilters(filters []FileFilter) []string {
