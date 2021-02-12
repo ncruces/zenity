@@ -21,7 +21,9 @@ func (e constError) Error() string { return string(e) }
 
 type options struct {
 	// General options
-	title string
+	title  string
+	width  uint
+	height uint
 
 	// File selection options
 	filename         string
@@ -68,6 +70,20 @@ func applyOptions(options []Option) (res options) {
 // Title returns an Option to set the dialog title.
 func Title(title string) Option {
 	return funcOption(func(o *options) { o.title = title })
+}
+
+// Width returns an Option to set the dialog width (Unix only).
+func Width(width uint) Option {
+	return funcOption(func(o *options) {
+		o.width = width
+	})
+}
+
+// Height returns an Option to set the dialog height (Unix only).
+func Height(height uint) Option {
+	return funcOption(func(o *options) {
+		o.height = height
+	})
 }
 
 // DialogIcon is the enumeration for dialog icons.

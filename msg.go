@@ -8,8 +8,8 @@ const ErrExtraButton = constError("Extra button pressed")
 //
 // Returns true on OK, false on Cancel, or ErrExtraButton.
 //
-// Valid options: Title, Icon, OKLabel, CancelLabel, ExtraButton, NoWrap,
-// Ellipsize, DefaultCancel.
+// Valid options: Title, Width, Height, Icon, OKLabel, CancelLabel,
+// ExtraButton, NoWrap, Ellipsize, DefaultCancel.
 func Question(text string, options ...Option) (bool, error) {
 	return message(questionKind, text, options)
 }
@@ -18,7 +18,8 @@ func Question(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// NoWrap, Ellipsize.
 func Info(text string, options ...Option) (bool, error) {
 	return message(infoKind, text, options)
 }
@@ -27,7 +28,8 @@ func Info(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// NoWrap, Ellipsize.
 func Warning(text string, options ...Option) (bool, error) {
 	return message(warningKind, text, options)
 }
@@ -36,7 +38,8 @@ func Warning(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Icon, OKLabel, ExtraButton, NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// NoWrap, Ellipsize.
 func Error(text string, options ...Option) (bool, error) {
 	return message(errorKind, text, options)
 }

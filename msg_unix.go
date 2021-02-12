@@ -4,6 +4,7 @@ package zenity
 
 import (
 	"os/exec"
+	"strconv"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
@@ -27,6 +28,12 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	}
 	if opts.title != "" {
 		args = append(args, "--title", opts.title)
+	}
+	if opts.width > 0 {
+		args = append(args, "--width", strconv.FormatUint(uint64(opts.width), 10))
+	}
+	if opts.height > 0 {
+		args = append(args, "--height", strconv.FormatUint(uint64(opts.height), 10))
 	}
 	if opts.okLabel != "" {
 		args = append(args, "--ok-label", opts.okLabel)
