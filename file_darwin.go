@@ -72,13 +72,13 @@ func selectFileSave(options []Option) (string, error) {
 	opts := applyOptions(options)
 
 	data := zenutil.File{
-		Prompt: opts.title,
+		Prompt:     opts.title,
+		Invisibles: opts.showHidden,
 	}
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFileName"
-		data.Type = initFilters(opts.fileFilters)
 	}
 	data.Location, data.Name = splitDirAndName(opts.filename)
 
