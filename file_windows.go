@@ -359,18 +359,16 @@ func browseForFolder(opts options) (string, []string, error) {
 }
 
 func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
-	if filename != "" {
-		d, n := splitDirAndName(filename)
-		e := filepath.Ext(n)
-		if n != "" {
-			copy(name, syscall.StringToUTF16(n))
-		}
-		if d != "" {
-			dir = syscall.StringToUTF16Ptr(d)
-		}
-		if e != "" {
-			ext = syscall.StringToUTF16Ptr(e[1:])
-		}
+	d, n := splitDirAndName(filename)
+	e := filepath.Ext(n)
+	if n != "" {
+		copy(name, syscall.StringToUTF16(n))
+	}
+	if d != "" {
+		dir = syscall.StringToUTF16Ptr(d)
+	}
+	if e != "" {
+		ext = syscall.StringToUTF16Ptr(e[1:])
 	}
 	return
 }
