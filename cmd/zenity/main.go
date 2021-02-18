@@ -384,11 +384,11 @@ func (f *FileFilters) Set(s string) error {
 	var filter zenity.FileFilter
 
 	if split := strings.SplitN(s, "|", 2); len(split) > 1 {
-		filter.Name = split[0]
+		filter.Name = strings.TrimSpace(split[0])
 		s = split[1]
 	}
 
-	filter.Patterns = strings.Split(s, " ")
+	filter.Patterns = strings.Split(strings.TrimSpace(s), " ")
 	f.FileFilters = append(f.FileFilters, filter)
 
 	return nil
