@@ -18,7 +18,11 @@ func selectColor(options []Option) (color.Color, error) {
 	}
 	r, g, b, _ := col.RGBA()
 
-	out, err := zenutil.Run(opts.ctx, "color", []uint32{r, g, b})
+	out, err := zenutil.Run(opts.ctx, "color", []float32{
+		float32(r) / 0xffff,
+		float32(g) / 0xffff,
+		float32(b) / 0xffff,
+	})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}

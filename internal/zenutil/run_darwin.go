@@ -18,21 +18,16 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	}
 
 	script = buf.String()
-	lang := "AppleScript"
-	if strings.HasPrefix(script, "var app") {
-		lang = "JavaScript"
-	}
-
 	if Command {
 		path, err := exec.LookPath("osascript")
 		if err == nil {
 			os.Stderr.Close()
-			syscall.Exec(path, []string{"osascript", "-l", lang, "-e", script}, nil)
+			syscall.Exec(path, []string{"osascript", "-l", "JavaScript", "-e", script}, nil)
 		}
 	}
 
 	if ctx != nil {
-		cmd := exec.CommandContext(ctx, "osascript", "-l", lang)
+		cmd := exec.CommandContext(ctx, "osascript", "-l", "JavaScript")
 		cmd.Stdin = strings.NewReader(script)
 		out, err := cmd.Output()
 		if ctx.Err() != nil {
@@ -40,7 +35,7 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 		}
 		return out, err
 	}
-	cmd := exec.Command("osascript", "-l", lang)
+	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = strings.NewReader(script)
 	return cmd.Output()
 }

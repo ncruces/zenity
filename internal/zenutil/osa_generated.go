@@ -11,11 +11,13 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 	return string(b), err
 }}).Parse(`
 {{define "color" -}}
-tell application "SystemUIServer"
-activate
-set c to choose color default color { {{index . 0}},{{index . 1}},{{index . 2}} }
-"rgb(" & (item 1 of c) div 256 & "," & (item 2 of c) div 256 & "," & (item 3 of c) div 256 & ")"
-end tell
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+var opts = {}
+opts.defaultColor = {{json .}}
+var res = app.chooseColor(opts)
+'rgb(' + res.map(x => Math.round(x * 255)) + ')'
 {{- end}}
 {{define "file" -}}
 var app = Application.currentApplication()
@@ -90,7 +92,6 @@ void 0
 {{define "notify" -}}
 var app = Application.currentApplication()
 app.includeStandardAdditions = true
-app.activate()
 var opts = {}
 {{if .Title -}}
 opts.withTitle = {{json .Title}}
