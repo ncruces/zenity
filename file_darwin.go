@@ -10,17 +10,17 @@ import (
 func selectFile(options []Option) (string, error) {
 	opts := applyOptions(options)
 
-	data := zenutil.File{
-		Prompt:     opts.title,
-		Invisibles: opts.showHidden,
-	}
+	var data zenutil.File
+	data.Options.Prompt = opts.title
+	data.Options.Invisibles = opts.showHidden
+	data.Options.Location, _ = splitDirAndName(opts.filename)
+
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = initFilters(opts.fileFilters)
+		data.Options.Type = initFilters(opts.fileFilters)
 	}
-	data.Location, _ = splitDirAndName(opts.filename)
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -38,19 +38,19 @@ func selectFile(options []Option) (string, error) {
 func selectFileMutiple(options []Option) ([]string, error) {
 	opts := applyOptions(options)
 
-	data := zenutil.File{
-		Prompt:     opts.title,
-		Invisibles: opts.showHidden,
-		Separator:  zenutil.Separator,
-		Multiple:   true,
-	}
+	var data zenutil.File
+	data.Options.Prompt = opts.title
+	data.Options.Invisibles = opts.showHidden
+	data.Options.Location, _ = splitDirAndName(opts.filename)
+	data.Options.Multiple = true
+	data.Separator = zenutil.Separator
+
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Type = initFilters(opts.fileFilters)
+		data.Options.Type = initFilters(opts.fileFilters)
 	}
-	data.Location, _ = splitDirAndName(opts.filename)
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
@@ -71,16 +71,16 @@ func selectFileMutiple(options []Option) ([]string, error) {
 func selectFileSave(options []Option) (string, error) {
 	opts := applyOptions(options)
 
-	data := zenutil.File{
-		Prompt:     opts.title,
-		Invisibles: opts.showHidden,
-	}
+	var data zenutil.File
+	data.Options.Prompt = opts.title
+	data.Options.Invisibles = opts.showHidden
+	data.Options.Location, data.Options.Name = splitDirAndName(opts.filename)
+
 	if opts.directory {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFileName"
 	}
-	data.Location, data.Name = splitDirAndName(opts.filename)
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {

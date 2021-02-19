@@ -11,93 +11,30 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 	return string(b), err
 }}).Parse(`
 {{define "color" -}}
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
 app.activate()
-var opts = {}
-opts.defaultColor = {{json .}}
-var res = app.chooseColor(opts)
-'rgb(' + res.map(x => Math.round(x * 255)) + ')'
+var res=app.chooseColor({defaultColor:{{json .}}})
+{"rgb("+res.map(x=>Math.round(x*255))+")"}
 {{- end}}
 {{define "file" -}}
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
 app.activate()
-var opts = {}
-{{if .Prompt -}}
-opts.withPrompt = {{json .Prompt}}
-{{end -}}
-{{if .Type -}}
-opts.ofType = {{json .Type}}
-{{end -}}
-{{if .Name -}}
-opts.defaultName = {{json .Name}}
-{{end -}}
-{{if .Location -}}
-opts.defaultLocation = {{json .Location}}
-{{end -}}
-{{if .Invisibles -}}
-opts.invisibles = {{json .Invisibles}}
-{{end -}}
-{{if .Multiple -}}
-opts.multipleSelectionsAllowed = {{json .Multiple}}
-{{end -}}
-var res = app[{{json .Operation}}](opts)
-if (Array.isArray(res)) {
-res.join({{json .Separator}})
-} else {
-res.toString()
-}
+var res=app[{{json .Operation}}]({{json .Options}})
+if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
 {{define "msg" -}}
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
 app.activate()
-var opts = {}
-{{if .Message -}}
-opts.message = {{json .Message}}
-{{end -}}
-{{if .As -}}
-opts.as = {{json .As}}
-{{end -}}
-{{if .Title -}}
-opts.withTitle = {{json .Title}}
-{{end -}}
-{{if .Icon -}}
-opts.withIcon = {{json .Icon}}
-{{end -}}
-{{if .Buttons -}}
-opts.buttons = {{json .Buttons}}
-{{end -}}
-{{if .Cancel -}}
-opts.cancelButton = {{json .Cancel}}
-{{end -}}
-{{if .Default -}}
-opts.defaultButton = {{json .Default}}
-{{end -}}
-{{if .Timeout -}}
-opts.givingUpAfter = {{json .Timeout}}
-{{end -}}
-var res = app[{{json .Operation}}]({{json .Text}}, opts)
-if (res.gaveUp) {
-ObjC.import("stdlib")
-$.exit(5)
-}
-if (res.buttonReturned === {{json .Extra}}) {
-res
-} else {
-void 0
-}
+var res=app[{{json .Operation}}]({{json .Text}},{{json .Options}})
+if(res.gaveUp){ObjC.import("stdlib")
+$.exit(5)}
+if(res.buttonReturned==={{json .Extra}}){res}else{void 0}
 {{- end}}
 {{define "notify" -}}
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
-var opts = {}
-{{if .Title -}}
-opts.withTitle = {{json .Title}}
-{{end -}}
-{{if .Subtitle -}}
-opts.subtitle = {{json .Subtitle}}
-{{end -}}
-void app.displayNotification({{json .Text}}, opts)
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+void app.displayNotification({{json .Text}},{{json .Options}})
 {{- end}}`))

@@ -8,38 +8,39 @@ import (
 
 func message(kind messageKind, text string, options []Option) (bool, error) {
 	opts := applyOptions(options)
-	data := zenutil.Msg{
-		Text:    text,
-		Timeout: zenutil.Timeout,
-	}
+
+	var data zenutil.Msg
+	data.Text = text
+	data.Options.Timeout = zenutil.Timeout
+
 	dialog := kind == questionKind || opts.icon != 0
 
 	if dialog {
 		data.Operation = "displayDialog"
-		data.Title = opts.title
+		data.Options.Title = opts.title
 
 		switch opts.icon {
 		case ErrorIcon:
-			data.Icon = "stop"
+			data.Options.Icon = "stop"
 		case WarningIcon:
-			data.Icon = "caution"
+			data.Options.Icon = "caution"
 		case InfoIcon, QuestionIcon:
-			data.Icon = "note"
+			data.Options.Icon = "note"
 		}
 	} else {
 		data.Operation = "displayAlert"
 		if opts.title != "" {
-			data.Message = text
+			data.Options.Message = text
 			data.Text = opts.title
 		}
 
 		switch kind {
 		case infoKind:
-			data.As = "informational"
+			data.Options.As = "informational"
 		case warningKind:
-			data.As = "warning"
+			data.Options.As = "warning"
 		case errorKind:
-			data.As = "critical"
+			data.Options.As = "critical"
 		}
 	}
 
@@ -58,31 +59,31 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 		if kind == questionKind {
 			if opts.extraButton == "" {
-				data.Buttons = []string{opts.cancelLabel, opts.okLabel}
-				data.Default = 2
-				data.Cancel = 1
+				data.Options.Buttons = []string{opts.cancelLabel, opts.okLabel}
+				data.Options.Default = 2
+				data.Options.Cancel = 1
 			} else {
-				data.Buttons = []string{opts.extraButton, opts.cancelLabel, opts.okLabel}
-				data.Default = 3
-				data.Cancel = 2
+				data.Options.Buttons = []string{opts.extraButton, opts.cancelLabel, opts.okLabel}
+				data.Options.Default = 3
+				data.Options.Cancel = 2
 			}
 		} else {
 			if opts.extraButton == "" {
-				data.Buttons = []string{opts.okLabel}
-				data.Default = 1
+				data.Options.Buttons = []string{opts.okLabel}
+				data.Options.Default = 1
 			} else {
-				data.Buttons = []string{opts.extraButton, opts.okLabel}
-				data.Default = 2
+				data.Options.Buttons = []string{opts.extraButton, opts.okLabel}
+				data.Options.Default = 2
 			}
 		}
 		data.Extra = opts.extraButton
 	}
 	if opts.defaultCancel {
-		if data.Cancel != 0 {
-			data.Default = data.Cancel
+		if data.Options.Cancel != 0 {
+			data.Options.Default = data.Options.Cancel
 		}
-		if dialog && data.Buttons == nil {
-			data.Default = 1
+		if dialog && data.Options.Buttons == nil {
+			data.Options.Default = 1
 		}
 	}
 
