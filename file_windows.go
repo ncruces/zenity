@@ -243,7 +243,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 			uintptr(unsafe.Pointer(&item)))
 
 		if hr >= 0 && item != nil {
-			dialog.Call(dialog.vtbl.SetDefaultFolder, uintptr(unsafe.Pointer(item)))
+			dialog.Call(dialog.vtbl.SetFolder, uintptr(unsafe.Pointer(item)))
 			item.Call(item.vtbl.Release)
 		}
 	}
@@ -362,12 +362,12 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	d, n := splitDirAndName(filename)
 	e := filepath.Ext(n)
 	if n != "" {
-		copy(name, syscall.StringToUTF16(n))
+		copy(name, syscall.StringToUTF16(filename))
 	}
 	if d != "" {
 		dir = syscall.StringToUTF16Ptr(d)
 	}
-	if e != "" {
+	if len(e) > 1 {
 		ext = syscall.StringToUTF16Ptr(e[1:])
 	}
 	return
