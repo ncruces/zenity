@@ -129,7 +129,7 @@ func setupFlags() {
 
 	// Message options
 	flag.StringVar(&text, "text", "", "Set the dialog text")
-	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (error, info, question, warning)")
+	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
 	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
@@ -202,6 +202,16 @@ func loadFlags() []zenity.Option {
 	// Message options
 
 	var ico zenity.DialogIcon
+	switch {
+	case errorDlg:
+		ico = zenity.ErrorIcon
+	case infoDlg:
+		ico = zenity.InfoIcon
+	case warningDlg:
+		ico = zenity.WarningIcon
+	case questionDlg:
+		ico = zenity.QuestionIcon
+	}
 	switch icon {
 	case "error", "dialog-error":
 		ico = zenity.ErrorIcon
