@@ -31,7 +31,7 @@ app.activate()
 var res=app[{{json .Operation}}]({{json .Text}},{{json .Options}})
 if(res.gaveUp){ObjC.import("stdlib")
 $.exit(5)}
-if(res.buttonReturned==={{json .Extra}}){res}else{void 0}
+if(res.buttonReturned==={{json .Extra}}){res.buttonReturned}else{void 0}
 {{- end}}
 {{define "notify" -}}
 var app=Application.currentApplication()

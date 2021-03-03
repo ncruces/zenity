@@ -8,7 +8,7 @@ if (res.gaveUp) {
 	$.exit(5)
 }
 if (res.buttonReturned === {{json .Extra}}) {
-	res
+	res.buttonReturned
 } else {
 	void 0
 }
