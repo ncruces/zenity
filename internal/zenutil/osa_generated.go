@@ -21,14 +21,14 @@ var res=app.chooseColor({defaultColor:{{json .}}})
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
-var res=app[{{json .Operation}}]({{json .Options}})
+var res=app.{{.Operation}}({{json .Options}})
 if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
 {{define "msg" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
-var res=app[{{json .Operation}}]({{json .Text}},{{json .Options}})
+var res=app.{{.Operation}}({{json .Text}},{{json .Options}})
 if(res.gaveUp){ObjC.import("stdlib")
 $.exit(5)}
 if(res.buttonReturned==={{json .Extra}}){res.buttonReturned}else{void 0}
