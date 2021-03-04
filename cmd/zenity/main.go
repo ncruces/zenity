@@ -217,18 +217,23 @@ func loadFlags() []zenity.Option {
 		setDefault(&title, "Error")
 		setDefault(&icon, "dialog-error")
 		setDefault(&text, "An error has occurred.")
+		setDefault(&okLabel, "OK")
 	case infoDlg:
 		setDefault(&title, "Information")
 		setDefault(&icon, "dialog-information")
 		setDefault(&text, "All updates are complete.")
+		setDefault(&okLabel, "OK")
 	case warningDlg:
 		setDefault(&title, "Warning")
 		setDefault(&icon, "dialog-warning")
 		setDefault(&text, "Are you sure you want to proceed?")
+		setDefault(&okLabel, "OK")
 	case questionDlg:
 		setDefault(&title, "Question")
 		setDefault(&icon, "dialog-question")
 		setDefault(&text, "Are you sure you want to proceed?")
+		setDefault(&okLabel, "Yes")
+		setDefault(&cancelLabel, "No")
 	default:
 		setDefault(&text, "")
 	}
