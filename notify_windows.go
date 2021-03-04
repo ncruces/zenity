@@ -13,9 +13,7 @@ var (
 	wtsSendMessage  = wtsapi32.NewProc("WTSSendMessageW")
 )
 
-func notify(text string, options []Option) error {
-	opts := applyOptions(options)
-
+func notify(text string, opts options) error {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
 	}
@@ -29,11 +27,13 @@ func notify(text string, options []Option) error {
 	info := syscall.StringToUTF16(text)
 	copy(args.Info[:len(args.Info)-1], info)
 
-	title := syscall.StringToUTF16(opts.title)
-	copy(args.InfoTitle[:len(args.InfoTitle)-1], title)
+	if opts.title != nil {
+		title := syscall.StringToUTF16(*opts.title)
+		copy(args.InfoTitle[:len(args.InfoTitle)-1], title)
+	}
 
 	switch opts.icon {
-	case InfoIcon:
+	case InfoIcon, QuestionIcon:
 		args.InfoFlags |= 0x1 // NIIF_INFO
 	case WarningIcon:
 		args.InfoFlags |= 0x2 // NIIF_WARNING
@@ -71,8 +71,8 @@ func wtsMessage(text string, opts options) error {
 	}
 
 	title := opts.title
-	if title == "" {
-		title = "Notification"
+	if title == nil {
+		title = stringPtr("Notification")
 	}
 
 	timeout := zenutil.Timeout
@@ -81,7 +81,7 @@ func wtsMessage(text string, opts options) error {
 	}
 
 	ptext := syscall.StringToUTF16(text)
-	ptitle := syscall.StringToUTF16(title)
+	ptitle := syscall.StringToUTF16(*title)
 
 	var res uint32
 	s, _, err := wtsSendMessage.Call(

@@ -28,10 +28,13 @@ if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
+ObjC.import("stdlib")
+ObjC.import("stdio")
 var res=app.{{.Operation}}({{json .Text}},{{json .Options}})
-if(res.gaveUp){ObjC.import("stdlib")
-$.exit(5)}
-if(res.buttonReturned==={{json .Extra}}){res.buttonReturned}else{void 0}
+if(res.gaveUp){$.exit(5)}
+if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
+$.exit(1)}
+void 0
 {{- end}}
 {{define "notify" -}}
 var app=Application.currentApplication()

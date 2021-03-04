@@ -17,6 +17,10 @@ import (
 
 //go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -platform-specific -manifest=win.manifest
 
+const (
+	unspecified = "\x00"
+)
+
 var (
 	// Application Options
 	notification      bool
@@ -122,14 +126,14 @@ func setupFlags() {
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
 
 	// General options
-	flag.StringVar(&title, "title", "", "Set the dialog title")
-	flag.StringVar(&icon, "window-icon", "", "Set the window icon (error, info, question, warning)")
-	flag.UintVar(&width, "width", 0, "Set the width")
-	flag.UintVar(&height, "height", 0, "Set the height")
+	flag.StringVar(&title, "title", "", "Set the dialog `title`")
+	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
+	flag.UintVar(&width, "width", 0, "Set the `width`")
+	flag.UintVar(&height, "height", 0, "Set the `height`")
 
 	// Message options
-	flag.StringVar(&text, "text", "", "Set the dialog text")
-	flag.StringVar(&icon, "icon-name", "", "Set the dialog icon (dialog-error, dialog-information, dialog-question, dialog-warning)")
+	flag.StringVar(&text, "text", "", "Set the dialog `text`")
+	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
 	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
@@ -144,11 +148,11 @@ func setupFlags() {
 	flag.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
-	flag.StringVar(&filename, "filename", "", "Set the filename")
+	flag.StringVar(&filename, "filename", "", "Set the `filename`")
 	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 
 	// Color selection options
-	flag.StringVar(&defaultColor, "color", "", "Set the color")
+	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
 	flag.BoolVar(&showPalette, "show-palette", false, "Show the palette")
 
 	// Windows specific options
@@ -157,9 +161,17 @@ func setupFlags() {
 		flag.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
 	}
 
-	// Internal options
-	flag.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog timeout in seconds")
-	flag.StringVar(&zenutil.Separator, "separator", "|", "Set output separator character")
+	// Command options
+	flag.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog `timeout` in seconds")
+	flag.StringVar(&zenutil.Separator, "separator", "|", "Set output `separator` character")
+
+	// Detect unspecified values
+	title = unspecified
+	icon = unspecified
+	text = unspecified
+	okLabel = unspecified
+	cancelLabel = unspecified
+	extraButton = unspecified
 }
 
 func validateFlags() {
@@ -193,26 +205,53 @@ func validateFlags() {
 func loadFlags() []zenity.Option {
 	var opts []zenity.Option
 
+	// Defaults
+
+	setDefault := func(s *string, val string) {
+		if *s == unspecified {
+			*s = val
+		}
+	}
+	switch {
+	case errorDlg:
+		setDefault(&title, "Error")
+		setDefault(&icon, "dialog-error")
+		setDefault(&text, "An error has occurred.")
+		setDefault(&okLabel, "OK")
+	case infoDlg:
+		setDefault(&title, "Information")
+		setDefault(&icon, "dialog-information")
+		setDefault(&text, "All updates are complete.")
+		setDefault(&okLabel, "OK")
+	case warningDlg:
+		setDefault(&title, "Warning")
+		setDefault(&icon, "dialog-warning")
+		setDefault(&text, "Are you sure you want to proceed?")
+		setDefault(&okLabel, "OK")
+	case questionDlg:
+		setDefault(&title, "Question")
+		setDefault(&icon, "dialog-question")
+		setDefault(&text, "Are you sure you want to proceed?")
+		setDefault(&okLabel, "Yes")
+		setDefault(&cancelLabel, "No")
+	default:
+		setDefault(&text, "")
+	}
+
 	// General options
 
-	opts = append(opts, zenity.Title(title))
+	if title != unspecified {
+		opts = append(opts, zenity.Title(title))
+	}
 	opts = append(opts, zenity.Width(width))
 	opts = append(opts, zenity.Height(height))
 
 	// Message options
 
 	var ico zenity.DialogIcon
-	switch {
-	case errorDlg:
-		ico = zenity.ErrorIcon
-	case infoDlg:
-		ico = zenity.InfoIcon
-	case warningDlg:
-		ico = zenity.WarningIcon
-	case questionDlg:
-		ico = zenity.QuestionIcon
-	}
 	switch icon {
+	case "":
+		ico = zenity.NoIcon
 	case "error", "dialog-error":
 		ico = zenity.ErrorIcon
 	case "info", "dialog-information":
@@ -224,9 +263,15 @@ func loadFlags() []zenity.Option {
 	}
 
 	opts = append(opts, zenity.Icon(ico))
-	opts = append(opts, zenity.OKLabel(okLabel))
-	opts = append(opts, zenity.CancelLabel(cancelLabel))
-	opts = append(opts, zenity.ExtraButton(extraButton))
+	if okLabel != unspecified {
+		opts = append(opts, zenity.OKLabel(okLabel))
+	}
+	if cancelLabel != unspecified {
+		opts = append(opts, zenity.CancelLabel(cancelLabel))
+	}
+	if extraButton != unspecified {
+		opts = append(opts, zenity.ExtraButton(extraButton))
+	}
 	if noWrap {
 		opts = append(opts, zenity.NoWrap())
 	}

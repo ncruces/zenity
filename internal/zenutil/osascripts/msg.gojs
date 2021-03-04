@@ -2,13 +2,14 @@ var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 
+ObjC.import("stdlib")
+ObjC.import("stdio")
+
 var res = app.{{.Operation}}({{json .Text}}, {{json .Options}})
 if (res.gaveUp) {
-	ObjC.import("stdlib")
 	$.exit(5)
 }
 if (res.buttonReturned === {{json .Extra}}) {
-	res.buttonReturned
-} else {
-	void 0
+	$.puts(res.buttonReturned)
+	$.exit(1)
 }

@@ -2,7 +2,7 @@ package zenity
 
 // ErrExtraButton is returned by dialog functions when the extra button is
 // pressed.
-const ErrExtraButton = constError("Extra button pressed")
+const ErrExtraButton = stringErr("Extra button pressed")
 
 // Question displays the question dialog.
 //
@@ -11,7 +11,7 @@ const ErrExtraButton = constError("Extra button pressed")
 // Valid options: Title, Width, Height, Icon, OKLabel, CancelLabel,
 // ExtraButton, NoWrap, Ellipsize, DefaultCancel.
 func Question(text string, options ...Option) (bool, error) {
-	return message(questionKind, text, options)
+	return message(questionKind, text, applyOptions(options))
 }
 
 // Info displays the info dialog.
@@ -21,7 +21,7 @@ func Question(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Info(text string, options ...Option) (bool, error) {
-	return message(infoKind, text, options)
+	return message(infoKind, text, applyOptions(options))
 }
 
 // Warning displays the warning dialog.
@@ -31,7 +31,7 @@ func Info(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Warning(text string, options ...Option) (bool, error) {
-	return message(warningKind, text, options)
+	return message(warningKind, text, applyOptions(options))
 }
 
 // Error displays the error dialog.
@@ -41,7 +41,7 @@ func Warning(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Error(text string, options ...Option) (bool, error) {
-	return message(errorKind, text, options)
+	return message(errorKind, text, applyOptions(options))
 }
 
 type messageKind int
@@ -55,30 +55,30 @@ const (
 
 // OKLabel returns an Option to set the label of the OK button.
 func OKLabel(ok string) Option {
-	return funcOption(func(o *options) { o.okLabel = ok })
+	return funcOption(func(o *options) { o.okLabel = &ok })
 }
 
 // CancelLabel returns an Option to set the label of the Cancel button.
 func CancelLabel(cancel string) Option {
-	return funcOption(func(o *options) { o.cancelLabel = cancel })
+	return funcOption(func(o *options) { o.cancelLabel = &cancel })
 }
 
 // ExtraButton returns an Option to add an extra button.
 func ExtraButton(extra string) Option {
-	return funcOption(func(o *options) { o.extraButton = extra })
+	return funcOption(func(o *options) { o.extraButton = &extra })
 }
 
-// NoWrap returns an Option to disable enable text wrapping.
+// NoWrap returns an Option to disable enable text wrapping (Unix only).
 func NoWrap() Option {
 	return funcOption(func(o *options) { o.noWrap = true })
 }
 
-// Ellipsize returns an Option to enable ellipsizing in the dialog text.
+// Ellipsize returns an Option to enable ellipsizing in the dialog text (Unix only).
 func Ellipsize() Option {
 	return funcOption(func(o *options) { o.ellipsize = true })
 }
 
-// DefaultCancel returns an Option to give Cancel button focus by default.
+// DefaultCancel returns an Option to give the Cancel button focus by default.
 func DefaultCancel() Option {
 	return funcOption(func(o *options) { o.defaultCancel = true })
 }

@@ -17,8 +17,7 @@ var (
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
 )
 
-func selectFile(options []Option) (string, error) {
-	opts := applyOptions(options)
+func selectFile(opts options) (string, error) {
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
 		return res, err
@@ -28,8 +27,8 @@ func selectFile(options []Option) (string, error) {
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x81008 // OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_EXPLORER
 
-	if opts.title != "" {
-		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	if opts.title != nil {
+		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
@@ -65,8 +64,7 @@ func selectFile(options []Option) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func selectFileMutiple(options []Option) ([]string, error) {
-	opts := applyOptions(options)
+func selectFileMutiple(opts options) ([]string, error) {
 	if opts.directory {
 		_, res, err := pickFolders(opts, true)
 		return res, err
@@ -76,8 +74,8 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x81208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_FILEMUSTEXIST|OFN_EXPLORER
 
-	if opts.title != "" {
-		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	if opts.title != nil {
+		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
 		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
@@ -138,8 +136,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	return split, nil
 }
 
-func selectFileSave(options []Option) (string, error) {
-	opts := applyOptions(options)
+func selectFileSave(opts options) (string, error) {
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
 		return res, err
@@ -149,8 +146,8 @@ func selectFileSave(options []Option) (string, error) {
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Flags = 0x88808 // OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|OFN_NOREADONLYRETURN|OFN_EXPLORER
 
-	if opts.title != "" {
-		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	if opts.title != nil {
+		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.confirmOverwrite {
 		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
@@ -229,8 +226,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		return "", nil, syscall.Errno(hr)
 	}
 
-	if opts.title != "" {
-		ptr := syscall.StringToUTF16Ptr(opts.title)
+	if opts.title != nil {
+		ptr := syscall.StringToUTF16Ptr(*opts.title)
 		dialog.Call(dialog.vtbl.SetTitle, uintptr(unsafe.Pointer(ptr)))
 	}
 
@@ -319,8 +316,8 @@ func browseForFolder(opts options) (string, []string, error) {
 	var args _BROWSEINFO
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
-	if opts.title != "" {
-		args.Title = syscall.StringToUTF16Ptr(opts.title)
+	if opts.title != nil {
+		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.filename != "" {
 		ptr := syscall.StringToUTF16Ptr(opts.filename)

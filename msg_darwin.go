@@ -6,14 +6,18 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := applyOptions(options)
-
+func message(kind messageKind, text string, opts options) (bool, error) {
 	var data zenutil.Msg
 	data.Text = text
 	data.Options.Timeout = zenutil.Timeout
 
-	dialog := kind == questionKind || opts.icon != 0
+	// dialog is more flexible, alert prettier
+	var dialog bool
+	if opts.icon != 0 { // use if we want to show a specific icon
+		dialog = true
+	} else if kind == questionKind && opts.cancelLabel == nil { // use for questions with default buttons
+		dialog = true
+	}
 
 	if dialog {
 		data.Operation = "displayDialog"
@@ -29,9 +33,9 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 	} else {
 		data.Operation = "displayAlert"
-		if opts.title != "" {
+		if opts.title != nil {
+			data.Text = *opts.title
 			data.Options.Message = text
-			data.Text = opts.title
 		}
 
 		switch kind {
@@ -44,58 +48,67 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 		}
 	}
 
-	if kind != questionKind {
-		if dialog {
-			opts.okLabel = "OK"
+	if kind == questionKind {
+		// alert defaults to a single button, we need two
+		if opts.cancelLabel == nil && !dialog {
+			opts.cancelLabel = stringPtr("Cancel")
 		}
-		opts.cancelLabel = ""
+	} else {
+		// dialog defaults to two buttons, we need one
+		if opts.okLabel == nil && dialog {
+			opts.okLabel = stringPtr("OK")
+		}
+		// only questions have cancel
+		opts.cancelLabel = nil
 	}
-	if opts.okLabel != "" || opts.cancelLabel != "" || opts.extraButton != "" {
-		if opts.okLabel == "" {
-			opts.okLabel = "OK"
-		}
-		if opts.cancelLabel == "" {
-			opts.cancelLabel = "Cancel"
+
+	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
+		if opts.okLabel == nil {
+			opts.okLabel = stringPtr("OK")
 		}
 		if kind == questionKind {
-			if opts.extraButton == "" {
-				data.Options.Buttons = []string{opts.cancelLabel, opts.okLabel}
+			if opts.cancelLabel == nil {
+				opts.cancelLabel = stringPtr("Cancel")
+			}
+			if opts.extraButton == nil {
+				data.Options.Buttons = []string{*opts.cancelLabel, *opts.okLabel}
 				data.Options.Default = 2
 				data.Options.Cancel = 1
 			} else {
-				data.Options.Buttons = []string{opts.extraButton, opts.cancelLabel, opts.okLabel}
+				data.Options.Buttons = []string{*opts.extraButton, *opts.cancelLabel, *opts.okLabel}
 				data.Options.Default = 3
 				data.Options.Cancel = 2
 			}
 		} else {
-			if opts.extraButton == "" {
-				data.Options.Buttons = []string{opts.okLabel}
+			if opts.extraButton == nil {
+				data.Options.Buttons = []string{*opts.okLabel}
 				data.Options.Default = 1
 			} else {
-				data.Options.Buttons = []string{opts.extraButton, opts.okLabel}
+				data.Options.Buttons = []string{*opts.extraButton, *opts.okLabel}
 				data.Options.Default = 2
 			}
 		}
 		data.Extra = opts.extraButton
 	}
-	if opts.defaultCancel {
+
+	if kind == questionKind && opts.defaultCancel {
 		if data.Options.Cancel != 0 {
 			data.Options.Default = data.Options.Cancel
-		}
-		if dialog && data.Options.Buttons == nil {
+		} else {
 			data.Options.Default = 1
 		}
 	}
 
 	out, err := zenutil.Run(opts.ctx, "msg", data)
+	if len(out) > 0 && opts.extraButton != nil &&
+		string(out[:len(out)-1]) == *opts.extraButton {
+		return false, ErrExtraButton
+	}
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
-	}
-	if len(out) > 0 && string(out[:len(out)-1]) == opts.extraButton {
-		return false, ErrExtraButton
 	}
 	return true, err
 }

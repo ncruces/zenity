@@ -6,9 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func notify(text string, options []Option) error {
-	opts := applyOptions(options)
-
+func notify(text string, opts options) error {
 	var data zenutil.Notify
 	data.Text = text
 	data.Options.Title = opts.title
