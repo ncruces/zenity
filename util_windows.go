@@ -138,11 +138,15 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 	}, nil
 }
 
-func hookDialogTitle(ctx context.Context, title string) (unhook context.CancelFunc, err error) {
-	return hookDialog(ctx, func(wnd uintptr) {
-		ptr := syscall.StringToUTF16Ptr(title)
-		setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
-	})
+func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelFunc, err error) {
+	var init func(wnd uintptr)
+	if title != nil {
+		init = func(wnd uintptr) {
+			ptr := syscall.StringToUTF16Ptr(*title)
+			setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
+		}
+	}
+	return hookDialog(ctx, init)
 }
 
 type _COMObject struct{}

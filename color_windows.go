@@ -46,7 +46,7 @@ func selectColor(options []Option) (color.Color, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	if opts.ctx != nil || opts.title != "" {
+	if opts.ctx != nil || opts.title != nil {
 		unhook, err := hookDialogTitle(opts.ctx, opts.title)
 		if err != nil {
 			return nil, err
