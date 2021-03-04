@@ -9,9 +9,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func selectFile(options []Option) (string, error) {
-	opts := applyOptions(options)
-
+func selectFile(opts options) (string, error) {
 	args := []string{"--file-selection"}
 	if opts.directory {
 		args = append(args, "--directory")
@@ -37,9 +35,7 @@ func selectFile(options []Option) (string, error) {
 	return string(out), nil
 }
 
-func selectFileMutiple(options []Option) ([]string, error) {
-	opts := applyOptions(options)
-
+func selectFileMutiple(opts options) ([]string, error) {
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
 	if opts.directory {
 		args = append(args, "--directory")
@@ -65,9 +61,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	return strings.Split(string(out), zenutil.Separator), nil
 }
 
-func selectFileSave(options []Option) (string, error) {
-	opts := applyOptions(options)
-
+func selectFileSave(opts options) (string, error) {
 	args := []string{"--file-selection", "--save"}
 	if opts.directory {
 		args = append(args, "--directory")

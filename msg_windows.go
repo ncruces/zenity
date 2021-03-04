@@ -11,9 +11,7 @@ var (
 	messageBox = user32.NewProc("MessageBoxW")
 )
 
-func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := applyOptions(options)
-
+func message(kind messageKind, text string, opts options) (bool, error) {
 	var flags uintptr
 
 	switch {

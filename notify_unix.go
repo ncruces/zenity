@@ -6,9 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func notify(text string, options []Option) error {
-	opts := applyOptions(options)
-
+func notify(text string, opts options) error {
 	args := []string{"--notification"}
 
 	if text != "" {

@@ -13,9 +13,7 @@ var (
 	wtsSendMessage  = wtsapi32.NewProc("WTSSendMessageW")
 )
 
-func notify(text string, options []Option) error {
-	opts := applyOptions(options)
-
+func notify(text string, opts options) error {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
 	}

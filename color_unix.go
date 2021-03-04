@@ -9,9 +9,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func selectColor(options []Option) (color.Color, error) {
-	opts := applyOptions(options)
-
+func selectColor(opts options) (color.Color, error) {
 	args := []string{"--color-selection"}
 
 	if opts.title != nil {

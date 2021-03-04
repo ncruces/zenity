@@ -8,7 +8,7 @@ import "image/color"
 //
 // Valid options: Title, Color, ShowPalette.
 func SelectColor(options ...Option) (color.Color, error) {
-	return selectColor(options)
+	return selectColor(applyOptions(options))
 }
 
 // Color returns an Option to set the color.

@@ -20,9 +20,7 @@ func init() {
 	}
 }
 
-func selectColor(options []Option) (color.Color, error) {
-	opts := applyOptions(options)
-
+func selectColor(opts options) (color.Color, error) {
 	// load custom colors
 	colorsMutex.Lock()
 	customColors := savedColors

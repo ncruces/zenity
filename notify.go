@@ -4,5 +4,5 @@ package zenity
 //
 // Valid options: Title, Icon.
 func Notify(text string, options ...Option) error {
-	return notify(text, options)
+	return notify(text, applyOptions(options))
 }

@@ -7,9 +7,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func selectFile(options []Option) (string, error) {
-	opts := applyOptions(options)
-
+func selectFile(opts options) (string, error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
@@ -35,9 +33,7 @@ func selectFile(options []Option) (string, error) {
 	return string(out), nil
 }
 
-func selectFileMutiple(options []Option) ([]string, error) {
-	opts := applyOptions(options)
-
+func selectFileMutiple(opts options) ([]string, error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
@@ -68,9 +64,7 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	return strings.Split(string(out), zenutil.Separator), nil
 }
 
-func selectFileSave(options []Option) (string, error) {
-	opts := applyOptions(options)
-
+func selectFileSave(opts options) (string, error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden

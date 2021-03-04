@@ -6,9 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := applyOptions(options)
-
+func message(kind messageKind, text string, opts options) (bool, error) {
 	var data zenutil.Msg
 	data.Text = text
 	data.Options.Timeout = zenutil.Timeout

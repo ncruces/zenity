@@ -11,7 +11,7 @@ const ErrExtraButton = stringErr("Extra button pressed")
 // Valid options: Title, Width, Height, Icon, OKLabel, CancelLabel,
 // ExtraButton, NoWrap, Ellipsize, DefaultCancel.
 func Question(text string, options ...Option) (bool, error) {
-	return message(questionKind, text, options)
+	return message(questionKind, text, applyOptions(options))
 }
 
 // Info displays the info dialog.
@@ -21,7 +21,7 @@ func Question(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Info(text string, options ...Option) (bool, error) {
-	return message(infoKind, text, options)
+	return message(infoKind, text, applyOptions(options))
 }
 
 // Warning displays the warning dialog.
@@ -31,7 +31,7 @@ func Info(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Warning(text string, options ...Option) (bool, error) {
-	return message(warningKind, text, options)
+	return message(warningKind, text, applyOptions(options))
 }
 
 // Error displays the error dialog.
@@ -41,7 +41,7 @@ func Warning(text string, options ...Option) (bool, error) {
 // Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
 // NoWrap, Ellipsize.
 func Error(text string, options ...Option) (bool, error) {
-	return message(errorKind, text, options)
+	return message(errorKind, text, applyOptions(options))
 }
 
 type messageKind int

@@ -7,9 +7,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func selectColor(options []Option) (color.Color, error) {
-	opts := applyOptions(options)
-
+func selectColor(opts options) (color.Color, error) {
 	var col color.Color
 	if opts.color != nil {
 		col = opts.color

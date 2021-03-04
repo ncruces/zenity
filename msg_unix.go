@@ -9,9 +9,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, options []Option) (bool, error) {
-	opts := applyOptions(options)
-
+func message(kind messageKind, text string, opts options) (bool, error) {
 	var args []string
 	switch kind {
 	case questionKind:
