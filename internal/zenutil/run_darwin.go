@@ -56,7 +56,7 @@ type File struct {
 
 // FileOptions is internal.
 type FileOptions struct {
-	Prompt     string   `json:"withPrompt,omitempty"`
+	Prompt     *string  `json:"withPrompt,omitempty"`
 	Type       []string `json:"ofType,omitempty"`
 	Name       string   `json:"defaultName,omitempty"`
 	Location   string   `json:"defaultLocation,omitempty"`
@@ -68,7 +68,7 @@ type FileOptions struct {
 type Msg struct {
 	Operation string
 	Text      string
-	Extra     string
+	Extra     *string
 	Options   MsgOptions
 }
 
@@ -76,7 +76,7 @@ type Msg struct {
 type MsgOptions struct {
 	Message string   `json:"message,omitempty"`
 	As      string   `json:"as,omitempty"`
-	Title   string   `json:"withTitle,omitempty"`
+	Title   *string  `json:"withTitle,omitempty"`
 	Icon    string   `json:"withIcon,omitempty"`
 	Buttons []string `json:"buttons,omitempty"`
 	Cancel  int      `json:"cancelButton,omitempty"`
@@ -92,6 +92,6 @@ type Notify struct {
 
 // NotifyOptions is internal.
 type NotifyOptions struct {
-	Title    string `json:"withTitle,omitempty"`
-	Subtitle string `json:"subtitle,omitempty"`
+	Title    *string `json:"withTitle,omitempty"`
+	Subtitle string  `json:"subtitle,omitempty"`
 }

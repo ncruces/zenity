@@ -15,13 +15,15 @@ import (
 	"image/color"
 )
 
-type constError string
+type stringErr string
 
-func (e constError) Error() string { return string(e) }
+func (e stringErr) Error() string { return string(e) }
+
+func stringPtr(s string) *string { return &s }
 
 type options struct {
 	// General options
-	title  string
+	title  *string
 	width  uint
 	height uint
 
@@ -39,9 +41,9 @@ type options struct {
 
 	// Message options
 	icon          DialogIcon
-	okLabel       string
-	cancelLabel   string
-	extraButton   string
+	okLabel       *string
+	cancelLabel   *string
+	extraButton   *string
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
@@ -69,7 +71,7 @@ func applyOptions(options []Option) (res options) {
 
 // Title returns an Option to set the dialog title.
 func Title(title string) Option {
-	return funcOption(func(o *options) { o.title = title })
+	return funcOption(func(o *options) { o.title = &title })
 }
 
 // Width returns an Option to set the dialog width (Unix only).
