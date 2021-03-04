@@ -16,8 +16,8 @@ func selectFile(options []Option) (string, error) {
 	if opts.directory {
 		args = append(args, "--directory")
 	}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
+	if opts.title != nil {
+		args = append(args, "--title", *opts.title)
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
@@ -44,8 +44,8 @@ func selectFileMutiple(options []Option) ([]string, error) {
 	if opts.directory {
 		args = append(args, "--directory")
 	}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
+	if opts.title != nil {
+		args = append(args, "--title", *opts.title)
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
@@ -72,8 +72,8 @@ func selectFileSave(options []Option) (string, error) {
 	if opts.directory {
 		args = append(args, "--directory")
 	}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
+	if opts.title != nil {
+		args = append(args, "--title", *opts.title)
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)

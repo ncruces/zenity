@@ -14,8 +14,8 @@ func notify(text string, options []Option) error {
 	if text != "" {
 		args = append(args, "--text", text, "--no-markup")
 	}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
+	if opts.title != nil {
+		args = append(args, "--title", *opts.title)
 	}
 	switch opts.icon {
 	case ErrorIcon:

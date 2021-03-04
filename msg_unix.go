@@ -26,8 +26,8 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	if text != "" {
 		args = append(args, "--text", text, "--no-markup")
 	}
-	if opts.title != "" {
-		args = append(args, "--title", opts.title)
+	if opts.title != nil {
+		args = append(args, "--title", *opts.title)
 	}
 	if opts.width > 0 {
 		args = append(args, "--width", strconv.FormatUint(uint64(opts.width), 10))
@@ -35,14 +35,14 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	if opts.height > 0 {
 		args = append(args, "--height", strconv.FormatUint(uint64(opts.height), 10))
 	}
-	if opts.okLabel != "" {
-		args = append(args, "--ok-label", opts.okLabel)
+	if opts.okLabel != nil {
+		args = append(args, "--ok-label", *opts.okLabel)
 	}
-	if opts.cancelLabel != "" {
-		args = append(args, "--cancel-label", opts.cancelLabel)
+	if opts.cancelLabel != nil {
+		args = append(args, "--cancel-label", *opts.cancelLabel)
 	}
-	if opts.extraButton != "" {
-		args = append(args, "--extra-button", opts.extraButton)
+	if opts.extraButton != nil {
+		args = append(args, "--extra-button", *opts.extraButton)
 	}
 	if opts.noWrap {
 		args = append(args, "--no-wrap")
@@ -65,10 +65,11 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
-		if len(out) > 0 && string(out[:len(out)-1]) == opts.extraButton {
-			return false, ErrExtraButton
-		}
+	if len(out) > 0 && opts.extraButton != nil &&
+		string(out[:len(out)-1]) == *opts.extraButton {
+		return false, ErrExtraButton
+	}
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}
 	if err != nil {
