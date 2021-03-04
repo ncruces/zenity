@@ -33,7 +33,7 @@ func notify(text string, opts options) error {
 	}
 
 	switch opts.icon {
-	case InfoIcon:
+	case InfoIcon, QuestionIcon:
 		args.InfoFlags |= 0x1 // NIIF_INFO
 	case WarningIcon:
 		args.InfoFlags |= 0x2 // NIIF_WARNING

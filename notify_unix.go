@@ -16,14 +16,16 @@ func notify(text string, opts options) error {
 		args = append(args, "--title", *opts.title)
 	}
 	switch opts.icon {
+	case NoIcon:
+		args = append(args, "--window-icon=dialog")
 	case ErrorIcon:
-		args = append(args, "--window-icon=error")
+		args = append(args, "--window-icon=dialog-error")
 	case WarningIcon:
-		args = append(args, "--window-icon=warning")
+		args = append(args, "--window-icon=dialog-warning")
 	case InfoIcon:
-		args = append(args, "--window-icon=info")
+		args = append(args, "--window-icon=dialog-information")
 	case QuestionIcon:
-		args = append(args, "--window-icon=question")
+		args = append(args, "--window-icon=dialog-question")
 	}
 
 	_, err := zenutil.Run(opts.ctx, args)

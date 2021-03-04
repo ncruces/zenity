@@ -52,6 +52,8 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		args = append(args, "--default-cancel")
 	}
 	switch opts.icon {
+	case NoIcon:
+		args = append(args, "--icon-name=")
 	case ErrorIcon:
 		args = append(args, "--window-icon=error", "--icon-name=dialog-error")
 	case WarningIcon:

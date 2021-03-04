@@ -97,6 +97,7 @@ const (
 	WarningIcon
 	InfoIcon
 	QuestionIcon
+	NoIcon
 )
 
 // Icon returns an Option to set the dialog icon.

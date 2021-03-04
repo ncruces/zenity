@@ -245,6 +245,8 @@ func loadFlags() []zenity.Option {
 
 	var ico zenity.DialogIcon
 	switch icon {
+	case "":
+		ico = zenity.NoIcon
 	case "error", "dialog-error":
 		ico = zenity.ErrorIcon
 	case "info", "dialog-information":
