@@ -102,15 +102,15 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, "msg", data)
+	if len(out) > 0 && opts.extraButton != nil &&
+		string(out[:len(out)-1]) == *opts.extraButton {
+		return false, ErrExtraButton
+	}
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
-	}
-	if len(out) > 0 && opts.extraButton != nil &&
-		string(out[:len(out)-1]) == *opts.extraButton {
-		return false, ErrExtraButton
 	}
 	return true, err
 }

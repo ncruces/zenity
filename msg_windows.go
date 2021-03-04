@@ -19,8 +19,10 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	switch {
 	case kind == questionKind && opts.extraButton != nil:
 		flags |= 0x3 // MB_YESNOCANCEL
-	case kind == questionKind || opts.extraButton != nil:
+	case kind == questionKind:
 		flags |= 0x1 // MB_OKCANCEL
+	case opts.extraButton != nil:
+		flags |= 0x4 // MB_YESNO
 	}
 
 	switch opts.icon {
@@ -66,16 +68,16 @@ func message(kind messageKind, text string, options []Option) (bool, error) {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return false, opts.ctx.Err()
 	}
-	if s == 0 {
+	switch s {
+	case 1, 6: // IDOK, IDYES
+		return true, nil
+	case 2: // IDCANCEL
+		return false, nil
+	case 7: // IDNO
+		return false, ErrExtraButton
+	default:
 		return false, err
 	}
-	if s == 7 || s == 2 && kind != questionKind { // IDNO
-		return false, ErrExtraButton
-	}
-	if s == 1 || s == 6 { // IDOK, IDYES
-		return true, nil
-	}
-	return false, nil
 }
 
 func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFunc, err error) {
@@ -93,8 +95,6 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 					case 2: // IDCANCEL
 						if kind == questionKind {
 							text = opts.cancelLabel
-						} else if opts.extraButton != nil {
-							text = opts.extraButton
 						} else {
 							text = opts.okLabel
 						}
