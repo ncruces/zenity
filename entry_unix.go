@@ -9,18 +9,8 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, opts options) (bool, error) {
-	args := []string{"--text", text, "--no-markup"}
-	switch kind {
-	case questionKind:
-		args = append(args, "--question")
-	case infoKind:
-		args = append(args, "--info")
-	case warningKind:
-		args = append(args, "--warning")
-	case errorKind:
-		args = append(args, "--error")
-	}
+func entry(text string, opts options) (string, error) {
+	args := []string{"--entry", "--text", text}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
 	}
@@ -39,38 +29,27 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	if opts.extraButton != nil {
 		args = append(args, "--extra-button", *opts.extraButton)
 	}
-	if opts.noWrap {
-		args = append(args, "--no-wrap")
-	}
-	if opts.ellipsize {
-		args = append(args, "--ellipsize")
-	}
-	if opts.defaultCancel {
-		args = append(args, "--default-cancel")
-	}
 	switch opts.icon {
-	case NoIcon:
-		args = append(args, "--icon-name=")
 	case ErrorIcon:
-		args = append(args, "--window-icon=error", "--icon-name=dialog-error")
+		args = append(args, "--window-icon=error")
 	case WarningIcon:
-		args = append(args, "--window-icon=warning", "--icon-name=dialog-warning")
+		args = append(args, "--window-icon=warning")
 	case InfoIcon:
-		args = append(args, "--window-icon=info", "--icon-name=dialog-information")
+		args = append(args, "--window-icon=info")
 	case QuestionIcon:
-		args = append(args, "--window-icon=question", "--icon-name=dialog-question")
+		args = append(args, "--window-icon=question")
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		if len(out) > 0 && opts.extraButton != nil &&
 			string(out[:len(out)-1]) == *opts.extraButton {
-			return false, ErrExtraButton
+			return "", ErrExtraButton
 		}
-		return false, nil
+		return "", nil
 	}
 	if err != nil {
-		return false, err
+		return "", err
 	}
-	return true, err
+	return string(out[:len(out)-1]), err
 }

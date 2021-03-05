@@ -7,11 +7,7 @@ import (
 )
 
 func notify(text string, opts options) error {
-	args := []string{"--notification"}
-
-	if text != "" {
-		args = append(args, "--text", text, "--no-markup")
-	}
+	args := []string{"--notification", "--text", text}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
 	}
