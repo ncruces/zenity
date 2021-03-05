@@ -7,7 +7,7 @@ import (
 )
 
 func message(kind messageKind, text string, opts options) (bool, error) {
-	var data zenutil.Msg
+	var data zenutil.Dialog
 	data.Text = text
 	data.Options.Timeout = zenutil.Timeout
 
@@ -99,12 +99,12 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		}
 	}
 
-	out, err := zenutil.Run(opts.ctx, "msg", data)
-	if len(out) > 0 && opts.extraButton != nil &&
-		string(out[:len(out)-1]) == *opts.extraButton {
-		return false, ErrExtraButton
-	}
+	out, err := zenutil.Run(opts.ctx, "dialog", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		if len(out) > 0 && opts.extraButton != nil &&
+			string(out[:len(out)-1]) == *opts.extraButton {
+			return false, ErrExtraButton
+		}
 		return false, nil
 	}
 	if err != nil {

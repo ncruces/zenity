@@ -13,3 +13,4 @@ if (res.buttonReturned === {{json .Extra}}) {
 	$.puts(res.buttonReturned)
 	$.exit(1)
 }
+res.textReturned

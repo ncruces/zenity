@@ -65,11 +65,11 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if len(out) > 0 && opts.extraButton != nil &&
-		string(out[:len(out)-1]) == *opts.extraButton {
-		return false, ErrExtraButton
-	}
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
+		if len(out) > 0 && opts.extraButton != nil &&
+			string(out[:len(out)-1]) == *opts.extraButton {
+			return false, ErrExtraButton
+		}
 		return false, nil
 	}
 	if err != nil {

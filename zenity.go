@@ -48,6 +48,10 @@ type options struct {
 	ellipsize     bool
 	defaultCancel bool
 
+	// Entry options
+	entryText string
+	hideText  bool
+
 	// Context for timeout
 	ctx context.Context
 }

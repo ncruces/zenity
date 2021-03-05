@@ -24,6 +24,7 @@ const (
 var (
 	// Application Options
 	notification      bool
+	entryDlg          bool
 	errorDlg          bool
 	infoDlg           bool
 	warningDlg        bool
@@ -35,9 +36,13 @@ var (
 	title  string
 	width  uint
 	height uint
+	text   string
+
+	// Entry options
+	entryText string
+	hideText  bool
 
 	// Message options
-	text          string
 	icon          string
 	okLabel       string
 	cancelLabel   string
@@ -89,6 +94,9 @@ func main() {
 	case notification:
 		errResult(zenity.Notify(text, opts...))
 
+	case entryDlg:
+		strResult(zenity.Entry(text, opts...))
+
 	case errorDlg:
 		okResult(zenity.Error(text, opts...))
 	case infoDlg:
@@ -118,6 +126,7 @@ func main() {
 func setupFlags() {
 	// Application Options
 	flag.BoolVar(&notification, "notification", false, "Display notification")
+	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
 	flag.BoolVar(&errorDlg, "error", false, "Display error dialog")
 	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
 	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
@@ -130,9 +139,13 @@ func setupFlags() {
 	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.UintVar(&width, "width", 0, "Set the `width`")
 	flag.UintVar(&height, "height", 0, "Set the `height`")
+	flag.StringVar(&text, "text", "", "Set the dialog `text`")
+
+	// Entry options
+	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
+	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
 
 	// Message options
-	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
@@ -179,6 +192,9 @@ func validateFlags() {
 	if notification {
 		n++
 	}
+	if entryDlg {
+		n++
+	}
 	if errorDlg {
 		n++
 	}
@@ -213,6 +229,11 @@ func loadFlags() []zenity.Option {
 		}
 	}
 	switch {
+	case entryDlg:
+		setDefault(&title, "Add a new entry")
+		setDefault(&text, "Enter new text:")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
 	case errorDlg:
 		setDefault(&title, "Error")
 		setDefault(&icon, "dialog-error")
@@ -245,6 +266,12 @@ func loadFlags() []zenity.Option {
 	}
 	opts = append(opts, zenity.Width(width))
 	opts = append(opts, zenity.Height(height))
+
+	// Entry options
+	opts = append(opts, zenity.EntryText(entryText))
+	if hideText {
+		opts = append(opts, zenity.HideText())
+	}
 
 	// Message options
 

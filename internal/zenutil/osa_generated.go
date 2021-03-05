@@ -17,14 +17,7 @@ app.activate()
 var res=app.chooseColor({defaultColor:{{json .}}})
 {"rgb("+res.map(x=>Math.round(x*255))+")"}
 {{- end}}
-{{define "file" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
-var res=app.{{.Operation}}({{json .Options}})
-if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
-{{- end}}
-{{define "msg" -}}
+{{define "dialog" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
@@ -34,7 +27,14 @@ var res=app.{{.Operation}}({{json .Text}},{{json .Options}})
 if(res.gaveUp){$.exit(5)}
 if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
 $.exit(1)}
-void 0
+res.textReturned
+{{- end}}
+{{define "file" -}}
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+app.activate()
+var res=app.{{.Operation}}({{json .Options}})
+if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
 {{define "notify" -}}
 var app=Application.currentApplication()

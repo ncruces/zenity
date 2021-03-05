@@ -64,18 +64,20 @@ type FileOptions struct {
 	Invisibles bool     `json:"invisibles,omitempty"`
 }
 
-// Msg is internal.
-type Msg struct {
+// Dialog is internal.
+type Dialog struct {
 	Operation string
 	Text      string
 	Extra     *string
-	Options   MsgOptions
+	Options   DialogOptions
 }
 
-// MsgOptions is internal.
-type MsgOptions struct {
+// DialogOptions is internal.
+type DialogOptions struct {
 	Message string   `json:"message,omitempty"`
 	As      string   `json:"as,omitempty"`
+	Answer  *string  `json:"defaultAnswer,omitempty"`
+	Hidden  bool     `json:"hiddenAnswer,omitempty"`
 	Title   *string  `json:"withTitle,omitempty"`
 	Icon    string   `json:"withIcon,omitempty"`
 	Buttons []string `json:"buttons,omitempty"`
