@@ -10,7 +10,7 @@ import (
 )
 
 func entry(text string, opts options) (string, error) {
-	args := []string{"--entry", "--text", text}
+	args := []string{"--entry", "--text", text, "--entry-text", opts.entryText}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
 	}
@@ -28,6 +28,9 @@ func entry(text string, opts options) (string, error) {
 	}
 	if opts.extraButton != nil {
 		args = append(args, "--extra-button", *opts.extraButton)
+	}
+	if opts.hideText {
+		args = append(args, "--hide-text")
 	}
 	switch opts.icon {
 	case ErrorIcon:

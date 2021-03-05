@@ -11,11 +11,11 @@ import (
 
 func selectFile(opts options) (string, error) {
 	args := []string{"--file-selection"}
-	if opts.directory {
-		args = append(args, "--directory")
-	}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
+	}
+	if opts.directory {
+		args = append(args, "--directory")
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
@@ -37,11 +37,11 @@ func selectFile(opts options) (string, error) {
 
 func selectFileMutiple(opts options) ([]string, error) {
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
-	if opts.directory {
-		args = append(args, "--directory")
-	}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
+	}
+	if opts.directory {
+		args = append(args, "--directory")
 	}
 	if opts.filename != "" {
 		args = append(args, "--filename", opts.filename)
@@ -63,17 +63,17 @@ func selectFileMutiple(opts options) ([]string, error) {
 
 func selectFileSave(opts options) (string, error) {
 	args := []string{"--file-selection", "--save"}
-	if opts.directory {
-		args = append(args, "--directory")
-	}
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
 	}
-	if opts.filename != "" {
-		args = append(args, "--filename", opts.filename)
+	if opts.directory {
+		args = append(args, "--directory")
 	}
 	if opts.confirmOverwrite {
 		args = append(args, "--confirm-overwrite")
+	}
+	if opts.filename != "" {
+		args = append(args, "--filename", opts.filename)
 	}
 	args = append(args, initFilters(opts.fileFilters)...)
 

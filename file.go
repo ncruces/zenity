@@ -33,15 +33,6 @@ func SelectFileSave(options ...Option) (string, error) {
 	return selectFileSave(applyOptions(options))
 }
 
-// Filename returns an Option to set the filename.
-//
-// You can specify a file name, a directory path, or both.
-// Specifying a file name, makes it the default selected file.
-// Specifying a directory path, makes it the default dialog location.
-func Filename(filename string) Option {
-	return funcOption(func(o *options) { o.filename = filename })
-}
-
 // Directory returns an Option to activate directory-only selection.
 func Directory() Option {
 	return funcOption(func(o *options) { o.directory = true })
@@ -62,6 +53,15 @@ func ConfirmCreate() Option {
 // ShowHidden returns an Option to show hidden files (Windows and macOS only).
 func ShowHidden() Option {
 	return funcOption(func(o *options) { o.showHidden = true })
+}
+
+// Filename returns an Option to set the filename.
+//
+// You can specify a file name, a directory path, or both.
+// Specifying a file name, makes it the default selected file.
+// Specifying a directory path, makes it the default dialog location.
+func Filename(filename string) Option {
+	return funcOption(func(o *options) { o.filename = filename })
 }
 
 // FileFilter is an Option that sets a filename filter.

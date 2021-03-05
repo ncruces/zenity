@@ -23,34 +23,34 @@ func stringPtr(s string) *string { return &s }
 
 type options struct {
 	// General options
-	title  *string
-	width  uint
-	height uint
+	title       *string
+	width       uint
+	height      uint
+	okLabel     *string
+	cancelLabel *string
+	extraButton *string
+	icon        DialogIcon
+
+	// Entry options
+	entryText string
+	hideText  bool
+
+	// Message options
+	noWrap        bool
+	ellipsize     bool
+	defaultCancel bool
 
 	// File selection options
-	filename         string
 	directory        bool
 	confirmOverwrite bool
 	confirmCreate    bool
 	showHidden       bool
+	filename         string
 	fileFilters      []FileFilter
 
 	// Color selection options
 	color       color.Color
 	showPalette bool
-
-	// Message options
-	icon          DialogIcon
-	okLabel       *string
-	cancelLabel   *string
-	extraButton   *string
-	noWrap        bool
-	ellipsize     bool
-	defaultCancel bool
-
-	// Entry options
-	entryText string
-	hideText  bool
 
 	// Context for timeout
 	ctx context.Context
@@ -92,6 +92,21 @@ func Height(height uint) Option {
 	})
 }
 
+// OKLabel returns an Option to set the label of the OK button.
+func OKLabel(ok string) Option {
+	return funcOption(func(o *options) { o.okLabel = &ok })
+}
+
+// CancelLabel returns an Option to set the label of the Cancel button.
+func CancelLabel(cancel string) Option {
+	return funcOption(func(o *options) { o.cancelLabel = &cancel })
+}
+
+// ExtraButton returns an Option to add an extra button.
+func ExtraButton(extra string) Option {
+	return funcOption(func(o *options) { o.extraButton = &extra })
+}
+
 // DialogIcon is the enumeration for dialog icons.
 type DialogIcon int
 
@@ -101,6 +116,7 @@ const (
 	WarningIcon
 	InfoIcon
 	QuestionIcon
+	PasswordIcon
 	NoIcon
 )
 

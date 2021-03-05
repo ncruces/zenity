@@ -8,8 +8,8 @@ const ErrExtraButton = stringErr("Extra button pressed")
 //
 // Returns true on OK, false on Cancel, or ErrExtraButton.
 //
-// Valid options: Title, Width, Height, Icon, OKLabel, CancelLabel,
-// ExtraButton, NoWrap, Ellipsize, DefaultCancel.
+// Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
+// Icon, NoWrap, Ellipsize, DefaultCancel.
 func Question(text string, options ...Option) (bool, error) {
 	return message(questionKind, text, applyOptions(options))
 }
@@ -18,7 +18,7 @@ func Question(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
 func Info(text string, options ...Option) (bool, error) {
 	return message(infoKind, text, applyOptions(options))
@@ -28,7 +28,7 @@ func Info(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
 func Warning(text string, options ...Option) (bool, error) {
 	return message(warningKind, text, applyOptions(options))
@@ -38,7 +38,7 @@ func Warning(text string, options ...Option) (bool, error) {
 //
 // Returns true on OK, false on dismiss, or ErrExtraButton.
 //
-// Valid options: Title, Width, Height, Icon, OKLabel, ExtraButton,
+// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
 func Error(text string, options ...Option) (bool, error) {
 	return message(errorKind, text, applyOptions(options))
@@ -52,21 +52,6 @@ const (
 	warningKind
 	errorKind
 )
-
-// OKLabel returns an Option to set the label of the OK button.
-func OKLabel(ok string) Option {
-	return funcOption(func(o *options) { o.okLabel = &ok })
-}
-
-// CancelLabel returns an Option to set the label of the Cancel button.
-func CancelLabel(cancel string) Option {
-	return funcOption(func(o *options) { o.cancelLabel = &cancel })
-}
-
-// ExtraButton returns an Option to add an extra button.
-func ExtraButton(extra string) Option {
-	return funcOption(func(o *options) { o.extraButton = &extra })
-}
 
 // NoWrap returns an Option to disable enable text wrapping (Unix only).
 func NoWrap() Option {

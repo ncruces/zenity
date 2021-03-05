@@ -33,20 +33,20 @@ var (
 	colorSelectionDlg bool
 
 	// General options
-	title  string
-	width  uint
-	height uint
-	text   string
+	title       string
+	width       uint
+	height      uint
+	okLabel     string
+	cancelLabel string
+	extraButton string
+	text        string
+	icon        string
 
 	// Entry options
 	entryText string
 	hideText  bool
 
 	// Message options
-	icon          string
-	okLabel       string
-	cancelLabel   string
-	extraButton   string
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
@@ -136,10 +136,13 @@ func setupFlags() {
 
 	// General options
 	flag.StringVar(&title, "title", "", "Set the dialog `title`")
-	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.UintVar(&width, "width", 0, "Set the `width`")
 	flag.UintVar(&height, "height", 0, "Set the `height`")
+	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
+	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
+	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
+	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 
 	// Entry options
 	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
@@ -147,9 +150,6 @@ func setupFlags() {
 
 	// Message options
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
-	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
-	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
-	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
 	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
@@ -180,11 +180,11 @@ func setupFlags() {
 
 	// Detect unspecified values
 	title = unspecified
-	icon = unspecified
-	text = unspecified
 	okLabel = unspecified
 	cancelLabel = unspecified
 	extraButton = unspecified
+	text = unspecified
+	icon = unspecified
 }
 
 func validateFlags() {
@@ -266,30 +266,6 @@ func loadFlags() []zenity.Option {
 	}
 	opts = append(opts, zenity.Width(width))
 	opts = append(opts, zenity.Height(height))
-
-	// Entry options
-	opts = append(opts, zenity.EntryText(entryText))
-	if hideText {
-		opts = append(opts, zenity.HideText())
-	}
-
-	// Message options
-
-	var ico zenity.DialogIcon
-	switch icon {
-	case "":
-		ico = zenity.NoIcon
-	case "error", "dialog-error":
-		ico = zenity.ErrorIcon
-	case "info", "dialog-information":
-		ico = zenity.InfoIcon
-	case "question", "dialog-question":
-		ico = zenity.QuestionIcon
-	case "important", "warning", "dialog-warning":
-		ico = zenity.WarningIcon
-	}
-
-	opts = append(opts, zenity.Icon(ico))
 	if okLabel != unspecified {
 		opts = append(opts, zenity.OKLabel(okLabel))
 	}
@@ -299,6 +275,33 @@ func loadFlags() []zenity.Option {
 	if extraButton != unspecified {
 		opts = append(opts, zenity.ExtraButton(extraButton))
 	}
+
+	var ico zenity.DialogIcon
+	switch icon {
+	case "error", "dialog-error":
+		ico = zenity.ErrorIcon
+	case "info", "dialog-information":
+		ico = zenity.InfoIcon
+	case "question", "dialog-question":
+		ico = zenity.QuestionIcon
+	case "important", "warning", "dialog-warning":
+		ico = zenity.WarningIcon
+	case "dialog-password":
+		ico = zenity.PasswordIcon
+	case "":
+		ico = zenity.NoIcon
+	}
+	opts = append(opts, zenity.Icon(ico))
+
+	// Entry options
+
+	opts = append(opts, zenity.EntryText(entryText))
+	if hideText {
+		opts = append(opts, zenity.HideText())
+	}
+
+	// Message options
+
 	if noWrap {
 		opts = append(opts, zenity.NoWrap())
 	}
@@ -311,10 +314,6 @@ func loadFlags() []zenity.Option {
 
 	// File selection options
 
-	opts = append(opts, fileFilters)
-	if filename != "" {
-		opts = append(opts, zenity.Filename(ingestPath(filename)))
-	}
 	if directory {
 		opts = append(opts, zenity.Directory())
 	}
@@ -327,6 +326,10 @@ func loadFlags() []zenity.Option {
 	if showHidden {
 		opts = append(opts, zenity.ShowHidden())
 	}
+	if filename != "" {
+		opts = append(opts, zenity.Filename(ingestPath(filename)))
+	}
+	opts = append(opts, fileFilters)
 
 	// Color selection options
 

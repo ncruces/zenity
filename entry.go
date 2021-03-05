@@ -4,7 +4,8 @@ package zenity
 //
 // Returns nil on cancel.
 //
-// Valid options: Title, Text, EntryText, HideText.
+// Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
+// Icon, EntryText, HideText.
 func Entry(text string, options ...Option) (string, error) {
 	return entry(text, applyOptions(options))
 }

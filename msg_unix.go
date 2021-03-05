@@ -49,8 +49,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		args = append(args, "--default-cancel")
 	}
 	switch opts.icon {
-	case NoIcon:
-		args = append(args, "--icon-name=")
 	case ErrorIcon:
 		args = append(args, "--window-icon=error", "--icon-name=dialog-error")
 	case WarningIcon:
@@ -59,6 +57,10 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		args = append(args, "--window-icon=info", "--icon-name=dialog-information")
 	case QuestionIcon:
 		args = append(args, "--window-icon=question", "--icon-name=dialog-question")
+	case PasswordIcon:
+		args = append(args, "--icon-name=dialog-password")
+	case NoIcon:
+		args = append(args, "--icon-name=")
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
