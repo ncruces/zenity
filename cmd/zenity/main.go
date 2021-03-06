@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"image/color"
@@ -443,8 +444,8 @@ func ingestPath(path string) string {
 		if args != nil {
 			args = append(args, path)
 			out, err := exec.Command(args[0], args[1:]...).Output()
-			if len(out) > 0 && err == nil {
-				path = string(out[:len(out)-1])
+			if err == nil {
+				path = string(bytes.TrimSuffix(out, []byte{'\n'}))
 			}
 		}
 	}
@@ -464,8 +465,8 @@ func egestPath(path string, err error) (string, error) {
 			var out []byte
 			args = append(args, filepath.ToSlash(path))
 			out, err = exec.Command(args[0], args[1:]...).Output()
-			if len(out) > 0 && err == nil {
-				path = string(out[:len(out)-1])
+			if err == nil {
+				path = string(bytes.TrimSuffix(out, []byte{'\n'}))
 			}
 		}
 	}

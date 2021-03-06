@@ -29,12 +29,12 @@ func ParseColor(s string) color.Color {
 
 	if len(s) >= 10 {
 		c := color.NRGBA{A: 0xff}
-		if _, err := fmt.Sscanf(s, "rgb(%d,%d,%d)\n", &c.R, &c.G, &c.B); err == nil {
+		if _, err := fmt.Sscanf(s, "rgb(%d,%d,%d)", &c.R, &c.G, &c.B); err == nil {
 			return c
 		}
 
 		var a float32
-		if _, err := fmt.Sscanf(s, "rgba(%d,%d,%d,%f)\n", &c.R, &c.G, &c.B, &a); err == nil {
+		if _, err := fmt.Sscanf(s, "rgba(%d,%d,%d,%f)", &c.R, &c.G, &c.B, &a); err == nil {
 			c.A = uint8(255*a + 0.5)
 			return c
 		}

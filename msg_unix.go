@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"bytes"
 	"os/exec"
 	"strconv"
 
@@ -65,8 +66,8 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 
 	out, err := zenutil.Run(opts.ctx, args)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if len(out) > 0 && opts.extraButton != nil &&
-			string(out[:len(out)-1]) == *opts.extraButton {
+		if opts.extraButton != nil &&
+			*opts.extraButton == string(bytes.TrimSuffix(out, []byte{'\n'})) {
 			return false, ErrExtraButton
 		}
 		return false, nil

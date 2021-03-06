@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"bytes"
 	"os/exec"
 	"strings"
 
@@ -23,16 +24,13 @@ func selectFile(opts options) (string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}
 	if err != nil {
 		return "", err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+	return string(bytes.TrimSuffix(out, []byte{'\n'})), nil
 }
 
 func selectFileMutiple(opts options) ([]string, error) {
@@ -49,14 +47,15 @@ func selectFileMutiple(opts options) ([]string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
+	out = bytes.TrimSuffix(out, []byte{'\n'})
+	if len(out) == 0 {
+		return nil, nil
 	}
 	return strings.Split(string(out), zenutil.Separator), nil
 }
@@ -78,16 +77,13 @@ func selectFileSave(opts options) (string, error) {
 	args = append(args, initFilters(opts.fileFilters)...)
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return "", nil
 	}
 	if err != nil {
 		return "", err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+	return string(bytes.TrimSuffix(out, []byte{'\n'})), nil
 }
 
 func initFilters(filters []FileFilter) []string {

@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"bytes"
 	"os/exec"
 	"strings"
 
@@ -27,10 +28,7 @@ func selectFile(opts options) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+	return string(bytes.TrimSuffix(out, []byte{'\n'})), nil
 }
 
 func selectFileMutiple(opts options) ([]string, error) {
@@ -55,9 +53,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
+	out = bytes.TrimSuffix(out, []byte{'\n'})
 	if len(out) == 0 {
 		return nil, nil
 	}
@@ -83,10 +79,7 @@ func selectFileSave(opts options) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(out) > 0 {
-		out = out[:len(out)-1]
-	}
-	return string(out), nil
+	return string(bytes.TrimSuffix(out, []byte{'\n'})), nil
 }
 
 func initFilters(filters []FileFilter) []string {

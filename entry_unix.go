@@ -3,6 +3,7 @@
 package zenity
 
 import (
+	"bytes"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -45,9 +46,10 @@ func entry(text string, opts options) (string, bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
+	out = bytes.TrimSuffix(out, []byte{'\n'})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if len(out) > 0 && opts.extraButton != nil &&
-			string(out[:len(out)-1]) == *opts.extraButton {
+		if opts.extraButton != nil &&
+			*opts.extraButton == string(out) {
 			return "", false, ErrExtraButton
 		}
 		return "", false, nil
@@ -55,7 +57,7 @@ func entry(text string, opts options) (string, bool, error) {
 	if err != nil {
 		return "", false, err
 	}
-	return string(out[:len(out)-1]), true, nil
+	return string(out), true, nil
 }
 
 func password(opts options) (string, string, bool, error) {
@@ -77,9 +79,10 @@ func password(opts options) (string, string, bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
+	out = bytes.TrimSuffix(out, []byte{'\n'})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if len(out) > 0 && opts.extraButton != nil &&
-			string(out[:len(out)-1]) == *opts.extraButton {
+		if opts.extraButton != nil &&
+			*opts.extraButton == string(out) {
 			return "", "", false, ErrExtraButton
 		}
 		return "", "", false, nil
@@ -88,9 +91,9 @@ func password(opts options) (string, string, bool, error) {
 		return "", "", false, err
 	}
 	if opts.username {
-		if split := strings.SplitN(string(out[:len(out)-1]), "|", 2); len(split) == 2 {
+		if split := strings.SplitN(string(out), "|", 2); len(split) == 2 {
 			return split[0], split[1], true, nil
 		}
 	}
-	return "", string(out[:len(out)-1]), true, nil
+	return "", string(out), true, nil
 }

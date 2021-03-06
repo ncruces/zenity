@@ -23,7 +23,7 @@ func selectColor(opts options) (color.Color, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() != 255 {
+	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		return nil, nil
 	}
 	if err != nil {
