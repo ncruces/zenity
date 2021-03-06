@@ -34,6 +34,7 @@ type options struct {
 	// Entry options
 	entryText string
 	hideText  bool
+	username  bool
 
 	// Message options
 	noWrap        bool

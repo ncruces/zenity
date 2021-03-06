@@ -6,7 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func entry(text string, opts options) (string, error) {
+func entry(text string, opts options) (string, bool, error) {
 	var data zenutil.Dialog
 	data.Text = text
 	data.Operation = "displayDialog"
@@ -47,12 +47,18 @@ func entry(text string, opts options) (string, error) {
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		if len(out) > 0 && opts.extraButton != nil &&
 			string(out[:len(out)-1]) == *opts.extraButton {
-			return "", ErrExtraButton
+			return "", false, ErrExtraButton
 		}
-		return "", nil
+		return "", false, nil
 	}
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
-	return string(out[:len(out)-1]), err
+	return string(out[:len(out)-1]), true, nil
+}
+
+func password(opts options) (string, string, bool, error) {
+	opts.hideText = true
+	pass, ok, err := entry("Type your password", opts)
+	return "", pass, ok, err
 }

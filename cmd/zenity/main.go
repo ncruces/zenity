@@ -29,6 +29,7 @@ var (
 	infoDlg           bool
 	warningDlg        bool
 	questionDlg       bool
+	passwordDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
 
@@ -95,7 +96,7 @@ func main() {
 		errResult(zenity.Notify(text, opts...))
 
 	case entryDlg:
-		strResult(zenity.Entry(text, opts...))
+		strOKResult(zenity.Entry(text, opts...))
 
 	case errorDlg:
 		okResult(zenity.Error(text, opts...))
@@ -105,6 +106,10 @@ func main() {
 		okResult(zenity.Warning(text, opts...))
 	case questionDlg:
 		okResult(zenity.Question(text, opts...))
+
+	case passwordDlg:
+		_, pw, ok, err := zenity.Password(opts...)
+		strOKResult(pw, ok, err)
 
 	case fileSelectionDlg:
 		switch {
@@ -131,6 +136,7 @@ func setupFlags() {
 	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
 	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
+	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
 
@@ -207,6 +213,9 @@ func validateFlags() {
 	if questionDlg {
 		n++
 	}
+	if passwordDlg {
+		n++
+	}
 	if fileSelectionDlg {
 		n++
 	}
@@ -255,6 +264,10 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "Yes")
 		setDefault(&cancelLabel, "No")
+	case passwordDlg:
+		setDefault(&icon, "dialog-password")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
 	default:
 		setDefault(&text, "")
 	}
@@ -386,11 +399,11 @@ func listResult(l []string, err error) {
 	if err != nil {
 		errResult(err)
 	}
-	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
-	os.Stdout.WriteString(zenutil.LineBreak)
 	if l == nil {
 		os.Exit(1)
 	}
+	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
+	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
@@ -402,6 +415,18 @@ func colorResult(c color.Color, err error) {
 		os.Exit(1)
 	}
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
+	os.Stdout.WriteString(zenutil.LineBreak)
+	os.Exit(0)
+}
+
+func strOKResult(s string, ok bool, err error) {
+	if err != nil {
+		errResult(err)
+	}
+	if !ok {
+		os.Exit(1)
+	}
+	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
