@@ -1,22 +1,34 @@
-// +build windows,!linux,!darwin,!js
+// This file was imported from: github.com/gen2brain/dlgs
+// Copyright (c) 2017, Milan Nikolic <gen2brain>
+// Licensed under the BSD 2-Clause "Simplified" License.
 
-package dlgs
+package zenity
 
 import (
-	"strings"
 	"syscall"
-	"unicode/utf16"
 	"unsafe"
 )
 
-var (
-	user32   = syscall.NewLazyDLL("user32.dll")
-	gdi32    = syscall.NewLazyDLL("gdi32.dll")
-	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
-	shell32  = syscall.NewLazyDLL("shell32.dll")
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+func entry(text string, opts options) (string, bool, error) {
+	var title string
+	if opts.title != nil {
+		title = *opts.title
+	}
+	return editBox(title, text, opts.entryText, "ClassEntry", false)
+}
 
-	messageBoxW           = user32.NewProc("MessageBoxW")
+func password(opts options) (string, string, bool, error) {
+	var title string
+	if opts.title != nil {
+		title = *opts.title
+	}
+	pass, ok, err := editBox(title, "Type your password", "", "ClassPassword", true)
+	return "", pass, ok, err
+}
+
+var (
+	gdi32 = syscall.NewLazyDLL("gdi32.dll")
+
 	createWindowExW       = user32.NewProc("CreateWindowExW")
 	defWindowProcW        = user32.NewProc("DefWindowProcW")
 	destroyWindowW        = user32.NewProc("DestroyWindow")
@@ -27,7 +39,6 @@ var (
 	registerClassExW      = user32.NewProc("RegisterClassExW")
 	unregisterClassW      = user32.NewProc("UnregisterClassW")
 	translateMessageW     = user32.NewProc("TranslateMessage")
-	setWindowTextW        = user32.NewProc("SetWindowTextW")
 	getWindowTextLengthW  = user32.NewProc("GetWindowTextLengthW")
 	getWindowTextW        = user32.NewProc("GetWindowTextW")
 	getWindowLongW        = user32.NewProc("GetWindowLongW")
@@ -42,30 +53,10 @@ var (
 
 	createFontIndirectW = gdi32.NewProc("CreateFontIndirectW")
 
-	getOpenFileNameW = comdlg32.NewProc("GetOpenFileNameW")
-	chooseColorW     = comdlg32.NewProc("ChooseColorW")
-
-	shBrowseForFolderW   = shell32.NewProc("SHBrowseForFolderW")
-	shGetPathFromIDListW = shell32.NewProc("SHGetPathFromIDListW")
-
 	getModuleHandleW = kernel32.NewProc("GetModuleHandleW")
 )
 
 const (
-	mbOk    = 0x00000000
-	mbYesNo = 0x00000004
-
-	mbDefaultIcon1 = 0x00000000
-	mbDefaultIcon2 = 0x00000100
-
-	mbIconInfo     = 0x00000040
-	mbIconWarning  = 0x00000030
-	mbIconError    = 0x00000010
-	mbIconQuestion = 0x00000020
-
-	idOk  = 1
-	idYes = 6
-
 	swShow       = 5
 	swShowNormal = 1
 	swUseDefault = 0x80000000
@@ -97,45 +88,13 @@ const (
 	wmKeydown    = 0x0100
 	wmInitDialog = 0x0110
 
-	ofnAllowMultiSelect = 0x00000200
-	ofnExplorer         = 0x00080000
-	ofnFileMustExist    = 0x00001000
-	ofnHideReadOnly     = 0x00000004
-	ofnOverwriteprompt  = 0x00000002
-
 	esPassword    = 0x0020
 	esAutoVScroll = 0x0040
 	esAutoHScroll = 0x0080
 
-	bifEditBox        = 0x00000010
-	bifNewDialogStyle = 0x00000040
-
-	ccRgbInit  = 0x00000001
-	ccFullOpen = 0x00000002
-
-	lbAddString   = 0x0180
-	lbGetCurSel   = 0x0188
-	lbGetSelCount = 0x0190
-	lbGetSelItems = 0x0191
-	lbGetItemData = 0x0199
-	lbSetItemData = 0x019A
-
-	lbSeparator = "LB_SEP"
-
-	lbsExtendedsel = 0x0800
-
-	dtsUpdown          = 0x0001
-	dtsShowNone        = 0x0002
-	dtsShortDateFormat = 0x0000
-	dtsLongDateFormat  = 0x0004
-
 	dtmFirst         = 0x1000
 	dtmGetSystemTime = dtmFirst + 1
 	dtmSetSystemTime = dtmFirst + 2
-
-	gdtError = -1
-	gdtValid = 0
-	gdtNone  = 1
 
 	vkEscape               = 0x1B
 	enUpdate               = 0x0400
@@ -220,76 +179,6 @@ type rectW struct {
 	bottom int32
 }
 
-// openfilenameW https://msdn.microsoft.com/en-us/library/windows/desktop/ms646839.aspx
-type openfilenameW struct {
-	lStructSize       uint32
-	hwndOwner         syscall.Handle
-	hInstance         syscall.Handle
-	lpstrFilter       *uint16
-	lpstrCustomFilter *uint16
-	nMaxCustFilter    uint32
-	nFilterIndex      uint32
-	lpstrFile         *uint16
-	nMaxFile          uint32
-	lpstrFileTitle    *uint16
-	nMaxFileTitle     uint32
-	lpstrInitialDir   *uint16
-	lpstrTitle        *uint16
-	flags             uint32
-	nFileOffset       uint16
-	nFileExtension    uint16
-	lpstrDefExt       *uint16
-	lCustData         uintptr
-	lpfnHook          syscall.Handle
-	lpTemplateName    *uint16
-	pvReserved        unsafe.Pointer
-	dwReserved        uint32
-	flagsEx           uint32
-}
-
-// browseinfoW http://msdn.microsoft.com/en-us/library/windows/desktop/bb773205.aspx
-type browseinfoW struct {
-	owner        syscall.Handle
-	root         *uint16
-	displayName  *uint16
-	title        *uint16
-	flags        uint32
-	callbackFunc uintptr
-	lParam       uintptr
-	image        int32
-}
-
-// choosecolorW https://msdn.microsoft.com/en-us/library/windows/desktop/ms646830.aspx
-type choosecolorW struct {
-	lStructSize    uint32
-	hwndOwner      syscall.Handle
-	hInstance      syscall.Handle
-	rgbResult      uint32
-	lpCustColors   *uint32
-	flags          uint32
-	lCustData      uintptr
-	lpfnHook       uintptr
-	lpTemplateName *uint16
-}
-
-// systemtimeW https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950.aspx
-type systemtimeW struct {
-	wYear         uint16
-	wMonth        uint16
-	wDayOfWeek    uint16
-	wDay          uint16
-	wHour         uint16
-	wMinute       uint16
-	wSecond       uint16
-	wMilliseconds uint16
-}
-
-func messageBox(title, text string, flags int) int {
-	ret, _, _ := messageBoxW.Call(0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))), uintptr(uint(flags)))
-	return int(ret)
-}
-
 func getModuleHandle() (syscall.Handle, error) {
 	ret, _, err := getModuleHandleW.Call(uintptr(0))
 	if ret == 0 {
@@ -352,7 +241,7 @@ func getMessage(msg *msgW, hwnd syscall.Handle, msgFilterMin, msgFilterMax uint3
 	return int32(ret) != 0, nil
 }
 
-func sendMessage(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
+func _sendMessage(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
 	ret, _, _ := sendMessageW.Call(uintptr(hwnd), uintptr(msg), wparam, lparam, 0, 0)
 	return ret
 }
@@ -367,10 +256,6 @@ func postQuitMessage(exitCode int32) {
 
 func translateMessage(msg *msgW) {
 	translateMessageW.Call(uintptr(unsafe.Pointer(msg)))
-}
-
-func setWindowText(hwnd syscall.Handle, text string) {
-	setWindowTextW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))))
 }
 
 func getWindowTextLength(hwnd syscall.Handle) int {
@@ -438,26 +323,6 @@ func getSystemMetrics(nindex int32) int32 {
 	return int32(ret)
 }
 
-func getOpenFileName(lpofn *openfilenameW) bool {
-	ret, _, _ := getOpenFileNameW.Call(uintptr(unsafe.Pointer(lpofn)), 0, 0)
-	return ret != 0
-}
-
-func shBrowseForFolder(lpbi *browseinfoW) uintptr {
-	ret, _, _ := shBrowseForFolderW.Call(uintptr(unsafe.Pointer(lpbi)), 0, 0)
-	return ret
-}
-
-func shGetPathFromIDList(pidl uintptr, pszPath *uint16) bool {
-	ret, _, _ := shGetPathFromIDListW.Call(pidl, uintptr(unsafe.Pointer(pszPath)), 0)
-	return ret != 0
-}
-
-func chooseColor(lpcc *choosecolorW) bool {
-	ret, _, _ := chooseColorW.Call(uintptr(unsafe.Pointer(lpcc)), 0, 0)
-	return ret != 0
-}
-
 func centerWindow(hwnd syscall.Handle) {
 	var rc rectW
 	getWindowRect(hwnd, &rc)
@@ -504,17 +369,6 @@ func messageLoop(hwnd syscall.Handle) error {
 	}
 
 	return nil
-}
-
-func utf16PtrFromString(s string) *uint16 {
-	b := utf16.Encode([]rune(s))
-	return &b[0]
-}
-
-func stringFromUtf16Ptr(p *uint16) string {
-	b := *(*[maxPath]uint16)(unsafe.Pointer(p))
-	r := utf16.Decode(b[:])
-	return strings.Trim(string(r), "\x00")
 }
 
 // editBox displays textedit/inputbox dialog.
@@ -579,10 +433,10 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 	setWindowLong(hwnd, gwlStyle, getWindowLong(hwnd, gwlStyle)^wsMaximizeBox)
 
 	font := getMessageFont()
-	sendMessage(hwndText, wmSetFont, font, 0)
-	sendMessage(hwndEdit, wmSetFont, font, 0)
-	sendMessage(hwndOK, wmSetFont, font, 0)
-	sendMessage(hwndCancel, wmSetFont, font, 0)
+	_sendMessage(hwndText, wmSetFont, font, 0)
+	_sendMessage(hwndEdit, wmSetFont, font, 0)
+	_sendMessage(hwndOK, wmSetFont, font, 0)
+	_sendMessage(hwndCancel, wmSetFont, font, 0)
 
 	centerWindow(hwnd)
 
