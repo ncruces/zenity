@@ -2,7 +2,7 @@ package zenity
 
 // ErrExtraButton is returned by dialog functions when the extra button is
 // pressed.
-const ErrExtraButton = stringErr("Extra button pressed")
+const ErrExtraButton = stringErr("extra button pressed")
 
 // Question displays the question dialog.
 //

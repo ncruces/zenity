@@ -239,7 +239,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 			_IID_IShellItem,
 			uintptr(unsafe.Pointer(&item)))
 
-		if hr >= 0 && item != nil {
+		if int32(hr) >= 0 && item != nil {
 			dialog.Call(dialog.vtbl.SetFolder, uintptr(unsafe.Pointer(item)))
 			item.Call(item.vtbl.Release)
 		}
