@@ -72,6 +72,7 @@ func selectColor(opts options) (color.Color, error) {
 	return color.RGBA{R: r, G: g, B: b, A: 255}, nil
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-choosecolorw-r1
 type _CHOOSECOLORW struct {
 	StructSize   uint32
 	Owner        uintptr

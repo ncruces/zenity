@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -27,6 +28,7 @@ var (
 	coCreateInstance = ole32.NewProc("CoCreateInstance")
 	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
 
+	getMessage               = user32.NewProc("GetMessageW")
 	sendMessage              = user32.NewProc("SendMessageW")
 	getClassName             = user32.NewProc("GetClassNameW")
 	setWindowsHookEx         = user32.NewProc("SetWindowsHookExW")
@@ -68,6 +70,7 @@ func commDlgError() error {
 	}
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
 type _CWPRETSTRUCT struct {
 	Result  uintptr
 	LParam  uintptr
@@ -149,6 +152,18 @@ func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelF
 	return hookDialog(ctx, init)
 }
 
+// https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
+
+type _IUnknownVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+}
+
+func uuid(s string) uintptr {
+	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
+}
+
 type _COMObject struct{}
 
 func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
@@ -164,10 +179,4 @@ func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr e
 	default:
 		panic("COM call with too many arguments.")
 	}
-}
-
-type _IUnknownVtbl struct {
-	QueryInterface uintptr
-	AddRef         uintptr
-	Release        uintptr
 }

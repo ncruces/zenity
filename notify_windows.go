@@ -97,20 +97,21 @@ func wtsMessage(text string, opts options) error {
 	return nil
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-notifyicondataw
 type _NOTIFYICONDATA struct {
 	StructSize      uint32
-	Owner           uintptr
+	Wnd             uintptr
 	ID              uint32
 	Flags           uint32
 	CallbackMessage uint32
 	Icon            uintptr
-	Tip             [128]uint16
+	Tip             [128]uint16 // NOTIFYICONDATAA_V1_SIZE
 	State           uint32
 	StateMask       uint32
 	Info            [256]uint16
 	Version         uint32
 	InfoTitle       [64]uint16
 	InfoFlags       uint32
-	// GuidItem     [16]byte
-	// BalloonIcon  uintptr
+	// GuidItem     [16]byte       // NOTIFYICONDATAA_V2_SIZE
+	// BalloonIcon  syscall.Handle // NOTIFYICONDATAA_V3_SIZE
 }

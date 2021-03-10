@@ -32,13 +32,11 @@ var (
 	createWindowExW       = user32.NewProc("CreateWindowExW")
 	defWindowProcW        = user32.NewProc("DefWindowProcW")
 	destroyWindowW        = user32.NewProc("DestroyWindow")
-	dispatchMessageW      = user32.NewProc("DispatchMessageW")
-	getMessageW           = user32.NewProc("GetMessageW")
-	sendMessageW          = user32.NewProc("SendMessageW")
+	dispatchMessage       = user32.NewProc("DispatchMessageW")
 	postQuitMessageW      = user32.NewProc("PostQuitMessage")
 	registerClassExW      = user32.NewProc("RegisterClassExW")
 	unregisterClassW      = user32.NewProc("UnregisterClassW")
-	translateMessageW     = user32.NewProc("TranslateMessage")
+	translateMessage      = user32.NewProc("TranslateMessage")
 	getWindowTextLengthW  = user32.NewProc("GetWindowTextLengthW")
 	getWindowTextW        = user32.NewProc("GetWindowTextW")
 	getWindowLongW        = user32.NewProc("GetWindowLongW")
@@ -47,7 +45,7 @@ var (
 	setWindowPosW         = user32.NewProc("SetWindowPos")
 	showWindowW           = user32.NewProc("ShowWindow")
 	updateWindowW         = user32.NewProc("UpdateWindow")
-	isDialogMessageW      = user32.NewProc("IsDialogMessageW")
+	isDialogMessage       = user32.NewProc("IsDialogMessageW")
 	getSystemMetricsW     = user32.NewProc("GetSystemMetrics")
 	systemParametersInfoW = user32.NewProc("SystemParametersInfoW")
 
@@ -121,14 +119,14 @@ type wndClassExW struct {
 	iconSm     syscall.Handle
 }
 
-// msgW https://msdn.microsoft.com/en-us/library/windows/desktop/ms644958.aspx
-type msgW struct {
-	hwnd    syscall.Handle
-	message uint32
-	wParam  uintptr
-	lParam  uintptr
-	time    uint32
-	pt      pointW
+// https://docs.microsoft.com/en-ie/windows/win32/api/winuser/ns-winuser-msg
+type _MSG struct {
+	Owner   syscall.Handle
+	Message uint32
+	WParam  uintptr
+	LParam  uintptr
+	Time    uint32
+	Pt      _POINT
 }
 
 // nonClientMetricsW https://msdn.microsoft.com/en-us/library/windows/desktop/ff729175.aspx
@@ -168,11 +166,13 @@ type logfontW struct {
 	lfFaceName       [32]uint16
 }
 
-type pointW struct {
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
+type _POINT struct {
 	x, y int32
 }
 
-type rectW struct {
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect
+type _RECT struct {
 	left   int32
 	top    int32
 	right  int32
@@ -231,31 +231,8 @@ func unregisterClass(className string, instance syscall.Handle) bool {
 	return ret != 0
 }
 
-func getMessage(msg *msgW, hwnd syscall.Handle, msgFilterMin, msgFilterMax uint32) (bool, error) {
-	ret, _, err := getMessageW.Call(uintptr(unsafe.Pointer(msg)), uintptr(hwnd), uintptr(msgFilterMin), uintptr(msgFilterMax))
-
-	if int32(ret) == -1 {
-		return false, err
-	}
-
-	return int32(ret) != 0, nil
-}
-
-func _sendMessage(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uintptr {
-	ret, _, _ := sendMessageW.Call(uintptr(hwnd), uintptr(msg), wparam, lparam, 0, 0)
-	return ret
-}
-
-func dispatchMessage(msg *msgW) {
-	dispatchMessageW.Call(uintptr(unsafe.Pointer(msg)))
-}
-
 func postQuitMessage(exitCode int32) {
 	postQuitMessageW.Call(uintptr(exitCode))
-}
-
-func translateMessage(msg *msgW) {
-	translateMessageW.Call(uintptr(unsafe.Pointer(msg)))
 }
 
 func getWindowTextLength(hwnd syscall.Handle) int {
@@ -292,7 +269,7 @@ func setWindowLong(hwnd syscall.Handle, index, value int32) int32 {
 	return int32(ret)
 }
 
-func getWindowRect(hwnd syscall.Handle, rect *rectW) bool {
+func getWindowRect(hwnd syscall.Handle, rect *_RECT) bool {
 	ret, _, _ := getWindowRectW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(rect)), 0)
 	return ret != 0
 }
@@ -313,18 +290,13 @@ func updateWindow(hwnd syscall.Handle) bool {
 	return ret != 0
 }
 
-func isDialogMessage(hwnd syscall.Handle, msg *msgW) bool {
-	ret, _, _ := isDialogMessageW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(msg)), 0)
-	return ret != 0
-}
-
 func getSystemMetrics(nindex int32) int32 {
 	ret, _, _ := getSystemMetricsW.Call(uintptr(nindex), 0, 0)
 	return int32(ret)
 }
 
 func centerWindow(hwnd syscall.Handle) {
-	var rc rectW
+	var rc _RECT
 	getWindowRect(hwnd, &rc)
 	xPos := (getSystemMetrics(smCxScreen) - (rc.right - rc.left)) / 2
 	yPos := (getSystemMetrics(smCyScreen) - (rc.bottom - rc.top)) / 2
@@ -350,25 +322,24 @@ func registerClass(className string, instance syscall.Handle, fn interface{}) er
 	return err
 }
 
-func messageLoop(hwnd syscall.Handle) error {
+// https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
+func messageLoop(hwnd uintptr) error {
 	for {
-		msg := msgW{}
-		gotMessage, err := getMessage(&msg, 0, 0, 0)
-		if err != nil {
+		var msg _MSG
+		ret, _, err := getMessage.Call(uintptr(unsafe.Pointer(&msg)), 0, 0, 0)
+		if int32(ret) == -1 {
 			return err
 		}
+		if ret == 0 {
+			return nil
+		}
 
-		if gotMessage {
-			if !isDialogMessage(hwnd, &msg) {
-				translateMessage(&msg)
-				dispatchMessage(&msg)
-			}
-		} else {
-			break
+		ret, _, _ = isDialogMessage.Call(hwnd, uintptr(unsafe.Pointer(&msg)), 0)
+		if ret == 0 {
+			translateMessage.Call(uintptr(unsafe.Pointer(&msg)))
+			dispatchMessage.Call(uintptr(unsafe.Pointer(&msg)))
 		}
 	}
-
-	return nil
 }
 
 // editBox displays textedit/inputbox dialog.
@@ -433,17 +404,17 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 	setWindowLong(hwnd, gwlStyle, getWindowLong(hwnd, gwlStyle)^wsMaximizeBox)
 
 	font := getMessageFont()
-	_sendMessage(hwndText, wmSetFont, font, 0)
-	_sendMessage(hwndEdit, wmSetFont, font, 0)
-	_sendMessage(hwndOK, wmSetFont, font, 0)
-	_sendMessage(hwndCancel, wmSetFont, font, 0)
+	sendMessage.Call(uintptr(hwndText), wmSetFont, font, 0)
+	sendMessage.Call(uintptr(hwndEdit), wmSetFont, font, 0)
+	sendMessage.Call(uintptr(hwndOK), wmSetFont, font, 0)
+	sendMessage.Call(uintptr(hwndCancel), wmSetFont, font, 0)
 
 	centerWindow(hwnd)
 
 	showWindow(hwnd, swShowNormal)
 	updateWindow(hwnd)
 
-	err = messageLoop(hwnd)
+	err = messageLoop(uintptr(hwnd))
 	if err != nil {
 		return out, false, err
 	}

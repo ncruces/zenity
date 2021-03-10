@@ -208,10 +208,10 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if int32(hr) < 0 {
 		return browseForFolder(opts)
 	}
-	defer dialog.Call(dialog.vtbl.Release)
+	defer dialog.Call(dialog.Release)
 
 	var flgs int
-	hr, _, _ = dialog.Call(dialog.vtbl.GetOptions, uintptr(unsafe.Pointer(&flgs)))
+	hr, _, _ = dialog.Call(dialog.GetOptions, uintptr(unsafe.Pointer(&flgs)))
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
 	}
@@ -221,14 +221,14 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if opts.showHidden {
 		flgs |= 0x10000000 // FOS_FORCESHOWHIDDEN
 	}
-	hr, _, _ = dialog.Call(dialog.vtbl.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
+	hr, _, _ = dialog.Call(dialog.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
 	}
 
 	if opts.title != nil {
 		ptr := syscall.StringToUTF16Ptr(*opts.title)
-		dialog.Call(dialog.vtbl.SetTitle, uintptr(unsafe.Pointer(ptr)))
+		dialog.Call(dialog.SetTitle, uintptr(unsafe.Pointer(ptr)))
 	}
 
 	if opts.filename != "" {
@@ -240,8 +240,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 			uintptr(unsafe.Pointer(&item)))
 
 		if int32(hr) >= 0 && item != nil {
-			dialog.Call(dialog.vtbl.SetFolder, uintptr(unsafe.Pointer(item)))
-			item.Call(item.vtbl.Release)
+			dialog.Call(dialog.SetFolder, uintptr(unsafe.Pointer(item)))
+			item.Call(item.Release)
 		}
 	}
 
@@ -254,7 +254,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 
 	activate()
-	hr, _, _ = dialog.Call(dialog.vtbl.Show, 0)
+	hr, _, _ = dialog.Call(dialog.Show, 0)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
@@ -271,10 +271,10 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		if int32(hr) < 0 {
 			return syscall.Errno(hr)
 		}
-		defer item.Call(item.vtbl.Release)
+		defer item.Call(item.Release)
 
 		var ptr uintptr
-		hr, _, _ = item.Call(item.vtbl.GetDisplayName,
+		hr, _, _ = item.Call(item.GetDisplayName,
 			0x80058000, // SIGDN_FILESYSPATH
 			uintptr(unsafe.Pointer(&ptr)))
 		if int32(hr) < 0 {
@@ -292,22 +292,22 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 
 	if multi {
 		var items *_IShellItemArray
-		hr, _, _ = dialog.Call(dialog.vtbl.GetResults, uintptr(unsafe.Pointer(&items)))
+		hr, _, _ = dialog.Call(dialog.GetResults, uintptr(unsafe.Pointer(&items)))
 		if int32(hr) < 0 {
 			return "", nil, syscall.Errno(hr)
 		}
-		defer items.Call(items.vtbl.Release)
+		defer items.Call(items.Release)
 
 		var count uint32
-		hr, _, _ = items.Call(items.vtbl.GetCount, uintptr(unsafe.Pointer(&count)))
+		hr, _, _ = items.Call(items.GetCount, uintptr(unsafe.Pointer(&count)))
 		if int32(hr) < 0 {
 			return "", nil, syscall.Errno(hr)
 		}
 		for i := uintptr(0); i < uintptr(count) && err == nil; i++ {
-			err = shellItemPath(&items._COMObject, items.vtbl.GetItemAt, i)
+			err = shellItemPath(&items._COMObject, items.GetItemAt, i)
 		}
 	} else {
-		err = shellItemPath(&dialog._COMObject, dialog.vtbl.GetResult)
+		err = shellItemPath(&dialog._COMObject, dialog.GetResult)
 	}
 	return
 }
@@ -387,6 +387,7 @@ func initFilters(filters []FileFilter) []uint16 {
 	return res
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamew
 type _OPENFILENAME struct {
 	StructSize      uint32
 	Owner           uintptr
@@ -413,6 +414,7 @@ type _OPENFILENAME struct {
 	FlagsEx         uint32
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow
 type _BROWSEINFO struct {
 	Owner        uintptr
 	Root         uintptr
@@ -424,9 +426,7 @@ type _BROWSEINFO struct {
 	Image        int32
 }
 
-func uuid(s string) uintptr {
-	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
-}
+// https://github.com/wine-mirror/wine/blob/master/include/shobjidl.idl
 
 var (
 	_IID_IShellItem       = uuid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
@@ -436,17 +436,17 @@ var (
 
 type _IFileOpenDialog struct {
 	_COMObject
-	vtbl *_IFileOpenDialogVtbl
+	*_IFileOpenDialogVtbl
 }
 
 type _IShellItem struct {
 	_COMObject
-	vtbl *_IShellItemVtbl
+	*_IShellItemVtbl
 }
 
 type _IShellItemArray struct {
 	_COMObject
-	vtbl *_IShellItemArrayVtbl
+	*_IShellItemArrayVtbl
 }
 
 type _IFileOpenDialogVtbl struct {
