@@ -324,9 +324,15 @@ func registerClass(className string, instance syscall.Handle, fn interface{}) er
 
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
 func messageLoop(hwnd uintptr) error {
+	getMessage := getMessage.Addr()
+	isDialogMessage := isDialogMessage.Addr()
+	translateMessage := translateMessage.Addr()
+	dispatchMessage := dispatchMessage.Addr()
+
+	var msg _MSG
+	var ptr = uintptr(unsafe.Pointer(&msg))
 	for {
-		var msg _MSG
-		ret, _, err := getMessage.Call(uintptr(unsafe.Pointer(&msg)), 0, 0, 0)
+		ret, _, err := syscall.Syscall6(getMessage, 4, ptr, 0, 0, 0, 0, 0)
 		if int32(ret) == -1 {
 			return err
 		}
@@ -334,10 +340,10 @@ func messageLoop(hwnd uintptr) error {
 			return nil
 		}
 
-		ret, _, _ = isDialogMessage.Call(hwnd, uintptr(unsafe.Pointer(&msg)), 0)
+		ret, _, _ = syscall.Syscall(isDialogMessage, 2, hwnd, ptr, 0)
 		if ret == 0 {
-			translateMessage.Call(uintptr(unsafe.Pointer(&msg)))
-			dispatchMessage.Call(uintptr(unsafe.Pointer(&msg)))
+			syscall.Syscall(translateMessage, 1, ptr, 0, 0)
+			syscall.Syscall(dispatchMessage, 1, ptr, 0, 0)
 		}
 	}
 }
