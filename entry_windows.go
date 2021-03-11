@@ -103,20 +103,20 @@ const (
 	maxPath                = 260
 )
 
-// wndClassExW https://msdn.microsoft.com/en-us/library/windows/desktop/ms633577.aspx
-type wndClassExW struct {
-	size       uint32
-	style      uint32
-	wndProc    uintptr
-	clsExtra   int32
-	wndExtra   int32
-	instance   syscall.Handle
-	icon       syscall.Handle
-	cursor     syscall.Handle
-	background syscall.Handle
-	menuName   *uint16
-	className  *uint16
-	iconSm     syscall.Handle
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
+type _WNDCLASSEXW struct {
+	Size       uint32
+	Style      uint32
+	WndProc    uintptr
+	ClsExtra   int32
+	WndExtra   int32
+	Instance   uintptr
+	Icon       uintptr
+	Cursor     uintptr
+	Background uintptr
+	MenuName   *uint16
+	ClassName  *uint16
+	IconSm     uintptr
 }
 
 // https://docs.microsoft.com/en-ie/windows/win32/api/winuser/ns-winuser-msg
@@ -215,7 +215,7 @@ func defWindowProc(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uint
 	return uintptr(ret)
 }
 
-func registerClassEx(wcx *wndClassExW) (uint16, error) {
+func registerClassEx(wcx *_WNDCLASSEXW) (uint16, error) {
 	ret, _, err := registerClassExW.Call(uintptr(unsafe.Pointer(wcx)))
 
 	if ret == 0 {
@@ -311,12 +311,12 @@ func getMessageFont() uintptr {
 }
 
 func registerClass(className string, instance syscall.Handle, fn interface{}) error {
-	var wcx wndClassExW
-	wcx.size = uint32(unsafe.Sizeof(wcx))
-	wcx.wndProc = syscall.NewCallback(fn)
-	wcx.instance = instance
-	wcx.background = colorWindow + 1
-	wcx.className = syscall.StringToUTF16Ptr(className)
+	var wcx _WNDCLASSEXW
+	wcx.Size = uint32(unsafe.Sizeof(wcx))
+	wcx.WndProc = syscall.NewCallback(fn)
+	wcx.Instance = uintptr(instance)
+	wcx.Background = colorWindow + 1
+	wcx.ClassName = syscall.StringToUTF16Ptr(className)
 
 	_, err := registerClassEx(&wcx)
 	return err
