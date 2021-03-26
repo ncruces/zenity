@@ -25,7 +25,7 @@ func selectColor(opts options) (color.Color, error) {
 	customColors := savedColors
 	colorsMutex.Unlock()
 
-	var args _CHOOSECOLORW
+	var args _CHOOSECOLOR
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.CustColors = &customColors
 
@@ -70,7 +70,7 @@ func selectColor(opts options) (color.Color, error) {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-choosecolorw-r1
-type _CHOOSECOLORW struct {
+type _CHOOSECOLOR struct {
 	StructSize   uint32
 	Owner        uintptr
 	Instance     uintptr

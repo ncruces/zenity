@@ -29,7 +29,7 @@ func password(opts options) (string, string, bool, error) {
 var (
 	gdi32 = syscall.NewLazyDLL("gdi32.dll")
 
-	createWindowExW       = user32.NewProc("CreateWindowExW")
+	createWindowEx        = user32.NewProc("CreateWindowExW")
 	defWindowProcW        = user32.NewProc("DefWindowProcW")
 	destroyWindowW        = user32.NewProc("DestroyWindow")
 	dispatchMessage       = user32.NewProc("DispatchMessageW")
@@ -104,7 +104,7 @@ const (
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
-type _WNDCLASSEXW struct {
+type _WNDCLASSEX struct {
 	Size       uint32
 	Style      uint32
 	WndProc    uintptr
@@ -119,7 +119,7 @@ type _WNDCLASSEXW struct {
 	IconSm     uintptr
 }
 
-// https://docs.microsoft.com/en-ie/windows/win32/api/winuser/ns-winuser-msg
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg
 type _MSG struct {
 	Owner   syscall.Handle
 	Message uint32
@@ -129,41 +129,41 @@ type _MSG struct {
 	Pt      _POINT
 }
 
-// nonClientMetricsW https://msdn.microsoft.com/en-us/library/windows/desktop/ff729175.aspx
-type nonClientMetricsW struct {
-	cbSize           uint32
-	iBorderWidth     int32
-	iScrollWidth     int32
-	iScrollHeight    int32
-	iCaptionWidth    int32
-	iCaptionHeight   int32
-	lfCaptionFont    logfontW
-	iSmCaptionWidth  int32
-	iSmCaptionHeight int32
-	lfSmCaptionFont  logfontW
-	iMenuWidth       int32
-	iMenuHeight      int32
-	lfMenuFont       logfontW
-	lfStatusFont     logfontW
-	lfMessageFont    logfontW
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw
+type _NONCLIENTMETRICS struct {
+	Size            uint32
+	BorderWidth     int32
+	ScrollWidth     int32
+	ScrollHeight    int32
+	CaptionWidth    int32
+	CaptionHeight   int32
+	CaptionFont     _LOGFONT
+	SmCaptionWidth  int32
+	SmCaptionHeight int32
+	SmCaptionFont   _LOGFONT
+	MenuWidth       int32
+	MenuHeight      int32
+	MenuFont        _LOGFONT
+	StatusFont      _LOGFONT
+	MessageFont     _LOGFONT
 }
 
-// logfontW https://msdn.microsoft.com/en-us/library/windows/desktop/dd145037.aspx
-type logfontW struct {
-	lfHeight         int32
-	lfWidth          int32
-	lfEscapement     int32
-	lfOrientation    int32
-	lfWeight         int32
-	lfItalic         byte
-	lfUnderline      byte
-	lfStrikeOut      byte
-	lfCharSet        byte
-	lfOutPrecision   byte
-	lfClipPrecision  byte
-	lfQuality        byte
-	lfPitchAndFamily byte
-	lfFaceName       [32]uint16
+// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw
+type _LOGFONT struct {
+	Height         int32
+	Width          int32
+	Escapement     int32
+	Orientation    int32
+	Weight         int32
+	Italic         byte
+	Underline      byte
+	StrikeOut      byte
+	CharSet        byte
+	OutPrecision   byte
+	ClipPrecision  byte
+	Quality        byte
+	PitchAndFamily byte
+	FaceName       [32]uint16
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
@@ -190,7 +190,7 @@ func getModuleHandle() (syscall.Handle, error) {
 
 func createWindow(exStyle uint64, className, windowName string, style uint64, x, y, width, height int64,
 	parent, menu, instance syscall.Handle) (syscall.Handle, error) {
-	ret, _, err := createWindowExW.Call(uintptr(exStyle), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
+	ret, _, err := createWindowEx.Call(uintptr(exStyle), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))), uintptr(style), uintptr(x), uintptr(y),
 		uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(0))
 
@@ -215,7 +215,7 @@ func defWindowProc(hwnd syscall.Handle, msg uint32, wparam, lparam uintptr) uint
 	return uintptr(ret)
 }
 
-func registerClassEx(wcx *_WNDCLASSEXW) (uint16, error) {
+func registerClassEx(wcx *_WNDCLASSEX) (uint16, error) {
 	ret, _, err := registerClassExW.Call(uintptr(unsafe.Pointer(wcx)))
 
 	if ret == 0 {
@@ -254,7 +254,7 @@ func systemParametersInfo(uiAction, uiParam uint32, pvParam unsafe.Pointer, fWin
 	return int32(ret) != 0
 }
 
-func createFontIndirect(lplf *logfontW) uintptr {
+func createFontIndirect(lplf *_LOGFONT) uintptr {
 	ret, _, _ := createFontIndirectW.Call(uintptr(unsafe.Pointer(lplf)), 0, 0)
 	return uintptr(ret)
 }
@@ -304,14 +304,14 @@ func centerWindow(hwnd syscall.Handle) {
 }
 
 func getMessageFont() uintptr {
-	var metrics nonClientMetricsW
-	metrics.cbSize = uint32(unsafe.Sizeof(metrics))
+	var metrics _NONCLIENTMETRICS
+	metrics.Size = uint32(unsafe.Sizeof(metrics))
 	systemParametersInfo(spiGetNonClientMetrics, uint32(unsafe.Sizeof(metrics)), unsafe.Pointer(&metrics), 0)
-	return createFontIndirect(&metrics.lfMessageFont)
+	return createFontIndirect(&metrics.MessageFont)
 }
 
 func registerClass(className string, instance syscall.Handle, fn interface{}) error {
-	var wcx _WNDCLASSEXW
+	var wcx _WNDCLASSEX
 	wcx.Size = uint32(unsafe.Sizeof(wcx))
 	wcx.WndProc = syscall.NewCallback(fn)
 	wcx.Instance = uintptr(instance)
