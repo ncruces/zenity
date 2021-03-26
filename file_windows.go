@@ -3,7 +3,6 @@ package zenity
 import (
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -42,8 +41,7 @@ func selectFile(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	defer setup()()
 
 	if opts.ctx != nil {
 		unhook, err := hookDialog(opts.ctx, nil)
@@ -53,7 +51,6 @@ func selectFile(opts options) (string, error) {
 		defer unhook()
 	}
 
-	activate()
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
@@ -89,8 +86,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	defer setup()()
 
 	if opts.ctx != nil {
 		unhook, err := hookDialog(opts.ctx, nil)
@@ -100,7 +96,6 @@ func selectFileMutiple(opts options) ([]string, error) {
 		defer unhook()
 	}
 
-	activate()
 	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
@@ -167,8 +162,7 @@ func selectFileSave(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	defer setup()()
 
 	if opts.ctx != nil {
 		unhook, err := hookDialog(opts.ctx, nil)
@@ -178,7 +172,6 @@ func selectFileSave(opts options) (string, error) {
 		defer unhook()
 	}
 
-	activate()
 	s, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
@@ -190,8 +183,7 @@ func selectFileSave(opts options) (string, error) {
 }
 
 func pickFolders(opts options, multi bool) (str string, lst []string, err error) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	defer setup()()
 
 	hr, _, _ := coInitializeEx.Call(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
 	if hr != 0x80010106 {                   // RPC_E_CHANGED_MODE
@@ -253,7 +245,6 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		defer unhook()
 	}
 
-	activate()
 	hr, _, _ = dialog.Call(dialog.Show, 0)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
@@ -338,7 +329,6 @@ func browseForFolder(opts options) (string, []string, error) {
 		defer unhook()
 	}
 
-	activate()
 	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()

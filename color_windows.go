@@ -2,7 +2,6 @@ package zenity
 
 import (
 	"image/color"
-	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -41,8 +40,7 @@ func selectColor(opts options) (color.Color, error) {
 		args.Flags |= 0x2 // CC_FULLOPEN
 	}
 
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	defer setup()()
 
 	if opts.ctx != nil || opts.title != nil {
 		unhook, err := hookDialogTitle(opts.ctx, opts.title)
@@ -52,7 +50,6 @@ func selectColor(opts options) (color.Color, error) {
 		defer unhook()
 	}
 
-	activate()
 	s, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()

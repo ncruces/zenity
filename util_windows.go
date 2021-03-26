@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"sync"
+	"runtime"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 )
@@ -28,21 +29,22 @@ var (
 	coCreateInstance = ole32.NewProc("CoCreateInstance")
 	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
 
-	getMessage               = user32.NewProc("GetMessageW")
-	sendMessage              = user32.NewProc("SendMessageW")
-	getClassName             = user32.NewProc("GetClassNameW")
-	setWindowsHookEx         = user32.NewProc("SetWindowsHookExW")
-	unhookWindowsHookEx      = user32.NewProc("UnhookWindowsHookEx")
-	callNextHookEx           = user32.NewProc("CallNextHookEx")
-	enumWindows              = user32.NewProc("EnumWindows")
-	enumChildWindows         = user32.NewProc("EnumChildWindows")
-	getDlgCtrlID             = user32.NewProc("GetDlgCtrlID")
-	setWindowText            = user32.NewProc("SetWindowTextW")
-	setForegroundWindow      = user32.NewProc("SetForegroundWindow")
-	getWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
+	getMessage                   = user32.NewProc("GetMessageW")
+	sendMessage                  = user32.NewProc("SendMessageW")
+	getClassName                 = user32.NewProc("GetClassNameW")
+	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
+	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
+	callNextHookEx               = user32.NewProc("CallNextHookEx")
+	enumWindows                  = user32.NewProc("EnumWindows")
+	enumChildWindows             = user32.NewProc("EnumChildWindows")
+	getDlgCtrlID                 = user32.NewProc("GetDlgCtrlID")
+	setWindowText                = user32.NewProc("SetWindowTextW")
+	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
+	getWindowThreadProcessId     = user32.NewProc("GetWindowThreadProcessId")
+	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
 )
 
-func activate() {
+func setup() context.CancelFunc {
 	var hwnd uintptr
 	enumWindows.Call(syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
 		var pid uintptr
@@ -58,6 +60,28 @@ func activate() {
 	}
 	if hwnd != 0 {
 		setForegroundWindow.Call(hwnd)
+	}
+
+	var old uintptr
+	runtime.LockOSThread()
+	if setThreadDpiAwarenessContext.Find() == nil {
+		// try:
+		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE
+		//   DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
+		for i := -4; i <= -2; i++ {
+			restore, _, _ := setThreadDpiAwarenessContext.Call(uintptr(i))
+			if restore != 0 {
+				break
+			}
+		}
+	}
+
+	return func() {
+		if old != 0 {
+			setThreadDpiAwarenessContext.Call(old)
+			runtime.UnlockOSThread()
+		}
 	}
 }
 
@@ -84,7 +108,6 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 		return nil, ctx.Err()
 	}
 
-	var mtx sync.Mutex
 	var hook, wnd uintptr
 	tid, _, _ := getCurrentThreadId.Call()
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
@@ -95,13 +118,11 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
 					var close bool
 
-					mtx.Lock()
 					if ctx != nil && ctx.Err() != nil {
 						close = true
 					} else {
-						wnd = lparam.Wnd
+						atomic.StoreUintptr(&wnd, lparam.Wnd)
 					}
-					mtx.Unlock()
 
 					if close {
 						sendMessage.Call(lparam.Wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
@@ -125,11 +146,7 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 	go func() {
 		select {
 		case <-ctx.Done():
-			mtx.Lock()
-			w := wnd
-			mtx.Unlock()
-
-			if w != 0 {
+			if w := atomic.LoadUintptr(&wnd); w != 0 {
 				sendMessage.Call(w, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
 			}
 		case <-wait:

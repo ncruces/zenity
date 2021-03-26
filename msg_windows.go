@@ -2,7 +2,6 @@ package zenity
 
 import (
 	"context"
-	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -42,10 +41,9 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		}
 	}
 
-	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
+	defer setup()()
 
+	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
 		unhook, err := hookMessageLabels(kind, opts)
 		if err != nil {
 			return false, err
