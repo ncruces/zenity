@@ -48,7 +48,11 @@ var (
 	isDialogMessage       = user32.NewProc("IsDialogMessageW")
 	getSystemMetricsW     = user32.NewProc("GetSystemMetrics")
 	systemParametersInfoW = user32.NewProc("SystemParametersInfoW")
+	getWindowDC           = user32.NewProc("GetWindowDC")
+	releaseDC             = user32.NewProc("ReleaseDC")
+	getDpiForWindow       = user32.NewProc("GetDpiForWindow")
 
+	getDeviceCaps       = gdi32.NewProc("GetDeviceCaps")
 	createFontIndirectW = gdi32.NewProc("CreateFontIndirectW")
 
 	getModuleHandleW = kernel32.NewProc("GetModuleHandleW")
@@ -188,11 +192,35 @@ func getModuleHandle() (syscall.Handle, error) {
 	return syscall.Handle(ret), nil
 }
 
-func createWindow(exStyle uint64, className, windowName string, style uint64, x, y, width, height int64,
+type dpi uintptr
+
+func (d dpi) Scale(dim uintptr) uintptr {
+	return dim * uintptr(d) / 96 // USER_DEFAULT_SCREEN_DPI
+}
+
+func getDPI(wnd uintptr) (dpi, error) {
+	var res uintptr = 96
+
+	if wnd != 0 && getDpiForWindow.Find() == nil {
+		res, _, _ = getDpiForWindow.Call(wnd)
+	} else {
+		dc, _, err := getWindowDC.Call(wnd)
+		if dc == 0 {
+			return 0, err
+		}
+		defer releaseDC.Call(0, dc)
+
+		res, _, _ = getDeviceCaps.Call(dc, 90) // LOGPIXELSY
+	}
+
+	return dpi(res), nil
+}
+
+func createWindow(exStyle uint64, className, windowName string, style, x, y, width, height uintptr,
 	parent, menu, instance syscall.Handle) (syscall.Handle, error) {
 	ret, _, err := createWindowEx.Call(uintptr(exStyle), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))), uintptr(style), uintptr(x), uintptr(y),
-		uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(0))
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))), uintptr(style), x, y,
+		width, height, uintptr(parent), uintptr(menu), uintptr(instance), uintptr(0))
 
 	if ret == 0 {
 		return 0, err
@@ -329,10 +357,9 @@ func messageLoop(hwnd uintptr) error {
 	translateMessage := translateMessage.Addr()
 	dispatchMessage := dispatchMessage.Addr()
 
-	var msg _MSG
-	var ptr = uintptr(unsafe.Pointer(&msg))
 	for {
-		ret, _, err := syscall.Syscall6(getMessage, 4, ptr, 0, 0, 0, 0, 0)
+		var msg _MSG
+		ret, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
 		if int32(ret) == -1 {
 			return err
 		}
@@ -340,10 +367,10 @@ func messageLoop(hwnd uintptr) error {
 			return nil
 		}
 
-		ret, _, _ = syscall.Syscall(isDialogMessage, 2, hwnd, ptr, 0)
+		ret, _, _ = syscall.Syscall(isDialogMessage, 2, hwnd, uintptr(unsafe.Pointer(&msg)), 0)
 		if ret == 0 {
-			syscall.Syscall(translateMessage, 1, ptr, 0, 0)
-			syscall.Syscall(dispatchMessage, 1, ptr, 0, 0)
+			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
 		}
 	}
 }
@@ -380,6 +407,7 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 				notCancledOrClosed = false
 				destroyWindow(hwnd)
 			}
+		case 0x2e0: // WM_DPICHANGED
 		default:
 			ret := defWindowProc(hwnd, msg, wparam, lparam)
 			return ret
@@ -388,23 +416,26 @@ func editBox(title, text, defaultText, className string, password bool) (string,
 		return 0
 	}
 
+	defer setup()()
+
 	err = registerClass(className, instance, fn)
 	if err != nil {
 		return out, false, err
 	}
 	defer unregisterClass(className, instance)
 
-	hwnd, _ := createWindow(0, className, title, wsOverlappedWindow, swUseDefault, swUseDefault, 235, 140, 0, 0, instance)
-	hwndText, _ := createWindow(0, "STATIC", text, wsChild|wsVisible, 10, 10, 200, 16, hwnd, 0, instance)
+	dpi, err := getDPI(0)
+	hwnd, _ := createWindow(0, className, title, wsOverlappedWindow, swUseDefault, swUseDefault, dpi.Scale(235), dpi.Scale(140), 0, 0, instance)
+	hwndText, _ := createWindow(0, "STATIC", text, wsChild|wsVisible, dpi.Scale(10), dpi.Scale(10), dpi.Scale(200), dpi.Scale(16), hwnd, 0, instance)
 
 	flags := wsBorder | wsChild | wsVisible | wsGroup | wsTabStop | esAutoHScroll
 	if password {
 		flags |= esPassword
 	}
-	hwndEdit, _ = createWindow(wsExClientEdge, "EDIT", defaultText, uint64(flags), 10, 30, 200, 24, hwnd, 0, instance)
+	hwndEdit, _ = createWindow(wsExClientEdge, "EDIT", defaultText, uintptr(flags), dpi.Scale(10), dpi.Scale(30), dpi.Scale(200), dpi.Scale(24), hwnd, 0, instance)
 
-	hwndOK, _ := createWindow(wsExClientEdge, "BUTTON", "OK", wsChild|wsVisible|bsPushButton|wsGroup|wsTabStop, 10, 65, 90, 24, hwnd, 100, instance)
-	hwndCancel, _ := createWindow(wsExClientEdge, "BUTTON", "Cancel", wsChild|wsVisible|bsPushButton|wsGroup|wsTabStop, 120, 65, 90, 24, hwnd, 110, instance)
+	hwndOK, _ := createWindow(wsExClientEdge, "BUTTON", "OK", wsChild|wsVisible|bsPushButton|wsGroup|wsTabStop, dpi.Scale(10), dpi.Scale(65), dpi.Scale(90), dpi.Scale(24), hwnd, 100, instance)
+	hwndCancel, _ := createWindow(wsExClientEdge, "BUTTON", "Cancel", wsChild|wsVisible|bsPushButton|wsGroup|wsTabStop, dpi.Scale(120), dpi.Scale(65), dpi.Scale(90), dpi.Scale(24), hwnd, 110, instance)
 
 	setWindowLong(hwnd, gwlStyle, getWindowLong(hwnd, gwlStyle)^wsMinimizeBox)
 	setWindowLong(hwnd, gwlStyle, getWindowLong(hwnd, gwlStyle)^wsMaximizeBox)
