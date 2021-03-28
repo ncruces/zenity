@@ -35,7 +35,14 @@ func ParseColor(s string) color.Color {
 
 		var a float32
 		if _, err := fmt.Sscanf(s, "rgba(%d,%d,%d,%f)", &c.R, &c.G, &c.B, &a); err == nil {
-			c.A = uint8(255*a + 0.5)
+			switch {
+			case a <= 0:
+				c.A = 0
+			case a >= 1:
+				c.A = 255
+			default:
+				c.A = uint8(255*a + 0.5)
+			}
 			return c
 		}
 	}
