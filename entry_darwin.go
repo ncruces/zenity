@@ -61,6 +61,6 @@ func entry(text string, opts options) (string, bool, error) {
 
 func password(opts options) (string, string, bool, error) {
 	opts.hideText = true
-	pass, ok, err := entry("Type your password", opts)
+	pass, ok, err := entry("Password:", opts)
 	return "", pass, ok, err
 }

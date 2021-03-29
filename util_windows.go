@@ -13,6 +13,7 @@ import (
 
 var (
 	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
+	gdi32    = syscall.NewLazyDLL("gdi32.dll")
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
 	ole32    = syscall.NewLazyDLL("ole32.dll")
 	shell32  = syscall.NewLazyDLL("shell32.dll")
@@ -21,6 +22,7 @@ var (
 
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
 
+	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
 	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
 	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
 
@@ -109,9 +111,10 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 	}
 
 	var hook, wnd uintptr
+	callNextHookEx := callNextHookEx.Addr()
 	tid, _, _ := getCurrentThreadId.Call()
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
-		syscall.NewCallback(func(code int, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+		syscall.NewCallback(func(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			if lparam.Message == 0x0110 { // WM_INITDIALOG
 				name := [8]uint16{}
 				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
@@ -131,7 +134,9 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 					}
 				}
 			}
-			next, _, _ := callNextHookEx.Call(hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
+			next, _, _ := syscall.Syscall6(callNextHookEx, 4,
+				hook, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)),
+				0, 0)
 			return next
 		}), 0, tid)
 

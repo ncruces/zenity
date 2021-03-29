@@ -56,7 +56,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 
-	activate()
 	s, _, err := messageBox.Call(0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
 		uintptr(unsafe.Pointer(title)), flags)

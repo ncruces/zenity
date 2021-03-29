@@ -266,6 +266,7 @@ func loadFlags() []zenity.Option {
 		setDefault(&okLabel, "Yes")
 		setDefault(&cancelLabel, "No")
 	case passwordDlg:
+		setDefault(&title, "Type your password")
 		setDefault(&icon, "dialog-password")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
