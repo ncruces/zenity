@@ -245,6 +245,8 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 	var okBtn, cancelBtn, extraBtn uintptr
 	defWindowProc := defWindowProc.Addr()
 
+	defer setup()()
+
 	font := getFont()
 	defer font.Delete()
 
@@ -300,7 +302,9 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 		return 0
 	}
 
-	defer setup()()
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", false, opts.ctx.Err()
+	}
 
 	instance, _, err := getModuleHandle.Call(0)
 	if instance == 0 {
@@ -355,9 +359,26 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 	showWindow.Call(wnd, 1 /* SW_SHOWNORMAL */, 0)
 	sendMessage.Call(editCtl, 0xb1 /* EM_SETSEL */, 0, intptr(-1))
 
-	err = nil
+	if opts.ctx != nil {
+		wait := make(chan struct{})
+		defer close(wait)
+		go func() {
+			select {
+			case <-opts.ctx.Done():
+				sendMessage.Call(wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+			case <-wait:
+			}
+		}()
+	}
+
+	// set default values
+	out, ok, err = "", false, nil
+
 	if err := messageLoop(wnd); err != nil {
 		return "", false, err
+	}
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", false, opts.ctx.Err()
 	}
 	return out, ok, err
 }

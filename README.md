@@ -15,6 +15,8 @@ For now, these are the only implemented dialogs:
 * [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
 * [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
 * [color selection](https://github.com/ncruces/zenity/wiki/Color-Selection-dialog)
+* [text entry](https://github.com/ncruces/zenity/wiki/Text-Entry-dialog)
+* [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
 * [notification](https://github.com/ncruces/zenity/wiki/Notification)
 
 Behavior on Windows, macOS and other Unixes might differ slightly.
