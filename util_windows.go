@@ -39,8 +39,9 @@ var (
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
 	enumWindows                  = user32.NewProc("EnumWindows")
 	enumChildWindows             = user32.NewProc("EnumChildWindows")
-	getDlgCtrlID                 = user32.NewProc("GetDlgCtrlID")
 	setWindowText                = user32.NewProc("SetWindowTextW")
+	getWindowText                = user32.NewProc("GetWindowTextW")
+	getWindowTextLength          = user32.NewProc("GetWindowTextLengthW")
 	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
 	getWindowThreadProcessId     = user32.NewProc("GetWindowThreadProcessId")
 	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
@@ -167,11 +168,14 @@ func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelF
 	var init func(wnd uintptr)
 	if title != nil {
 		init = func(wnd uintptr) {
-			ptr := syscall.StringToUTF16Ptr(*title)
-			setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
+			setWindowText.Call(wnd, stringUintptr(*title))
 		}
 	}
 	return hookDialog(ctx, init)
+}
+
+func stringUintptr(s string) uintptr {
+	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl

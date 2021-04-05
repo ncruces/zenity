@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	messageBox = user32.NewProc("MessageBoxW")
+	messageBox   = user32.NewProc("MessageBoxW")
+	getDlgCtrlID = user32.NewProc("GetDlgCtrlID")
 )
 
 func message(kind messageKind, text string, opts options) (bool, error) {
@@ -51,14 +52,12 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 		defer unhook()
 	}
 
-	var title *uint16
+	var title uintptr
 	if opts.title != nil {
-		title = syscall.StringToUTF16Ptr(*opts.title)
+		title = stringUintptr(*opts.title)
 	}
 
-	s, _, err := messageBox.Call(0,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))),
-		uintptr(unsafe.Pointer(title)), flags)
+	s, _, err := messageBox.Call(0, stringUintptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return false, opts.ctx.Err()
@@ -97,8 +96,7 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 						text = opts.extraButton
 					}
 					if text != nil {
-						ptr := syscall.StringToUTF16Ptr(*text)
-						setWindowText.Call(wnd, uintptr(unsafe.Pointer(ptr)))
+						setWindowText.Call(wnd, stringUintptr(*text))
 					}
 				}
 				return 1

@@ -1,10 +1,7 @@
-// This file was imported from: github.com/gen2brain/dlgs
-// Copyright (c) 2017, Milan Nikolic <gen2brain>
-// Licensed under the BSD 2-Clause "Simplified" License.
-
 package zenity
 
 import (
+	"math"
 	"strconv"
 	"syscall"
 	"unsafe"
@@ -15,39 +12,40 @@ func entry(text string, opts options) (string, bool, error) {
 	if opts.title != nil {
 		title = *opts.title
 	}
-	return editBox(title, text, opts.entryText, opts.hideText)
+	if opts.okLabel == nil {
+		opts.okLabel = stringPtr("OK")
+	}
+	if opts.cancelLabel == nil {
+		opts.cancelLabel = stringPtr("Cancel")
+	}
+	return editBox(title, text, opts)
 }
 
 func password(opts options) (string, string, bool, error) {
-	var title string
-	if opts.title != nil {
-		title = *opts.title
-	}
-	pass, ok, err := editBox(title, "Password:", "", true)
+	opts.hideText = true
+	pass, ok, err := entry("Password:", opts)
 	return "", pass, ok, err
 }
 
 var (
+	registerClassEx      = user32.NewProc("RegisterClassExW")
+	unregisterClass      = user32.NewProc("UnregisterClassW")
 	createWindowEx       = user32.NewProc("CreateWindowExW")
-	defWindowProc        = user32.NewProc("DefWindowProcW")
 	destroyWindow        = user32.NewProc("DestroyWindow")
+	isDialogMessage      = user32.NewProc("IsDialogMessageW")
+	translateMessage     = user32.NewProc("TranslateMessage")
 	dispatchMessage      = user32.NewProc("DispatchMessageW")
 	postQuitMessage      = user32.NewProc("PostQuitMessage")
-	registerClassEx      = user32.NewProc("RegisterClassExW")
-	unregisterClassW     = user32.NewProc("UnregisterClassW")
-	translateMessage     = user32.NewProc("TranslateMessage")
-	getWindowTextLengthW = user32.NewProc("GetWindowTextLengthW")
-	getWindowTextW       = user32.NewProc("GetWindowTextW")
+	defWindowProc        = user32.NewProc("DefWindowProcW")
 	getWindowRect        = user32.NewProc("GetWindowRect")
 	setWindowPos         = user32.NewProc("SetWindowPos")
+	setFocus             = user32.NewProc("SetFocus")
 	showWindow           = user32.NewProc("ShowWindow")
-	isDialogMessage      = user32.NewProc("IsDialogMessageW")
-	getSystemMetricsW    = user32.NewProc("GetSystemMetrics")
 	systemParametersInfo = user32.NewProc("SystemParametersInfoW")
+	getSystemMetrics     = user32.NewProc("GetSystemMetrics")
 	getWindowDC          = user32.NewProc("GetWindowDC")
 	releaseDC            = user32.NewProc("ReleaseDC")
 	getDpiForWindow      = user32.NewProc("GetDpiForWindow")
-	setFocus             = user32.NewProc("SetFocus")
 
 	deleteObject       = gdi32.NewProc("DeleteObject")
 	getDeviceCaps      = gdi32.NewProc("GetDeviceCaps")
@@ -132,21 +130,14 @@ type _RECT struct {
 
 type dpi uintptr
 
-func (d dpi) Scale(dim uintptr) uintptr {
-	if d == 0 {
-		return dim
-	}
-	return dim * uintptr(d) / 96 // USER_DEFAULT_SCREEN_DPI
-}
-
 func getDPI(wnd uintptr) dpi {
 	var res uintptr
 
 	if wnd != 0 && getDpiForWindow.Find() == nil {
 		res, _, _ = getDpiForWindow.Call(wnd)
 	} else if dc, _, _ := getWindowDC.Call(wnd); dc != 0 {
-		defer releaseDC.Call(0, dc)
 		res, _, _ = getDeviceCaps.Call(dc, 90) // LOGPIXELSY
+		releaseDC.Call(0, dc)
 	}
 
 	if res == 0 {
@@ -155,51 +146,11 @@ func getDPI(wnd uintptr) dpi {
 	return dpi(res)
 }
 
-func createWindow(exStyle uintptr, className, windowName string,
-	style, x, y, width, height, parent, menu, instance uintptr) (uintptr, error) {
-	ret, _, err := createWindowEx.Call(exStyle,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))),
-		style, x, y, width, height, parent, menu, instance, 0)
-
-	if ret == 0 {
-		return 0, err
+func (d dpi) Scale(dim uintptr) uintptr {
+	if d == 0 {
+		return dim
 	}
-
-	return ret, nil
-}
-
-func unregisterClass(className string, instance uintptr) bool {
-	ret, _, _ := unregisterClassW.Call(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))), instance)
-
-	return ret != 0
-}
-
-func getWindowTextLength(hwnd uintptr) int {
-	ret, _, _ := getWindowTextLengthW.Call(hwnd)
-	return int(ret)
-}
-
-func getWindowText(hwnd uintptr) string {
-	textLen := getWindowTextLength(hwnd) + 1
-
-	buf := make([]uint16, textLen)
-	getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), uintptr(textLen))
-
-	return syscall.UTF16ToString(buf)
-}
-
-func getSystemMetrics(nindex int32) int32 {
-	ret, _, _ := getSystemMetricsW.Call(uintptr(nindex), 0, 0)
-	return int32(ret)
-}
-
-func centerWindow(wnd uintptr) {
-	var rect _RECT
-	getWindowRect.Call(wnd, uintptr(unsafe.Pointer(&rect)))
-	x := (getSystemMetrics(0 /* SM_CXSCREEN */) - (rect.right - rect.left)) / 2
-	y := (getSystemMetrics(1 /* SM_CYSCREEN */) - (rect.bottom - rect.top)) / 2
-	setWindowPos.Call(wnd, 0, uintptr(x), uintptr(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
+	return dim * uintptr(d) / 96 // USER_DEFAULT_SCREEN_DPI
 }
 
 type font struct {
@@ -207,7 +158,7 @@ type font struct {
 	face   _LOGFONT
 }
 
-func getMessageFont() font {
+func getFont() font {
 	var metrics _NONCLIENTMETRICS
 	metrics.Size = uint32(unsafe.Sizeof(metrics))
 	systemParametersInfo.Call(0x29, // SPI_GETNONCLIENTMETRICS
@@ -215,23 +166,43 @@ func getMessageFont() font {
 	return font{face: metrics.MessageFont}
 }
 
-func (f *font) forDPI(dpi dpi) uintptr {
+func (f *font) ForDPI(dpi dpi) uintptr {
 	if h := -int32(dpi.Scale(12)); f.handle == 0 || f.face.Height != h {
-		f.delete()
+		f.Delete()
 		f.face.Height = h
 		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.face)))
 	}
 	return f.handle
 }
 
-func (f *font) delete() {
+func (f *font) Delete() {
 	if f.handle != 0 {
 		deleteObject.Call(f.handle)
 		f.handle = 0
 	}
 }
 
-func registerClass(instance, proc uintptr) (string, error) {
+func getWindowTextString(wnd uintptr) string {
+	len, _, _ := getWindowTextLength.Call(wnd)
+	buf := make([]uint16, len+1)
+	getWindowText.Call(wnd, uintptr(unsafe.Pointer(&buf[0])), len+1)
+	return syscall.UTF16ToString(buf)
+}
+
+func centerWindow(wnd uintptr) {
+	getMetric := func(i uintptr) int32 {
+		ret, _, _ := getSystemMetrics.Call(i)
+		return int32(ret)
+	}
+
+	var rect _RECT
+	getWindowRect.Call(wnd, uintptr(unsafe.Pointer(&rect)))
+	x := (getMetric(0 /* SM_CXSCREEN */) - (rect.right - rect.left)) / 2
+	y := (getMetric(1 /* SM_CYSCREEN */) - (rect.bottom - rect.top)) / 2
+	setWindowPos.Call(wnd, 0, uintptr(x), uintptr(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
+}
+
+func registerClass(instance, proc uintptr) (uintptr, error) {
 	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
 
 	var wcx _WNDCLASSEX
@@ -242,10 +213,7 @@ func registerClass(instance, proc uintptr) (string, error) {
 	wcx.ClassName = syscall.StringToUTF16Ptr(name)
 
 	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
-	if ret == 0 {
-		return "", err
-	}
-	return name, nil
+	return ret, err
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
@@ -273,29 +241,32 @@ func messageLoop(wnd uintptr) error {
 	}
 }
 
-// editBox displays textedit/inputbox dialog.
-func editBox(title, text, defaultText string, password bool) (out string, ok bool, err error) {
+func editBox(title, text string, opts options) (out string, ok bool, err error) {
 	var wnd, textCtl, editCtl uintptr
 	var okBtn, cancelBtn, extraBtn uintptr
 	defWindowProc := defWindowProc.Addr()
 
-	font := getMessageFont()
-	defer font.delete()
+	font := getFont()
+	defer font.Delete()
 
 	layout := func(dpi dpi) {
-		hfont := font.forDPI(dpi)
+		hfont := font.ForDPI(dpi)
 		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(140), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
-		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4)  // SWP_NOZORDER
-		setWindowPos.Call(editCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4)  // SWP_NOZORDER
-		setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)     // SWP_NOZORDER
-		setWindowPos.Call(cancelBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
-		setWindowPos.Call(extraBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
-
+		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(140), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(editCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		if extraBtn == 0 {
+			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		} else {
+			sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		}
 	}
 
 	proc := func(wnd uintptr, msg uint32, wparam, lparam uintptr) uintptr {
@@ -311,10 +282,11 @@ func editBox(title, text, defaultText string, password bool) (out string, ok boo
 			default:
 				return 1
 			case 1, 6: // IDOK, IDYES
-				out = getWindowText(editCtl)
+				out = getWindowTextString(editCtl)
 				ok = true
 			case 2: // IDCANCEL
 			case 7: // IDNO
+				err = ErrExtraButton
 			}
 			destroyWindow.Call(wnd)
 
@@ -336,49 +308,57 @@ func editBox(title, text, defaultText string, password bool) (out string, ok boo
 		return "", false, err
 	}
 
-	className, err := registerClass(instance, syscall.NewCallback(proc))
-	if err != nil {
+	cls, err := registerClass(instance, syscall.NewCallback(proc))
+	if cls == 0 {
 		return "", false, err
 	}
-	defer unregisterClass(className, instance)
+	defer unregisterClass.Call(cls, instance)
 
-	wnd, _ = createWindow(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
-		className, title,
+	wnd, _, _ = createWindowEx.Call(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
+		cls, stringUintptr(title),
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
 		281, 140, 0, 0, instance)
 
-	textCtl, _ = createWindow(0, "STATIC", text,
+	textCtl, _, _ = createWindowEx.Call(0,
+		stringUintptr("STATIC"), stringUintptr(text),
 		0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
 		12, 10, 241, 16, wnd, 0, instance)
 
 	var flags uintptr = 0x50030080 // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|ES_AUTOHSCROLL
-	if password {
+	if opts.hideText {
 		flags |= 0x20 // ES_PASSWORD
 	}
-	editCtl, _ = createWindow(0x200, // WS_EX_CLIENTEDGE
-		"EDIT", defaultText, flags,
+	editCtl, _, _ = createWindowEx.Call(0x200, // WS_EX_CLIENTEDGE
+		stringUintptr("EDIT"), stringUintptr(opts.entryText),
+		flags,
 		12, 30, 241, 24, wnd, 0, instance)
 
-	okBtn, _ = createWindow(0, "BUTTON", "OK",
+	okBtn, _, _ = createWindowEx.Call(0,
+		stringUintptr("BUTTON"), stringUintptr(*opts.okLabel),
 		0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
 		12, 65, 75, 24, wnd, 1 /* IDOK */, instance)
-	cancelBtn, _ = createWindow(0, "BUTTON", "Cancel",
+	cancelBtn, _, _ = createWindowEx.Call(0,
+		stringUintptr("BUTTON"), stringUintptr(*opts.cancelLabel),
 		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		95, 65, 75, 24, wnd, 2 /* IDCANCEL */, instance)
-	extraBtn, _ = createWindow(0, "BUTTON", "Extra",
-		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		178, 65, 75, 24, wnd, 7 /* IDNO */, instance)
+		12, 65, 75, 24, wnd, 2 /* IDCANCEL */, instance)
+	if opts.extraButton != nil {
+		extraBtn, _, _ = createWindowEx.Call(0,
+			stringUintptr("BUTTON"), stringUintptr(*opts.extraButton),
+			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
+			12, 65, 75, 24, wnd, 7 /* IDNO */, instance)
+	}
 
 	layout(getDPI(wnd))
 	centerWindow(wnd)
 	setFocus.Call(editCtl)
 	showWindow.Call(wnd, 1 /* SW_SHOWNORMAL */, 0)
+	sendMessage.Call(editCtl, 0xb1 /* EM_SETSEL */, 0, math.MaxUint64 /* -1 */)
 
-	err = messageLoop(wnd)
-	if err != nil {
+	err = nil
+	if err := messageLoop(wnd); err != nil {
 		return "", false, err
 	}
-	return out, ok, nil
+	return out, ok, err
 }
