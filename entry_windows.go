@@ -1,7 +1,6 @@
 package zenity
 
 import (
-	"math"
 	"strconv"
 	"syscall"
 	"unsafe"
@@ -315,14 +314,14 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 	defer unregisterClass.Call(cls, instance)
 
 	wnd, _, _ = createWindowEx.Call(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
-		cls, stringUintptr(title),
+		cls, strptr(title),
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
 		281, 140, 0, 0, instance)
 
 	textCtl, _, _ = createWindowEx.Call(0,
-		stringUintptr("STATIC"), stringUintptr(text),
+		strptr("STATIC"), strptr(text),
 		0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
 		12, 10, 241, 16, wnd, 0, instance)
 
@@ -331,21 +330,21 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 		flags |= 0x20 // ES_PASSWORD
 	}
 	editCtl, _, _ = createWindowEx.Call(0x200, // WS_EX_CLIENTEDGE
-		stringUintptr("EDIT"), stringUintptr(opts.entryText),
+		strptr("EDIT"), strptr(opts.entryText),
 		flags,
 		12, 30, 241, 24, wnd, 0, instance)
 
 	okBtn, _, _ = createWindowEx.Call(0,
-		stringUintptr("BUTTON"), stringUintptr(*opts.okLabel),
+		strptr("BUTTON"), strptr(*opts.okLabel),
 		0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
 		12, 65, 75, 24, wnd, 1 /* IDOK */, instance)
 	cancelBtn, _, _ = createWindowEx.Call(0,
-		stringUintptr("BUTTON"), stringUintptr(*opts.cancelLabel),
+		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
 		12, 65, 75, 24, wnd, 2 /* IDCANCEL */, instance)
 	if opts.extraButton != nil {
 		extraBtn, _, _ = createWindowEx.Call(0,
-			stringUintptr("BUTTON"), stringUintptr(*opts.extraButton),
+			strptr("BUTTON"), strptr(*opts.extraButton),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
 			12, 65, 75, 24, wnd, 7 /* IDNO */, instance)
 	}
@@ -354,7 +353,7 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 	centerWindow(wnd)
 	setFocus.Call(editCtl)
 	showWindow.Call(wnd, 1 /* SW_SHOWNORMAL */, 0)
-	sendMessage.Call(editCtl, 0xb1 /* EM_SETSEL */, 0, math.MaxUint64 /* -1 */)
+	sendMessage.Call(editCtl, 0xb1 /* EM_SETSEL */, 0, intptr(-1))
 
 	err = nil
 	if err := messageLoop(wnd); err != nil {

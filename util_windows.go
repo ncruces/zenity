@@ -168,14 +168,18 @@ func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelF
 	var init func(wnd uintptr)
 	if title != nil {
 		init = func(wnd uintptr) {
-			setWindowText.Call(wnd, stringUintptr(*title))
+			setWindowText.Call(wnd, strptr(*title))
 		}
 	}
 	return hookDialog(ctx, init)
 }
 
-func stringUintptr(s string) uintptr {
+func strptr(s string) uintptr {
 	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
+}
+
+func intptr(i int64) uintptr {
+	return uintptr(i)
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl

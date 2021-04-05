@@ -54,10 +54,10 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 
 	var title uintptr
 	if opts.title != nil {
-		title = stringUintptr(*opts.title)
+		title = strptr(*opts.title)
 	}
 
-	s, _, err := messageBox.Call(0, stringUintptr(text), title, flags)
+	s, _, err := messageBox.Call(0, strptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return false, opts.ctx.Err()
@@ -96,7 +96,7 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 						text = opts.extraButton
 					}
 					if text != nil {
-						setWindowText.Call(wnd, stringUintptr(*text))
+						setWindowText.Call(wnd, strptr(*text))
 					}
 				}
 				return 1
