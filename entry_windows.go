@@ -5,6 +5,7 @@
 package zenity
 
 import (
+	"strconv"
 	"syscall"
 	"unsafe"
 )
@@ -14,7 +15,7 @@ func entry(text string, opts options) (string, bool, error) {
 	if opts.title != nil {
 		title = *opts.title
 	}
-	return editBox(title, text, opts.entryText, "ClassEntry", opts.hideText)
+	return editBox(title, text, opts.entryText, opts.hideText)
 }
 
 func password(opts options) (string, string, bool, error) {
@@ -22,7 +23,7 @@ func password(opts options) (string, string, bool, error) {
 	if opts.title != nil {
 		title = *opts.title
 	}
-	pass, ok, err := editBox(title, "Password:", "", "ClassPassword", true)
+	pass, ok, err := editBox(title, "Password:", "", true)
 	return "", pass, ok, err
 }
 
@@ -154,11 +155,12 @@ func getDPI(wnd uintptr) dpi {
 	return dpi(res)
 }
 
-func createWindow(exStyle uint64, className, windowName string, style, x, y, width, height,
-	parent, menu, instance uintptr) (uintptr, error) {
-	ret, _, err := createWindowEx.Call(uintptr(exStyle), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))), style, x, y,
-		width, height, parent, menu, instance, 0)
+func createWindow(exStyle uintptr, className, windowName string,
+	style, x, y, width, height, parent, menu, instance uintptr) (uintptr, error) {
+	ret, _, err := createWindowEx.Call(exStyle,
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(className))),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(windowName))),
+		style, x, y, width, height, parent, menu, instance, 0)
 
 	if ret == 0 {
 		return 0, err
@@ -200,28 +202,50 @@ func centerWindow(wnd uintptr) {
 	setWindowPos.Call(wnd, 0, uintptr(x), uintptr(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
 }
 
-func getMessageFont() uintptr {
-	var metrics _NONCLIENTMETRICS
-	metrics.Size = uint32(unsafe.Sizeof(metrics))
-	systemParametersInfo.Call(0x29, /* SPI_GETNONCLIENTMETRICS */
-		unsafe.Sizeof(metrics), uintptr(unsafe.Pointer(&metrics)), 0)
-	ret, _, _ := createFontIndirect.Call(uintptr(unsafe.Pointer(&metrics.MessageFont)))
-	return ret
+type font struct {
+	handle uintptr
+	face   _LOGFONT
 }
 
-func registerClass(className string, instance uintptr, proc interface{}) error {
+func getMessageFont() font {
+	var metrics _NONCLIENTMETRICS
+	metrics.Size = uint32(unsafe.Sizeof(metrics))
+	systemParametersInfo.Call(0x29, // SPI_GETNONCLIENTMETRICS
+		unsafe.Sizeof(metrics), uintptr(unsafe.Pointer(&metrics)), 0)
+	return font{face: metrics.MessageFont}
+}
+
+func (f *font) forDPI(dpi dpi) uintptr {
+	if h := -int32(dpi.Scale(12)); f.handle == 0 || f.face.Height != h {
+		f.delete()
+		f.face.Height = h
+		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.face)))
+	}
+	return f.handle
+}
+
+func (f *font) delete() {
+	if f.handle != 0 {
+		deleteObject.Call(f.handle)
+		f.handle = 0
+	}
+}
+
+func registerClass(instance, proc uintptr) (string, error) {
+	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
+
 	var wcx _WNDCLASSEX
 	wcx.Size = uint32(unsafe.Sizeof(wcx))
-	wcx.WndProc = syscall.NewCallback(proc)
+	wcx.WndProc = proc
 	wcx.Instance = instance
 	wcx.Background = 5 // COLOR_WINDOW
-	wcx.ClassName = syscall.StringToUTF16Ptr(className)
+	wcx.ClassName = syscall.StringToUTF16Ptr(name)
 
 	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
 	if ret == 0 {
-		return err
+		return "", err
 	}
-	return nil
+	return name, nil
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
@@ -250,12 +274,21 @@ func messageLoop(wnd uintptr) error {
 }
 
 // editBox displays textedit/inputbox dialog.
-func editBox(title, text, defaultText, className string, password bool) (out string, ok bool, err error) {
+func editBox(title, text, defaultText string, password bool) (out string, ok bool, err error) {
 	var wnd, textCtl, editCtl uintptr
 	var okBtn, cancelBtn, extraBtn uintptr
 	defWindowProc := defWindowProc.Addr()
 
+	font := getMessageFont()
+	defer font.delete()
+
 	layout := func(dpi dpi) {
+		hfont := font.forDPI(dpi)
+		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(140), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
 		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4)  // SWP_NOZORDER
 		setWindowPos.Call(editCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4)  // SWP_NOZORDER
@@ -263,12 +296,6 @@ func editBox(title, text, defaultText, className string, password bool) (out str
 		setWindowPos.Call(cancelBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 		setWindowPos.Call(extraBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 
-		font := getMessageFont()
-		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, font, 0)
-		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, font, 0)
-		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, font, 0)
-		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, font, 0)
-		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, font, 0)
 	}
 
 	proc := func(wnd uintptr, msg uint32, wparam, lparam uintptr) uintptr {
@@ -309,21 +336,22 @@ func editBox(title, text, defaultText, className string, password bool) (out str
 		return "", false, err
 	}
 
-	err = registerClass(className, instance, proc)
+	className, err := registerClass(instance, syscall.NewCallback(proc))
 	if err != nil {
 		return "", false, err
 	}
 	defer unregisterClass(className, instance)
 
-	dpi := getDPI(0)
-
 	wnd, _ = createWindow(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
-		className, title, 0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
-		0x80000000 /* CW_USEDEFAULT */, 0x80000000, /* CW_USEDEFAULT */
-		dpi.Scale(281), dpi.Scale(140), 0, 0, instance)
+		className, title,
+		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
+		0x80000000, // CW_USEDEFAULT
+		0x80000000, // CW_USEDEFAULT
+		281, 140, 0, 0, instance)
 
-	textCtl, _ = createWindow(0, "STATIC", text, 0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
-		dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), wnd, 0, instance)
+	textCtl, _ = createWindow(0, "STATIC", text,
+		0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
+		12, 10, 241, 16, wnd, 0, instance)
 
 	var flags uintptr = 0x50030080 // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|ES_AUTOHSCROLL
 	if password {
@@ -331,14 +359,17 @@ func editBox(title, text, defaultText, className string, password bool) (out str
 	}
 	editCtl, _ = createWindow(0x200, // WS_EX_CLIENTEDGE
 		"EDIT", defaultText, flags,
-		dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), wnd, 0, instance)
+		12, 30, 241, 24, wnd, 0, instance)
 
-	okBtn, _ = createWindow(0, "BUTTON", "OK", 0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
-		dpi.Scale(12), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), wnd, 1 /* IDOK */, instance)
-	cancelBtn, _ = createWindow(0, "BUTTON", "Cancel", 0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), wnd, 2 /* IDCANCEL */, instance)
-	extraBtn, _ = createWindow(0, "BUTTON", "Extra", 0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), wnd, 7 /* IDNO */, instance)
+	okBtn, _ = createWindow(0, "BUTTON", "OK",
+		0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
+		12, 65, 75, 24, wnd, 1 /* IDOK */, instance)
+	cancelBtn, _ = createWindow(0, "BUTTON", "Cancel",
+		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
+		95, 65, 75, 24, wnd, 2 /* IDCANCEL */, instance)
+	extraBtn, _ = createWindow(0, "BUTTON", "Extra",
+		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
+		178, 65, 75, 24, wnd, 7 /* IDNO */, instance)
 
 	layout(getDPI(wnd))
 	centerWindow(wnd)
