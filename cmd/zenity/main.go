@@ -16,7 +16,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -platform-specific -manifest=win.manifest
+//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 
 const (
 	unspecified = "\x00"
