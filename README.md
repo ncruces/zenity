@@ -39,6 +39,7 @@ Why reinvent this particular wheel?
     * Explorer shell not required
     * works in Server Core
   * Unicode support
+  * High DPI support (no manifest required)
   * WSL/Cygwin/MSYS2 [support](https://github.com/ncruces/zenity/wiki/Zenity-for-WSL,-Cygwin,-MSYS2)
 * on macOS:
   * only dependency is `osascript`

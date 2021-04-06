@@ -23,82 +23,17 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	if dialog {
 		data.Operation = "displayDialog"
 		data.Options.Title = opts.title
-
-		switch opts.icon {
-		case ErrorIcon:
-			data.Options.Icon = "stop"
-		case WarningIcon:
-			data.Options.Icon = "caution"
-		case InfoIcon, QuestionIcon:
-			data.Options.Icon = "note"
-		}
+		data.Options.Icon = opts.icon.String()
 	} else {
 		data.Operation = "displayAlert"
+		data.Options.As = kind.String()
 		if opts.title != nil {
 			data.Text = *opts.title
 			data.Options.Message = text
 		}
-
-		switch kind {
-		case infoKind:
-			data.Options.As = "informational"
-		case warningKind:
-			data.Options.As = "warning"
-		case errorKind:
-			data.Options.As = "critical"
-		}
 	}
 
-	if kind == questionKind {
-		// alert defaults to a single button, we need two
-		if opts.cancelLabel == nil && !dialog {
-			opts.cancelLabel = stringPtr("Cancel")
-		}
-	} else {
-		// dialog defaults to two buttons, we need one
-		if opts.okLabel == nil && dialog {
-			opts.okLabel = stringPtr("OK")
-		}
-		// only questions have cancel
-		opts.cancelLabel = nil
-	}
-
-	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
-		if opts.okLabel == nil {
-			opts.okLabel = stringPtr("OK")
-		}
-		if kind == questionKind {
-			if opts.cancelLabel == nil {
-				opts.cancelLabel = stringPtr("Cancel")
-			}
-			if opts.extraButton == nil {
-				data.Options.Buttons = []string{*opts.cancelLabel, *opts.okLabel}
-				data.Options.Default = 2
-				data.Options.Cancel = 1
-			} else {
-				data.Options.Buttons = []string{*opts.extraButton, *opts.cancelLabel, *opts.okLabel}
-				data.Options.Default = 3
-				data.Options.Cancel = 2
-			}
-		} else {
-			if opts.extraButton == nil {
-				data.Options.Buttons = []string{*opts.okLabel}
-				data.Options.Default = 1
-			} else {
-				data.Options.Buttons = []string{*opts.extraButton, *opts.okLabel}
-				data.Options.Default = 2
-			}
-		}
-		data.Extra = opts.extraButton
-	}
-
-	if kind == questionKind && opts.defaultCancel {
-		if data.Options.Cancel != 0 {
-			data.Options.Default = data.Options.Cancel
-		} else {
-			data.Options.Default = 1
-		}
-	}
+	data.SetButtons(getButtons(dialog, kind == questionKind, opts))
 
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {

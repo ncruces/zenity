@@ -97,3 +97,20 @@ type NotifyOptions struct {
 	Title    *string `json:"withTitle,omitempty"`
 	Subtitle string  `json:"subtitle,omitempty"`
 }
+
+type Buttons struct {
+	Buttons []string
+	Default int
+	Cancel  int
+	Extra   int
+}
+
+func (d *Dialog) SetButtons(btns Buttons) {
+	d.Options.Buttons = btns.Buttons
+	d.Options.Default = btns.Default
+	d.Options.Cancel = btns.Cancel
+	if btns.Extra > 0 {
+		name := btns.Buttons[btns.Extra-1]
+		d.Extra = &name
+	}
+}

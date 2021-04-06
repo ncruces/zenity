@@ -15,34 +15,8 @@ func entry(text string, opts options) (string, bool, error) {
 	data.Options.Answer = &opts.entryText
 	data.Options.Hidden = opts.hideText
 	data.Options.Timeout = zenutil.Timeout
-
-	switch opts.icon {
-	case ErrorIcon:
-		data.Options.Icon = "stop"
-	case WarningIcon:
-		data.Options.Icon = "caution"
-	case InfoIcon, QuestionIcon:
-		data.Options.Icon = "note"
-	}
-
-	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
-		if opts.okLabel == nil {
-			opts.okLabel = stringPtr("OK")
-		}
-		if opts.cancelLabel == nil {
-			opts.cancelLabel = stringPtr("Cancel")
-		}
-		if opts.extraButton == nil {
-			data.Options.Buttons = []string{*opts.cancelLabel, *opts.okLabel}
-			data.Options.Default = 2
-			data.Options.Cancel = 1
-		} else {
-			data.Options.Buttons = []string{*opts.extraButton, *opts.cancelLabel, *opts.okLabel}
-			data.Options.Default = 3
-			data.Options.Cancel = 2
-		}
-		data.Extra = opts.extraButton
-	}
+	data.Options.Icon = opts.icon.String()
+	data.SetButtons(getButtons(true, true, opts))
 
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
 	out = bytes.TrimSuffix(out, []byte{'\n'})
