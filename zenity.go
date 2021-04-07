@@ -41,6 +41,10 @@ type options struct {
 	ellipsize     bool
 	defaultCancel bool
 
+	// List options
+	disallowEmpty bool
+	defaultItems  []string
+
 	// File selection options
 	directory        bool
 	confirmOverwrite bool

@@ -86,6 +86,24 @@ type DialogOptions struct {
 	Timeout int      `json:"givingUpAfter,omitempty"`
 }
 
+// List is internal.
+type List struct {
+	Items     []string
+	Separator string
+	Options   ListOptions
+}
+
+// ListOptions is internal.
+type ListOptions struct {
+	Title    *string  `json:"withTitle,omitempty"`
+	Prompt   *string  `json:"withPrompt,omitempty"`
+	OK       *string  `json:"okButtonName,omitempty"`
+	Cancel   *string  `json:"cancelButtonName,omitempty"`
+	Default  []string `json:"defaultItems,omitempty"`
+	Multiple bool     `json:"multipleSelectionsAllowed,omitempty"`
+	Empty    bool     `json:"emptySelectionAllowed,omitempty"`
+}
+
 // Notify is internal.
 type Notify struct {
 	Text    string

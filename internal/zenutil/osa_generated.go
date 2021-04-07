@@ -36,6 +36,12 @@ app.activate()
 var res=app.{{.Operation}}({{json .Options}})
 if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
+{{define "list" -}}
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+var res=app.chooseFromList({{json .Items}},{{json .Options}})
+res.join({{json .Separator}})
+{{- end}}
 {{define "notify" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
