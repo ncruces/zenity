@@ -3,8 +3,10 @@
 
 package zenutil
 
-import "encoding/json"
-import "text/template"
+import (
+	"encoding/json"
+	"text/template"
+)
 
 var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
 	b, err := json.Marshal(v)

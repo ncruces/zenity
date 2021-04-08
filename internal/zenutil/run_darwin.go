@@ -23,9 +23,9 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 		// Try to use syscall.Exec, fallback to exec.Command.
 		if path, err := exec.LookPath("osascript"); err != nil {
 		} else if t, err := ioutil.TempFile("", ""); err != nil {
+		} else if err := os.Remove(t.Name()); err != nil {
 		} else if _, err := t.WriteString(script); err != nil {
 		} else if _, err := t.Seek(0, 0); err != nil {
-		} else if err := os.Remove(t.Name()); err != nil {
 		} else if err := syscall.Dup2(int(t.Fd()), syscall.Stdin); err != nil {
 		} else if err := os.Stderr.Close(); err != nil {
 		} else {
