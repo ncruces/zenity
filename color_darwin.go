@@ -2,7 +2,6 @@ package zenity
 
 import (
 	"image/color"
-	"os/exec"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
@@ -21,11 +20,9 @@ func selectColor(opts options) (color.Color, error) {
 		float32(g) / 0xffff,
 		float32(b) / 0xffff,
 	})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		return nil, nil
+	str, ok, err := strResult(opts, out, err)
+	if ok {
+		return zenutil.ParseColor(str), nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	return zenutil.ParseColor(string(out)), nil
+	return nil, err
 }

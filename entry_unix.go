@@ -3,97 +3,42 @@
 package zenity
 
 import (
-	"bytes"
-	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 func entry(text string, opts options) (string, bool, error) {
-	args := []string{"--entry", "--text", text, "--entry-text", opts.entryText}
-	if opts.title != nil {
-		args = append(args, "--title", *opts.title)
-	}
-	if opts.width > 0 {
-		args = append(args, "--width", strconv.FormatUint(uint64(opts.width), 10))
-	}
-	if opts.height > 0 {
-		args = append(args, "--height", strconv.FormatUint(uint64(opts.height), 10))
-	}
-	if opts.okLabel != nil {
-		args = append(args, "--ok-label", *opts.okLabel)
-	}
-	if opts.cancelLabel != nil {
-		args = append(args, "--cancel-label", *opts.cancelLabel)
-	}
-	if opts.extraButton != nil {
-		args = append(args, "--extra-button", *opts.extraButton)
+	args := []string{"--entry", "--text", text}
+	args = appendTitle(args, opts)
+	args = appendButtons(args, opts)
+	args = appendWidthHeight(args, opts)
+	args = appendIcon(args, opts)
+	if opts.entryText != "" {
+		args = append(args, "--entry-text", opts.entryText)
 	}
 	if opts.hideText {
 		args = append(args, "--hide-text")
 	}
-	switch opts.icon {
-	case ErrorIcon:
-		args = append(args, "--window-icon=error")
-	case WarningIcon:
-		args = append(args, "--window-icon=warning")
-	case InfoIcon:
-		args = append(args, "--window-icon=info")
-	case QuestionIcon:
-		args = append(args, "--window-icon=question")
-	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	out = bytes.TrimSuffix(out, []byte{'\n'})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil &&
-			*opts.extraButton == string(out) {
-			return "", false, ErrExtraButton
-		}
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
-	}
-	return string(out), true, nil
+	return strResult(opts, out, err)
 }
 
 func password(opts options) (string, string, bool, error) {
 	args := []string{"--password"}
-	if opts.title != nil {
-		args = append(args, "--title", *opts.title)
-	}
-	if opts.okLabel != nil {
-		args = append(args, "--ok-label", *opts.okLabel)
-	}
-	if opts.cancelLabel != nil {
-		args = append(args, "--cancel-label", *opts.cancelLabel)
-	}
-	if opts.extraButton != nil {
-		args = append(args, "--extra-button", *opts.extraButton)
-	}
+	args = appendTitle(args, opts)
+	args = appendButtons(args, opts)
 	if opts.username {
 		args = append(args, "--username")
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	out = bytes.TrimSuffix(out, []byte{'\n'})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil &&
-			*opts.extraButton == string(out) {
-			return "", "", false, ErrExtraButton
-		}
-		return "", "", false, nil
-	}
-	if err != nil {
-		return "", "", false, err
-	}
-	if opts.username {
+	str, ok, err := strResult(opts, out, err)
+	if ok && opts.username {
 		if split := strings.SplitN(string(out), "|", 2); len(split) == 2 {
 			return split[0], split[1], true, nil
 		}
 	}
-	return "", string(out), true, nil
+	return "", str, ok, err
 }

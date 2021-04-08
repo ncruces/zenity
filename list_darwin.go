@@ -1,10 +1,6 @@
 package zenity
 
 import (
-	"bytes"
-	"os/exec"
-	"strings"
-
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -19,13 +15,7 @@ func list(text string, items []string, opts options) (string, bool, error) {
 	data.Options.Empty = !opts.disallowEmpty
 
 	out, err := zenutil.Run(opts.ctx, "list", data)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
-	}
-	return string(bytes.TrimSuffix(out, []byte{'\n'})), true, nil
+	return strResult(opts, out, err)
 }
 
 func listMultiple(text string, items []string, opts options) ([]string, error) {
@@ -41,15 +31,5 @@ func listMultiple(text string, items []string, opts options) ([]string, error) {
 	data.Separator = zenutil.Separator
 
 	out, err := zenutil.Run(opts.ctx, "list", data)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	out = bytes.TrimSuffix(out, []byte{'\n'})
-	if len(out) == 0 {
-		return nil, nil
-	}
-	return strings.Split(string(out), zenutil.Separator), nil
+	return lstResult(opts, out, err)
 }
