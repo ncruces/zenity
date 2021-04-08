@@ -22,6 +22,10 @@ var (
 
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
 
+	deleteObject       = gdi32.NewProc("DeleteObject")
+	getDeviceCaps      = gdi32.NewProc("GetDeviceCaps")
+	createFontIndirect = gdi32.NewProc("CreateFontIndirectW")
+
 	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
 	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
 	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
@@ -33,9 +37,12 @@ var (
 
 	getMessage                   = user32.NewProc("GetMessageW")
 	sendMessage                  = user32.NewProc("SendMessageW")
+	isDialogMessage              = user32.NewProc("IsDialogMessageW")
+	dispatchMessage              = user32.NewProc("DispatchMessageW")
+	translateMessage             = user32.NewProc("TranslateMessage")
 	getClassName                 = user32.NewProc("GetClassNameW")
-	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
 	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
+	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
 	enumWindows                  = user32.NewProc("EnumWindows")
 	enumChildWindows             = user32.NewProc("EnumChildWindows")
@@ -45,7 +52,19 @@ var (
 	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
 	getWindowThreadProcessId     = user32.NewProc("GetWindowThreadProcessId")
 	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
+	getDpiForWindow              = user32.NewProc("GetDpiForWindow")
+	releaseDC                    = user32.NewProc("ReleaseDC")
+	getWindowDC                  = user32.NewProc("GetWindowDC")
+	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
 )
+
+func intptr(i int64) uintptr {
+	return uintptr(i)
+}
+
+func strptr(s string) uintptr {
+	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
+}
 
 func setup() context.CancelFunc {
 	var hwnd uintptr
@@ -95,15 +114,6 @@ func commDlgError() error {
 	} else {
 		return fmt.Errorf("Common Dialog error: %x", s)
 	}
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
-type _CWPRETSTRUCT struct {
-	Result  uintptr
-	LParam  uintptr
-	WParam  uintptr
-	Message uint32
-	Wnd     uintptr
 }
 
 func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook context.CancelFunc, err error) {
@@ -174,12 +184,152 @@ func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelF
 	return hookDialog(ctx, init)
 }
 
-func strptr(s string) uintptr {
-	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
+type dpi uintptr
+
+func getDPI(wnd uintptr) dpi {
+	var res uintptr
+
+	if wnd != 0 && getDpiForWindow.Find() == nil {
+		res, _, _ = getDpiForWindow.Call(wnd)
+	} else if dc, _, _ := getWindowDC.Call(wnd); dc != 0 {
+		res, _, _ = getDeviceCaps.Call(dc, 90) // LOGPIXELSY
+		releaseDC.Call(0, dc)
+	}
+
+	if res == 0 {
+		return 96 // USER_DEFAULT_SCREEN_DPI
+	}
+	return dpi(res)
 }
 
-func intptr(i int64) uintptr {
-	return uintptr(i)
+func (d dpi) Scale(dim uintptr) uintptr {
+	if d == 0 {
+		return dim
+	}
+	return dim * uintptr(d) / 96 // USER_DEFAULT_SCREEN_DPI
+}
+
+type font struct {
+	handle  uintptr
+	logical _LOGFONT
+}
+
+func getFont() font {
+	var metrics _NONCLIENTMETRICS
+	metrics.Size = uint32(unsafe.Sizeof(metrics))
+	systemParametersInfo.Call(0x29, // SPI_GETNONCLIENTMETRICS
+		unsafe.Sizeof(metrics), uintptr(unsafe.Pointer(&metrics)), 0)
+	return font{logical: metrics.MessageFont}
+}
+
+func (f *font) ForDPI(dpi dpi) uintptr {
+	if h := -int32(dpi.Scale(12)); f.handle == 0 || f.logical.Height != h {
+		f.Delete()
+		f.logical.Height = h
+		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.logical)))
+	}
+	return f.handle
+}
+
+func (f *font) Delete() {
+	if f.handle != 0 {
+		deleteObject.Call(f.handle)
+		f.handle = 0
+	}
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
+func messageLoop(wnd uintptr) error {
+	getMessage := getMessage.Addr()
+	isDialogMessage := isDialogMessage.Addr()
+	translateMessage := translateMessage.Addr()
+	dispatchMessage := dispatchMessage.Addr()
+
+	for {
+		var msg _MSG
+		ret, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
+		if int32(ret) == -1 {
+			return err
+		}
+		if ret == 0 {
+			return nil
+		}
+
+		ret, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
+		if ret == 0 {
+			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+		}
+	}
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
+type _CWPRETSTRUCT struct {
+	Result  uintptr
+	LParam  uintptr
+	WParam  uintptr
+	Message uint32
+	Wnd     uintptr
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw
+type _LOGFONT struct {
+	Height         int32
+	Width          int32
+	Escapement     int32
+	Orientation    int32
+	Weight         int32
+	Italic         byte
+	Underline      byte
+	StrikeOut      byte
+	CharSet        byte
+	OutPrecision   byte
+	ClipPrecision  byte
+	Quality        byte
+	PitchAndFamily byte
+	FaceName       [32]uint16
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw
+type _NONCLIENTMETRICS struct {
+	Size            uint32
+	BorderWidth     int32
+	ScrollWidth     int32
+	ScrollHeight    int32
+	CaptionWidth    int32
+	CaptionHeight   int32
+	CaptionFont     _LOGFONT
+	SmCaptionWidth  int32
+	SmCaptionHeight int32
+	SmCaptionFont   _LOGFONT
+	MenuWidth       int32
+	MenuHeight      int32
+	MenuFont        _LOGFONT
+	StatusFont      _LOGFONT
+	MessageFont     _LOGFONT
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg
+type _MSG struct {
+	Owner   syscall.Handle
+	Message uint32
+	WParam  uintptr
+	LParam  uintptr
+	Time    uint32
+	Pt      _POINT
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
+type _POINT struct {
+	x, y int32
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect
+type _RECT struct {
+	left   int32
+	top    int32
+	right  int32
+	bottom int32
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
