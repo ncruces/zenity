@@ -2,6 +2,7 @@ package zenity
 
 import (
 	"context"
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -55,6 +56,7 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	var title uintptr
 	if opts.title != nil {
 		title = strptr(*opts.title)
+		defer runtime.KeepAlive(*opts.title)
 	}
 
 	s, _, err := messageBox.Call(0, strptr(text), title, flags)

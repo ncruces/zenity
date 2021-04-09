@@ -409,15 +409,13 @@ func uuid(s string) uintptr {
 type _COMObject struct{}
 
 func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	self := uintptr(unsafe.Pointer(o))
-	nargs := uintptr(len(a))
-	switch nargs {
+	switch nargs := uintptr(len(a)); nargs {
 	case 0:
-		return syscall.Syscall(trap, nargs+1, self, 0, 0)
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), 0, 0)
 	case 1:
-		return syscall.Syscall(trap, nargs+1, self, a[0], 0)
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], 0)
 	case 2:
-		return syscall.Syscall(trap, nargs+1, self, a[0], a[1])
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], a[1])
 	default:
 		panic("COM call with too many arguments.")
 	}

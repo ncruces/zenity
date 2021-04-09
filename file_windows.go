@@ -3,6 +3,7 @@ package zenity
 import (
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -311,14 +312,14 @@ func browseForFolder(opts options) (string, []string, error) {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.filename != "" {
-		ptr := syscall.StringToUTF16Ptr(opts.filename)
-		args.LParam = uintptr(unsafe.Pointer(ptr))
+		args.LParam = strptr(opts.filename)
 		args.CallbackFunc = syscall.NewCallback(func(wnd uintptr, msg uint32, lparam, data uintptr) uintptr {
 			if msg == 1 { // BFFM_INITIALIZED
 				sendMessage.Call(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
 			}
 			return 0
 		})
+		defer runtime.KeepAlive(opts.filename)
 	}
 
 	if opts.ctx != nil {

@@ -27,14 +27,14 @@ func ListMultiple(text string, items []string, options ...Option) ([]string, err
 	return listMultiple(text, items, applyOptions(options))
 }
 
-// ListMultiple displays the list dialog, allowing multiple items to be selected.
+// ListMultipleItems displays the list dialog, allowing multiple items to be selected.
 //
 // Returns a nil slice on cancel, or ErrExtraButton.
 func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }
 
-// DefaultItems returns an Option to set the items to initally select (macOS only).
+// DefaultItems returns an Option to set the items to initially select (macOS only).
 func DefaultItems(items ...string) Option {
 	return funcOption(func(o *options) { o.defaultItems = items })
 }
