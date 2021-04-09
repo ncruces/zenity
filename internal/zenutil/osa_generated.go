@@ -3,8 +3,10 @@
 
 package zenutil
 
-import "encoding/json"
-import "text/template"
+import (
+	"encoding/json"
+	"text/template"
+)
 
 var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
@@ -35,6 +37,12 @@ app.includeStandardAdditions=true
 app.activate()
 var res=app.{{.Operation}}({{json .Options}})
 if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
+{{- end}}
+{{define "list" -}}
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+var res=app.chooseFromList({{json .Items}},{{json .Options}})
+res.join({{json .Separator}})
 {{- end}}
 {{define "notify" -}}
 var app=Application.currentApplication()

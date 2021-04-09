@@ -3,10 +3,6 @@
 package zenity
 
 import (
-	"bytes"
-	"os/exec"
-	"strconv"
-
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -22,24 +18,10 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	case errorKind:
 		args = append(args, "--error")
 	}
-	if opts.title != nil {
-		args = append(args, "--title", *opts.title)
-	}
-	if opts.width > 0 {
-		args = append(args, "--width", strconv.FormatUint(uint64(opts.width), 10))
-	}
-	if opts.height > 0 {
-		args = append(args, "--height", strconv.FormatUint(uint64(opts.height), 10))
-	}
-	if opts.okLabel != nil {
-		args = append(args, "--ok-label", *opts.okLabel)
-	}
-	if opts.cancelLabel != nil {
-		args = append(args, "--cancel-label", *opts.cancelLabel)
-	}
-	if opts.extraButton != nil {
-		args = append(args, "--extra-button", *opts.extraButton)
-	}
+	args = appendTitle(args, opts)
+	args = appendButtons(args, opts)
+	args = appendWidthHeight(args, opts)
+	args = appendIcon(args, opts)
 	if opts.noWrap {
 		args = append(args, "--no-wrap")
 	}
@@ -51,13 +33,13 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	}
 	switch opts.icon {
 	case ErrorIcon:
-		args = append(args, "--window-icon=error", "--icon-name=dialog-error")
+		args = append(args, "--icon-name=dialog-error")
 	case WarningIcon:
-		args = append(args, "--window-icon=warning", "--icon-name=dialog-warning")
+		args = append(args, "--icon-name=dialog-warning")
 	case InfoIcon:
-		args = append(args, "--window-icon=info", "--icon-name=dialog-information")
+		args = append(args, "--icon-name=dialog-information")
 	case QuestionIcon:
-		args = append(args, "--window-icon=question", "--icon-name=dialog-question")
+		args = append(args, "--icon-name=dialog-question")
 	case PasswordIcon:
 		args = append(args, "--icon-name=dialog-password")
 	case NoIcon:
@@ -65,15 +47,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil &&
-			*opts.extraButton == string(bytes.TrimSuffix(out, []byte{'\n'})) {
-			return false, ErrExtraButton
-		}
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, err
+	_, ok, err := strResult(opts, out, err)
+	return ok, err
 }

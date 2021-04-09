@@ -1,9 +1,6 @@
 package zenity
 
 import (
-	"bytes"
-	"os/exec"
-
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -19,22 +16,5 @@ func entry(text string, opts options) (string, bool, error) {
 	data.SetButtons(getButtons(true, true, opts))
 
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
-	out = bytes.TrimSuffix(out, []byte{'\n'})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil &&
-			*opts.extraButton == string(out) {
-			return "", false, ErrExtraButton
-		}
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
-	}
-	return string(out), true, nil
-}
-
-func password(opts options) (string, string, bool, error) {
-	opts.hideText = true
-	pass, ok, err := entry("Password:", opts)
-	return "", pass, ok, err
+	return strResult(opts, out, err)
 }

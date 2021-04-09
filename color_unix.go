@@ -4,7 +4,6 @@ package zenity
 
 import (
 	"image/color"
-	"os/exec"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
@@ -12,9 +11,7 @@ import (
 func selectColor(opts options) (color.Color, error) {
 	args := []string{"--color-selection"}
 
-	if opts.title != nil {
-		args = append(args, "--title", *opts.title)
-	}
+	args = appendTitle(args, opts)
 	if opts.color != nil {
 		args = append(args, "--color", zenutil.UnparseColor(opts.color))
 	}
@@ -23,11 +20,9 @@ func selectColor(opts options) (color.Color, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		return nil, nil
+	str, ok, err := strResult(opts, out, err)
+	if ok {
+		return zenutil.ParseColor(str), nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	return zenutil.ParseColor(string(out)), nil
+	return nil, err
 }

@@ -1,9 +1,6 @@
 package zenity
 
 import (
-	"bytes"
-	"os/exec"
-
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -36,15 +33,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	data.SetButtons(getButtons(dialog, kind == questionKind, opts))
 
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil &&
-			*opts.extraButton == string(bytes.TrimSuffix(out, []byte{'\n'})) {
-			return false, ErrExtraButton
-		}
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, err
+	_, ok, err := strResult(opts, out, err)
+	return ok, err
 }

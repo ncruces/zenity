@@ -8,9 +8,7 @@ import (
 
 func notify(text string, opts options) error {
 	args := []string{"--notification", "--text", text}
-	if opts.title != nil {
-		args = append(args, "--title", *opts.title)
-	}
+	args = appendTitle(args, opts)
 	switch opts.icon {
 	case ErrorIcon:
 		args = append(args, "--window-icon=dialog-error")

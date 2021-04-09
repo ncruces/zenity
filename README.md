@@ -8,15 +8,13 @@ This repo includes both a cross-platform Go package providing
 (simple dialogs that interact graphically with the user),
 as well as a *“port”* of the `zenity` command to both Windows and macOS based on that library.
 
-**This is a work in progress.**
-
-Lots of things are missing.
-For now, these are the only implemented dialogs:
+Implemented dialogs:
 * [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
+* [text entry](https://github.com/ncruces/zenity/wiki/Text-Entry-dialog)
+* [list](https://github.com/ncruces/zenity/wiki/List-dialog)
+* [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
 * [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
 * [color selection](https://github.com/ncruces/zenity/wiki/Color-Selection-dialog)
-* [text entry](https://github.com/ncruces/zenity/wiki/Text-Entry-dialog)
-* [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
 * [notification](https://github.com/ncruces/zenity/wiki/Notification)
 
 Behavior on Windows, macOS and other Unixes might differ slightly.
