@@ -15,7 +15,10 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	if opts.cancelLabel == nil {
 		opts.cancelLabel = stringPtr("Cancel")
 	}
+	return entryDlg(title, text, opts)
+}
 
+func entryDlg(title, text string, opts options) (out string, ok bool, err error) {
 	defer setup()()
 	font := getFont()
 	defer font.Delete()
@@ -30,17 +33,17 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(140), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
 		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
 		setWindowPos.Call(editCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
 		if extraBtn == 0 {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 		} else {
 			sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(65), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 		}
 	}
 
@@ -96,7 +99,7 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
-		281, 140, 0, 0, instance)
+		281, 141, 0, 0, instance)
 
 	textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr(text),
@@ -115,16 +118,16 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
-		12, 65, 75, 24, wnd, 1 /* IDOK */, instance)
+		12, 66, 75, 24, wnd, 1 /* IDOK */, instance)
 	cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		12, 65, 75, 24, wnd, 2 /* IDCANCEL */, instance)
+		12, 66, 75, 24, wnd, 2 /* IDCANCEL */, instance)
 	if opts.extraButton != nil {
 		extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-			12, 65, 75, 24, wnd, 7 /* IDNO */, instance)
+			12, 66, 75, 24, wnd, 7 /* IDNO */, instance)
 	}
 
 	layout(getDPI(wnd))

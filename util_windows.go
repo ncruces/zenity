@@ -114,8 +114,8 @@ func setup() context.CancelFunc {
 	return func() {
 		if old != 0 {
 			setThreadDpiAwarenessContext.Call(old)
-			runtime.UnlockOSThread()
 		}
+		runtime.UnlockOSThread()
 	}
 }
 

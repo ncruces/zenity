@@ -34,12 +34,12 @@ func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }
 
-// DefaultItems returns an Option to set the items to initally select (Windows and macOS only).
+// DefaultItems returns an Option to set the items to initally select (macOS only).
 func DefaultItems(items ...string) Option {
 	return funcOption(func(o *options) { o.defaultItems = items })
 }
 
-// DisallowEmpty returns an Option to not allow zero items to be selected (Windows and macOS only).
+// DisallowEmpty returns an Option to not allow zero items to be selected (macOS only).
 func DisallowEmpty() Option {
 	return funcOption(func(o *options) { o.disallowEmpty = true })
 }
