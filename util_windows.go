@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strconv"
 	"sync/atomic"
 	"syscall"
 	"unsafe"
@@ -37,6 +38,7 @@ var (
 
 	getMessage                   = user32.NewProc("GetMessageW")
 	sendMessage                  = user32.NewProc("SendMessageW")
+	postQuitMessage              = user32.NewProc("PostQuitMessage")
 	isDialogMessage              = user32.NewProc("IsDialogMessageW")
 	dispatchMessage              = user32.NewProc("DispatchMessageW")
 	translateMessage             = user32.NewProc("TranslateMessage")
@@ -56,6 +58,16 @@ var (
 	releaseDC                    = user32.NewProc("ReleaseDC")
 	getWindowDC                  = user32.NewProc("GetWindowDC")
 	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
+	setWindowPos                 = user32.NewProc("SetWindowPos")
+	getWindowRect                = user32.NewProc("GetWindowRect")
+	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
+	unregisterClass              = user32.NewProc("UnregisterClassW")
+	registerClassEx              = user32.NewProc("RegisterClassExW")
+	destroyWindow                = user32.NewProc("DestroyWindow")
+	createWindowEx               = user32.NewProc("CreateWindowExW")
+	showWindow                   = user32.NewProc("ShowWindow")
+	setFocus                     = user32.NewProc("SetFocus")
+	defWindowProc                = user32.NewProc("DefWindowProcW")
 )
 
 func intptr(i int64) uintptr {
@@ -238,6 +250,40 @@ func (f *font) Delete() {
 	}
 }
 
+func centerWindow(wnd uintptr) {
+	getMetric := func(i uintptr) int32 {
+		ret, _, _ := getSystemMetrics.Call(i)
+		return int32(ret)
+	}
+
+	var rect _RECT
+	getWindowRect.Call(wnd, uintptr(unsafe.Pointer(&rect)))
+	x := (getMetric(0 /* SM_CXSCREEN */) - (rect.right - rect.left)) / 2
+	y := (getMetric(1 /* SM_CYSCREEN */) - (rect.bottom - rect.top)) / 2
+	setWindowPos.Call(wnd, 0, uintptr(x), uintptr(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
+}
+
+func getWindowString(wnd uintptr) string {
+	len, _, _ := getWindowTextLength.Call(wnd)
+	buf := make([]uint16, len+1)
+	getWindowText.Call(wnd, uintptr(unsafe.Pointer(&buf[0])), len+1)
+	return syscall.UTF16ToString(buf)
+}
+
+func registerClass(instance, proc uintptr) (uintptr, error) {
+	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
+
+	var wcx _WNDCLASSEX
+	wcx.Size = uint32(unsafe.Sizeof(wcx))
+	wcx.WndProc = proc
+	wcx.Instance = instance
+	wcx.Background = 5 // COLOR_WINDOW
+	wcx.ClassName = syscall.StringToUTF16Ptr(name)
+
+	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
+	return ret, err
+}
+
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
 func messageLoop(wnd uintptr) error {
 	getMessage := getMessage.Addr()
@@ -330,6 +376,22 @@ type _RECT struct {
 	top    int32
 	right  int32
 	bottom int32
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
+type _WNDCLASSEX struct {
+	Size       uint32
+	Style      uint32
+	WndProc    uintptr
+	ClsExtra   int32
+	WndExtra   int32
+	Instance   uintptr
+	Icon       uintptr
+	Cursor     uintptr
+	Background uintptr
+	MenuName   *uint16
+	ClassName  *uint16
+	IconSm     uintptr
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl

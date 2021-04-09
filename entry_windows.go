@@ -1,12 +1,10 @@
 package zenity
 
 import (
-	"strconv"
 	"syscall"
-	"unsafe"
 )
 
-func entry(text string, opts options) (string, bool, error) {
+func entry(text string, opts options) (out string, ok bool, err error) {
 	var title string
 	if opts.title != nil {
 		title = *opts.title
@@ -17,88 +15,14 @@ func entry(text string, opts options) (string, bool, error) {
 	if opts.cancelLabel == nil {
 		opts.cancelLabel = stringPtr("Cancel")
 	}
-	return editBox(title, text, opts)
-}
-
-func password(opts options) (string, string, bool, error) {
-	opts.hideText = true
-	pass, ok, err := entry("Password:", opts)
-	return "", pass, ok, err
-}
-
-var (
-	registerClassEx  = user32.NewProc("RegisterClassExW")
-	unregisterClass  = user32.NewProc("UnregisterClassW")
-	createWindowEx   = user32.NewProc("CreateWindowExW")
-	destroyWindow    = user32.NewProc("DestroyWindow")
-	postQuitMessage  = user32.NewProc("PostQuitMessage")
-	defWindowProc    = user32.NewProc("DefWindowProcW")
-	getWindowRect    = user32.NewProc("GetWindowRect")
-	setWindowPos     = user32.NewProc("SetWindowPos")
-	setFocus         = user32.NewProc("SetFocus")
-	showWindow       = user32.NewProc("ShowWindow")
-	getSystemMetrics = user32.NewProc("GetSystemMetrics")
-)
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
-type _WNDCLASSEX struct {
-	Size       uint32
-	Style      uint32
-	WndProc    uintptr
-	ClsExtra   int32
-	WndExtra   int32
-	Instance   uintptr
-	Icon       uintptr
-	Cursor     uintptr
-	Background uintptr
-	MenuName   *uint16
-	ClassName  *uint16
-	IconSm     uintptr
-}
-
-func getWindowString(wnd uintptr) string {
-	len, _, _ := getWindowTextLength.Call(wnd)
-	buf := make([]uint16, len+1)
-	getWindowText.Call(wnd, uintptr(unsafe.Pointer(&buf[0])), len+1)
-	return syscall.UTF16ToString(buf)
-}
-
-func centerWindow(wnd uintptr) {
-	getMetric := func(i uintptr) int32 {
-		ret, _, _ := getSystemMetrics.Call(i)
-		return int32(ret)
-	}
-
-	var rect _RECT
-	getWindowRect.Call(wnd, uintptr(unsafe.Pointer(&rect)))
-	x := (getMetric(0 /* SM_CXSCREEN */) - (rect.right - rect.left)) / 2
-	y := (getMetric(1 /* SM_CYSCREEN */) - (rect.bottom - rect.top)) / 2
-	setWindowPos.Call(wnd, 0, uintptr(x), uintptr(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
-}
-
-func registerClass(instance, proc uintptr) (uintptr, error) {
-	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
-
-	var wcx _WNDCLASSEX
-	wcx.Size = uint32(unsafe.Sizeof(wcx))
-	wcx.WndProc = proc
-	wcx.Instance = instance
-	wcx.Background = 5 // COLOR_WINDOW
-	wcx.ClassName = syscall.StringToUTF16Ptr(name)
-
-	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
-	return ret, err
-}
-
-func editBox(title, text string, opts options) (out string, ok bool, err error) {
-	var wnd, textCtl, editCtl uintptr
-	var okBtn, cancelBtn, extraBtn uintptr
-	defWindowProc := defWindowProc.Addr()
 
 	defer setup()()
-
 	font := getFont()
 	defer font.Delete()
+	defWindowProc := defWindowProc.Addr()
+
+	var wnd, textCtl, editCtl uintptr
+	var okBtn, cancelBtn, extraBtn uintptr
 
 	layout := func(dpi dpi) {
 		hfont := font.ForDPI(dpi)
@@ -231,4 +155,10 @@ func editBox(title, text string, opts options) (out string, ok bool, err error) 
 		return "", false, opts.ctx.Err()
 	}
 	return out, ok, err
+}
+
+func password(opts options) (string, string, bool, error) {
+	opts.hideText = true
+	str, ok, err := entry("Password:", opts)
+	return "", str, ok, err
 }
