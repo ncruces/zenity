@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"image/color"
 	"os"
@@ -24,15 +25,16 @@ const (
 
 var (
 	// Application Options
-	notification      bool
-	entryDlg          bool
 	errorDlg          bool
 	infoDlg           bool
 	warningDlg        bool
 	questionDlg       bool
+	entryDlg          bool
+	listDlg           bool
 	passwordDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
+	notification      bool
 
 	// General options
 	title       string
@@ -43,25 +45,29 @@ var (
 	extraButton string
 	text        string
 	icon        string
-
-	// Entry options
-	entryText string
-	hideText  bool
+	multiple    bool
 
 	// Message options
 	noWrap        bool
 	ellipsize     bool
 	defaultCancel bool
 
+	// Entry options
+	entryText string
+	hideText  bool
+
+	// List options
+	columns    int
+	allowEmpty bool
+
 	// File selection options
 	save             bool
-	multiple         bool
 	directory        bool
 	confirmOverwrite bool
 	confirmCreate    bool
 	showHidden       bool
 	filename         string
-	fileFilters      FileFilters
+	fileFilters      zenity.FileFilters
 
 	// Color selection options
 	defaultColor string
@@ -93,12 +99,6 @@ func main() {
 	}
 
 	switch {
-	case notification:
-		errResult(zenity.Notify(text, opts...))
-
-	case entryDlg:
-		strOKResult(zenity.Entry(text, opts...))
-
 	case errorDlg:
 		okResult(zenity.Error(text, opts...))
 	case infoDlg:
@@ -107,6 +107,16 @@ func main() {
 		okResult(zenity.Warning(text, opts...))
 	case questionDlg:
 		okResult(zenity.Question(text, opts...))
+
+	case entryDlg:
+		strOKResult(zenity.Entry(text, opts...))
+
+	case listDlg:
+		if multiple {
+			listResult(zenity.ListMultiple(text, flag.Args(), opts...))
+		} else {
+			strOKResult(zenity.List(text, flag.Args(), opts...))
+		}
 
 	case passwordDlg:
 		_, pw, ok, err := zenity.Password(opts...)
@@ -124,6 +134,9 @@ func main() {
 
 	case colorSelectionDlg:
 		colorResult(zenity.SelectColor(opts...))
+
+	case notification:
+		errResult(zenity.Notify(text, opts...))
 	}
 
 	flag.Usage()
@@ -131,15 +144,16 @@ func main() {
 
 func setupFlags() {
 	// Application Options
-	flag.BoolVar(&notification, "notification", false, "Display notification")
-	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
 	flag.BoolVar(&errorDlg, "error", false, "Display error dialog")
 	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
 	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
+	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
+	flag.BoolVar(&listDlg, "list", false, "Display list dialog")
 	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
+	flag.BoolVar(&notification, "notification", false, "Display notification")
 
 	// General options
 	flag.StringVar(&title, "title", "", "Set the dialog `title`")
@@ -150,10 +164,7 @@ func setupFlags() {
 	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
-
-	// Entry options
-	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
-	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
+	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
 
 	// Message options
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
@@ -161,15 +172,23 @@ func setupFlags() {
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
+	// Entry options
+	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
+	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
+
+	// List options
+	flag.Var(funcValue(addColumn), "column", "Set the column header")
+	flag.Bool("hide-header", true, "Hide the column headers")
+	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
+
 	// File selection options
 	flag.BoolVar(&save, "save", false, "Activate save mode")
-	flag.BoolVar(&multiple, "multiple", false, "Allow multiple files to be selected")
 	flag.BoolVar(&directory, "directory", false, "Activate directory-only selection")
 	flag.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the `filename`")
-	flag.Var(&fileFilters, "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
+	flag.Var(funcValue(addFileFilter), "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
 
 	// Color selection options
 	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
@@ -196,12 +215,6 @@ func setupFlags() {
 
 func validateFlags() {
 	var n int
-	if notification {
-		n++
-	}
-	if entryDlg {
-		n++
-	}
 	if errorDlg {
 		n++
 	}
@@ -214,6 +227,12 @@ func validateFlags() {
 	if questionDlg {
 		n++
 	}
+	if entryDlg {
+		n++
+	}
+	if listDlg {
+		n++
+	}
 	if passwordDlg {
 		n++
 	}
@@ -221,6 +240,9 @@ func validateFlags() {
 		n++
 	}
 	if colorSelectionDlg {
+		n++
+	}
+	if notification {
 		n++
 	}
 	if n != 1 {
@@ -239,11 +261,6 @@ func loadFlags() []zenity.Option {
 		}
 	}
 	switch {
-	case entryDlg:
-		setDefault(&title, "Add a new entry")
-		setDefault(&text, "Enter new text:")
-		setDefault(&okLabel, "OK")
-		setDefault(&cancelLabel, "Cancel")
 	case errorDlg:
 		setDefault(&title, "Error")
 		setDefault(&icon, "dialog-error")
@@ -265,6 +282,16 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "Yes")
 		setDefault(&cancelLabel, "No")
+	case entryDlg:
+		setDefault(&title, "Add a new entry")
+		setDefault(&text, "Enter new text:")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
+	case listDlg:
+		setDefault(&title, "Select items from the list")
+		setDefault(&text, "Select items from the list below:")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
 	case passwordDlg:
 		setDefault(&title, "Type your password")
 		setDefault(&icon, "dialog-password")
@@ -308,13 +335,6 @@ func loadFlags() []zenity.Option {
 	}
 	opts = append(opts, zenity.Icon(ico))
 
-	// Entry options
-
-	opts = append(opts, zenity.EntryText(entryText))
-	if hideText {
-		opts = append(opts, zenity.HideText())
-	}
-
 	// Message options
 
 	if noWrap {
@@ -325,6 +345,19 @@ func loadFlags() []zenity.Option {
 	}
 	if defaultCancel {
 		opts = append(opts, zenity.DefaultCancel())
+	}
+
+	// Entry options
+
+	opts = append(opts, zenity.EntryText(entryText))
+	if hideText {
+		opts = append(opts, zenity.HideText())
+	}
+
+	// List options
+
+	if !allowEmpty {
+		opts = append(opts, zenity.DisallowEmpty())
 	}
 
 	// File selection options
@@ -487,18 +520,20 @@ func egestPaths(paths []string, err error) ([]string, error) {
 	return paths, err
 }
 
-// FileFilters is internal.
-type FileFilters struct {
-	zenity.FileFilters
+type funcValue func(string) error
+
+func (f funcValue) String() string     { return "" }
+func (f funcValue) Set(s string) error { return f(s) }
+
+func addColumn(s string) error {
+	columns++
+	if columns <= 1 {
+		return nil
+	}
+	return errors.New("multiple columns not supported")
 }
 
-// String is internal.
-func (f *FileFilters) String() string {
-	return "zenity.FileFilters"
-}
-
-// Set is internal.
-func (f *FileFilters) Set(s string) error {
+func addFileFilter(s string) error {
 	var filter zenity.FileFilter
 
 	if split := strings.SplitN(s, "|", 2); len(split) > 1 {
@@ -507,7 +542,7 @@ func (f *FileFilters) Set(s string) error {
 	}
 
 	filter.Patterns = strings.Split(strings.TrimSpace(s), " ")
-	f.FileFilters = append(f.FileFilters, filter)
+	fileFilters = append(fileFilters, filter)
 
 	return nil
 }
