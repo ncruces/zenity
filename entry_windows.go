@@ -156,9 +156,3 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	}
 	return out, ok, err
 }
-
-func password(opts options) (string, string, bool, error) {
-	opts.hideText = true
-	str, ok, err := entry("Password:", opts)
-	return "", str, ok, err
-}

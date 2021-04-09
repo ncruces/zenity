@@ -18,9 +18,3 @@ func entry(text string, opts options) (string, bool, error) {
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
 	return strResult(opts, out, err)
 }
-
-func password(opts options) (string, string, bool, error) {
-	opts.hideText = true
-	str, ok, err := entry("Password:", opts)
-	return "", str, ok, err
-}
