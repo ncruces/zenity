@@ -53,6 +53,9 @@ type options struct {
 	disallowEmpty bool
 	defaultItems  []string
 
+	// Calendar options
+	year, month, day int
+
 	// File selection options
 	directory        bool
 	confirmOverwrite bool
