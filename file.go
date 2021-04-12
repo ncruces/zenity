@@ -3,6 +3,7 @@ package zenity
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // SelectFile displays the file selection dialog.
@@ -82,6 +83,93 @@ type FileFilters []FileFilter
 
 func (f FileFilters) apply(o *options) {
 	o.fileFilters = append(o.fileFilters, f...)
+}
+
+// macOS filters by case insensitive literal extension.
+// Extract all literal extensions from all patterns.
+// If those contain wildcards, or classes with more than one character, accept anything.
+func (f FileFilters) darwin() []string {
+	var res []string
+	for _, filter := range f {
+		for _, pattern := range filter.Patterns {
+			ext := pattern[strings.LastIndexByte(pattern, '.')+1:]
+
+			var escape bool
+			var buf strings.Builder
+			for _, r := range removeClasses(ext) {
+				switch {
+				case escape:
+					escape = false
+				case r == '\\':
+					escape = true
+					continue
+				case r == '*' || r == '?':
+					return nil
+				}
+				buf.WriteRune(r)
+			}
+			res = append(res, buf.String())
+		}
+	}
+	return res
+}
+
+func removeClasses(pattern string) string {
+	var res strings.Builder
+	for {
+		i, j := findClass(pattern)
+		if i < 0 {
+			res.WriteString(pattern)
+			return res.String()
+		}
+		res.WriteString(pattern[:i])
+
+		var char string
+		var escape, many bool
+		for _, r := range pattern[i+1 : j-1] {
+			if escape {
+				escape = false
+			} else if r == '\\' {
+				escape = true
+				continue
+			}
+			if char == "" {
+				char = string(r)
+			} else if !strings.EqualFold(char, string(r)) {
+				many = true
+				break
+			}
+		}
+		if many {
+			res.WriteByte('?')
+		} else {
+			res.WriteByte('\\')
+			res.WriteString(char)
+		}
+		pattern = pattern[j:]
+	}
+}
+
+func findClass(pattern string) (start, end int) {
+	start = -1
+	escape := false
+	for i, b := range []byte(pattern) {
+		switch {
+		case escape:
+			escape = false
+		case b == '\\':
+			escape = true
+		case start < 0:
+			if b == '[' {
+				start = i
+			}
+		case 0 <= start && start < i-1:
+			if b == ']' {
+				return start, i + 1
+			}
+		}
+	}
+	return -1, -1
 }
 
 func splitDirAndName(path string) (dir, name string) {

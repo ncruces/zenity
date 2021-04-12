@@ -51,7 +51,7 @@ type options struct {
 	confirmCreate    bool
 	showHidden       bool
 	filename         string
-	fileFilters      []FileFilter
+	fileFilters      FileFilters
 
 	// Color selection options
 	color       color.Color

@@ -1,8 +1,6 @@
 package zenity
 
 import (
-	"strings"
-
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -16,7 +14,7 @@ func selectFile(opts options) (string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Options.Type = initFilters(opts.fileFilters)
+		data.Options.Type = opts.fileFilters.darwin()
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
@@ -36,7 +34,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Options.Type = initFilters(opts.fileFilters)
+		data.Options.Type = opts.fileFilters.darwin()
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
@@ -58,23 +56,4 @@ func selectFileSave(opts options) (string, error) {
 	out, err := zenutil.Run(opts.ctx, "file", data)
 	str, _, err := strResult(opts, out, err)
 	return str, err
-}
-
-func initFilters(filters []FileFilter) []string {
-	var filter []string
-	for _, f := range filters {
-		for _, p := range f.Patterns {
-			star := strings.LastIndexByte(p, '*')
-			if star >= 0 {
-				dot := strings.LastIndexByte(p, '.')
-				if star > dot {
-					return nil
-				}
-				filter = append(filter, p[dot+1:])
-			} else {
-				filter = append(filter, p)
-			}
-		}
-	}
-	return filter
 }

@@ -11,7 +11,7 @@ as well as a *“port”* of the `zenity` command to both Windows and macOS base
 Implemented dialogs:
 * [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
 * [text entry](https://github.com/ncruces/zenity/wiki/Text-Entry-dialog)
-* [list](https://github.com/ncruces/zenity/wiki/List-dialog)
+* [list](https://github.com/ncruces/zenity/wiki/List-dialog) (simple)
 * [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
 * [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
 * [color selection](https://github.com/ncruces/zenity/wiki/Color-Selection-dialog)
