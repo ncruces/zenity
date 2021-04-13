@@ -85,6 +85,15 @@ func (f FileFilters) apply(o *options) {
 	o.fileFilters = append(o.fileFilters, f...)
 }
 
+// Windows' patterns need a name.
+func (f FileFilters) name() {
+	for i, filter := range f {
+		if filter.Name == "" {
+			f[i].Name = strings.Join(filter.Patterns, " ")
+		}
+	}
+}
+
 // Windows' patterns are case insensitive, don't support character classes or escaping.
 // First we remove character classes, then escaping. Patterns with literal wildcards are invalid (match nothing).
 // The semicolon is a separator, so we replace it with the single character wildcard.
