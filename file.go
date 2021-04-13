@@ -85,10 +85,42 @@ func (f FileFilters) apply(o *options) {
 	o.fileFilters = append(o.fileFilters, f...)
 }
 
-// macOS filters by case insensitive literal extension.
-// Extract all literal extensions from all patterns.
-// If those contain wildcards, or classes with more than one character, accept anything.
-func (f FileFilters) darwin() []string {
+// Windows' patterns are case insensitive, don't support character classes or escaping.
+// First we remove character classes, then escaping. Patterns with literal wildcards are invalid (match nothing).
+// The semicolon is a separator, so we replace it with the single character wildcard.
+func (f FileFilters) simplify() {
+	for _, filter := range f {
+		for i, pattern := range filter.Patterns {
+			var escape, invalid bool
+			var buf strings.Builder
+			for _, r := range removeClasses(pattern) {
+				if !escape && r == '\\' {
+					escape = true
+					continue
+				}
+				if escape && (r == '*' || r == '?') {
+					invalid = true
+					break
+				}
+				if r == ';' {
+					r = '?'
+				}
+				buf.WriteRune(r)
+				escape = false
+			}
+			if invalid {
+				filter.Patterns[i] = ""
+			} else {
+				filter.Patterns[i] = buf.String()
+			}
+		}
+	}
+}
+
+// macOS filters by "type"; the case insensitive literal extension is a good proxy.
+// So we extract the extension from each pattern, remove character classes, then escaping.
+// If an extension contains a wildcard, any type is accepted.
+func (f FileFilters) types() []string {
 	var res []string
 	for _, filter := range f {
 		for _, pattern := range filter.Patterns {
@@ -114,6 +146,9 @@ func (f FileFilters) darwin() []string {
 	return res
 }
 
+// Remove character classes from pattern, assuming case insensitivity.
+// Classes of one character (case insensitive) are replaced by the character.
+// Others are replaced by the single character wildcard.
 func removeClasses(pattern string) string {
 	var res strings.Builder
 	for {

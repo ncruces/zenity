@@ -14,7 +14,7 @@ func selectFile(opts options) (string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Options.Type = opts.fileFilters.darwin()
+		data.Options.Type = opts.fileFilters.types()
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
@@ -34,7 +34,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 		data.Operation = "chooseFolder"
 	} else {
 		data.Operation = "chooseFile"
-		data.Options.Type = opts.fileFilters.darwin()
+		data.Options.Type = opts.fileFilters.types()
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)

@@ -10,8 +10,8 @@ import (
 	"github.com/ncruces/zenity"
 )
 
-const defaultPath = ""
-const defaultName = ""
+const defaultPath = ``
+const defaultName = ``
 
 func ExampleSelectFile() {
 	zenity.SelectFile(

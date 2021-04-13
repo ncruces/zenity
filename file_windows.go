@@ -361,7 +361,8 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	return
 }
 
-func initFilters(filters []FileFilter) []uint16 {
+func initFilters(filters FileFilters) []uint16 {
+	filters.simplify()
 	var res []uint16
 	for _, f := range filters {
 		res = append(res, utf16.Encode([]rune(f.Name))...)

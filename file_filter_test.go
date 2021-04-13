@@ -5,27 +5,55 @@ import (
 	"testing"
 )
 
-func TestFileFilters_darwin(t *testing.T) {
+func TestFileFilters_simplify(t *testing.T) {
 	tests := []struct {
 		data FileFilters
 		want []string
 	}{
-		{FileFilters{{"", []string{`*.png`}}}, []string{`png`}},
-		{FileFilters{{"", []string{`*.pn?`}}}, nil},
-		{FileFilters{{"", []string{`*.pn\?`}}}, []string{`pn?`}},
-		{FileFilters{{"", []string{`*.[PpNnGg]`}}}, nil},
-		{FileFilters{{"", []string{`*.[Pp][Nn][Gg]`}}}, []string{`PNG`}},
-		{FileFilters{{"", []string{`*.[Pp][\Nn][G\g]`}}}, []string{`PNG`}},
-		{FileFilters{{"", []string{`*.[PNG`}}}, []string{`[PNG`}},
-		{FileFilters{{"", []string{`*.]PNG`}}}, []string{`]PNG`}},
-		{FileFilters{{"", []string{`*.[[]PNG`}}}, []string{`[PNG`}},
-		{FileFilters{{"", []string{`*.[]]PNG`}}}, []string{`]PNG`}},
-		{FileFilters{{"", []string{`*.[\[]PNG`}}}, []string{`[PNG`}},
-		{FileFilters{{"", []string{`*.[\]]PNG`}}}, []string{`]PNG`}},
+		{FileFilters{{"", []string{`*.png`}}}, []string{"*.png"}},
+		{FileFilters{{"", []string{`*.pn?`}}}, []string{"*.pn?"}},
+		{FileFilters{{"", []string{`*.pn;`}}}, []string{"*.pn?"}},
+		{FileFilters{{"", []string{`*.pn\?`}}}, []string{""}},
+		{FileFilters{{"", []string{`*.[PpNnGg]`}}}, []string{"*.?"}},
+		{FileFilters{{"", []string{`*.[Pp][Nn][Gg]`}}}, []string{"*.PNG"}},
+		{FileFilters{{"", []string{`*.[Pp][\Nn][G\g]`}}}, []string{"*.PNG"}},
+		{FileFilters{{"", []string{`*.[PNG`}}}, []string{"*.[PNG"}},
+		{FileFilters{{"", []string{`*.]PNG`}}}, []string{"*.]PNG"}},
+		{FileFilters{{"", []string{`*.[[]PNG`}}}, []string{"*.[PNG"}},
+		{FileFilters{{"", []string{`*.[]]PNG`}}}, []string{"*.]PNG"}},
+		{FileFilters{{"", []string{`*.[\[]PNG`}}}, []string{"*.[PNG"}},
+		{FileFilters{{"", []string{`*.[\]]PNG`}}}, []string{"*.]PNG"}},
 	}
-	for _, tt := range tests {
-		if got := tt.data.darwin(); !reflect.DeepEqual(got, tt.want) {
-			t.Fatalf("FileFilters.darwin(%+v) = %v, want %v", tt.data, got, tt.want)
+	for i, tt := range tests {
+		tt.data.simplify()
+		if got := tt.data[0].Patterns; !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("FileFilters.simplify[%d] = %q, want %q", i, got, tt.want)
+		}
+	}
+}
+
+func TestFileFilters_types(t *testing.T) {
+	tests := []struct {
+		data FileFilters
+		want []string
+	}{
+		{FileFilters{{"", []string{`*.png`}}}, []string{"png"}},
+		{FileFilters{{"", []string{`*.pn?`}}}, nil},
+		{FileFilters{{"", []string{`*.pn;`}}}, []string{"pn;"}},
+		{FileFilters{{"", []string{`*.pn\?`}}}, []string{"pn?"}},
+		{FileFilters{{"", []string{`*.[PpNnGg]`}}}, nil},
+		{FileFilters{{"", []string{`*.[Pp][Nn][Gg]`}}}, []string{"PNG"}},
+		{FileFilters{{"", []string{`*.[Pp][\Nn][G\g]`}}}, []string{"PNG"}},
+		{FileFilters{{"", []string{`*.[PNG`}}}, []string{"[PNG"}},
+		{FileFilters{{"", []string{`*.]PNG`}}}, []string{"]PNG"}},
+		{FileFilters{{"", []string{`*.[[]PNG`}}}, []string{"[PNG"}},
+		{FileFilters{{"", []string{`*.[]]PNG`}}}, []string{"]PNG"}},
+		{FileFilters{{"", []string{`*.[\[]PNG`}}}, []string{"[PNG"}},
+		{FileFilters{{"", []string{`*.[\]]PNG`}}}, []string{"]PNG"}},
+	}
+	for i, tt := range tests {
+		if got := tt.data.types(); !reflect.DeepEqual(got, tt.want) {
+			t.Fatalf("FileFilters.types[%d] = %v, want %v", i, got, tt.want)
 		}
 	}
 }
