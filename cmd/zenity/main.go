@@ -177,7 +177,7 @@ func setupFlags() {
 	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
 
 	// List options
-	flag.Var(funcValue(addColumn), "column", "Set the column header")
+	flag.Func("column", "Set the column header", addColumn)
 	flag.Bool("hide-header", true, "Hide the column headers")
 	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
 
@@ -188,7 +188,7 @@ func setupFlags() {
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the `filename`")
-	flag.Var(funcValue(addFileFilter), "file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)")
+	flag.Func("file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
 
 	// Color selection options
 	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
@@ -519,11 +519,6 @@ func egestPaths(paths []string, err error) ([]string, error) {
 	}
 	return paths, err
 }
-
-type funcValue func(string) error
-
-func (f funcValue) String() string     { return "" }
-func (f funcValue) Set(s string) error { return f(s) }
 
 func addColumn(s string) error {
 	columns++
