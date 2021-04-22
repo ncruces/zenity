@@ -1,12 +1,16 @@
 package zenutil
 
 import (
+	"bytes"
 	"context"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 // Run is internal.
@@ -45,6 +49,123 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	cmd := exec.Command("osascript", "-l", "JavaScript")
 	cmd.Stdin = strings.NewReader(script)
 	return cmd.Output()
+}
+
+func RunProgress(ctx context.Context) (m *progressMonitor, err error) {
+	t, err := ioutil.TempDir("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(t)
+		}
+	}()
+
+	var cmd *exec.Cmd
+	name := filepath.Join(t, "progress.app")
+
+	cmd = exec.Command("osacompile", "-l", "JavaScript", "-o", name)
+	cmd.Stdin = strings.NewReader(progress)
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	plist := filepath.Join(name, "Contents/Info.plist")
+
+	cmd = exec.Command("defaults", "write", plist, "LSUIElement", "true")
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	cmd = exec.Command("defaults", "write", plist, "CFBundleName", "")
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	var executable string
+	cmd = exec.Command("defaults", "read", plist, "CFBundleExecutable")
+	if out, err := cmd.Output(); err != nil {
+		return nil, err
+	} else {
+		out = bytes.TrimSuffix(out, []byte{'\n'})
+		executable = filepath.Join(name, "Contents/MacOS", string(out))
+	}
+
+	cmd = exec.Command(executable)
+	pipe, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err = cmd.Start(); err != nil {
+		return nil, err
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	m = &progressMonitor{
+		done:  make(chan struct{}),
+		lines: make(chan string),
+	}
+	go func() {
+		defer func() {
+			pipe.Close()
+			err := cmd.Wait()
+			if cerr := ctx.Err(); cerr != nil {
+				err = cerr
+			}
+			m.err = err
+			close(m.done)
+			os.RemoveAll(t)
+		}()
+		for {
+			var line string
+			select {
+			case s, ok := <-m.lines:
+				if !ok {
+					return
+				}
+				line = s
+			case <-ctx.Done():
+				return
+			case <-time.After(40 * time.Millisecond):
+			}
+			if _, err := pipe.Write([]byte(line + "\n")); err != nil {
+				return
+			}
+		}
+	}()
+	return
+}
+
+type progressMonitor struct {
+	err   error
+	done  chan struct{}
+	lines chan string
+}
+
+func (m *progressMonitor) send(line string) error {
+	select {
+	case m.lines <- line:
+		return nil
+	case <-m.done:
+		return m.err
+	}
+}
+
+func (m *progressMonitor) Close() error {
+	close(m.lines)
+	<-m.done
+	return m.err
+}
+
+func (m *progressMonitor) Message(msg string) error {
+	return m.send("#" + msg)
+}
+
+func (m *progressMonitor) Progress(progress int) error {
+	return m.send(strconv.Itoa(progress))
 }
 
 // File is internal.

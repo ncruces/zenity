@@ -15,8 +15,7 @@ function run(args) {
         var s
         try {
             s = $.readline('')
-        }
-        catch (e) {
+        } catch (e) {
             if (e.errorNumber === -128) $.exit(1)
             break
         }
