@@ -69,6 +69,9 @@ func Filename(filename string) Option {
 //
 // macOS hides filename filters from the user,
 // and only supports filtering by extension (or "type").
+//
+// Patterns may use the GTK syntax on all platforms:
+// https://developer.gnome.org/pygtk/stable/class-gtkfilefilter.html#method-gtkfilefilter--add-pattern
 type FileFilter struct {
 	Name     string   // display string that describes the filter (optional)
 	Patterns []string // filter patterns for the display string
