@@ -57,6 +57,11 @@ type options struct {
 	color       color.Color
 	showPalette bool
 
+	// Progress indication options
+	maxValue      int
+	noCancel      bool
+	timeRemaining bool
+
 	// Context for timeout
 	ctx context.Context
 }

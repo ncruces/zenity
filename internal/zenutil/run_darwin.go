@@ -51,7 +51,7 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	return cmd.Output()
 }
 
-func RunProgress(ctx context.Context) (m *progressMonitor, err error) {
+func RunProgress(ctx context.Context, env []string) (m *progressDialog, err error) {
 	t, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
@@ -93,6 +93,7 @@ func RunProgress(ctx context.Context) (m *progressMonitor, err error) {
 	}
 
 	cmd = exec.Command(executable)
+	cmd.Env = env
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -104,7 +105,7 @@ func RunProgress(ctx context.Context) (m *progressMonitor, err error) {
 		ctx = context.Background()
 	}
 
-	m = &progressMonitor{
+	m = &progressDialog{
 		done:  make(chan struct{}),
 		lines: make(chan string),
 	}
@@ -139,13 +140,13 @@ func RunProgress(ctx context.Context) (m *progressMonitor, err error) {
 	return
 }
 
-type progressMonitor struct {
+type progressDialog struct {
 	err   error
 	done  chan struct{}
 	lines chan string
 }
 
-func (m *progressMonitor) send(line string) error {
+func (m *progressDialog) send(line string) error {
 	select {
 	case m.lines <- line:
 		return nil
@@ -154,18 +155,18 @@ func (m *progressMonitor) send(line string) error {
 	}
 }
 
-func (m *progressMonitor) Close() error {
+func (m *progressDialog) Close() error {
 	close(m.lines)
 	<-m.done
 	return m.err
 }
 
-func (m *progressMonitor) Message(msg string) error {
-	return m.send("#" + msg)
+func (m *progressDialog) Text(text string) error {
+	return m.send("#" + text)
 }
 
-func (m *progressMonitor) Progress(progress int) error {
-	return m.send(strconv.Itoa(progress))
+func (m *progressDialog) Value(value int) error {
+	return m.send(strconv.Itoa(value))
 }
 
 // File is internal.
