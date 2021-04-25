@@ -40,3 +40,66 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 	}
 	return exec.Command(tool, args...).Output()
 }
+
+// RunProgress is internal.
+func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog, err error) {
+	if Command && path != "" {
+		if Timeout > 0 {
+			args = append(args, "--timeout", strconv.Itoa(Timeout))
+		}
+		syscall.Exec(path, append([]string{tool}, args...), os.Environ())
+	}
+
+	cmd := exec.Command(tool, args...)
+	pipe, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err = cmd.Start(); err != nil {
+		return nil, err
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	m = &progressDialog{
+		done:    make(chan struct{}),
+		lines:   make(chan string),
+		percent: true,
+		max:     max,
+	}
+	go func() {
+		err := cmd.Wait()
+		select {
+		case _, ok := <-m.lines:
+			if !ok {
+				err = nil
+			}
+		default:
+		}
+		if cerr := ctx.Err(); cerr != nil {
+			err = cerr
+		}
+		m.err = err
+		close(m.done)
+	}()
+	go func() {
+		defer cmd.Process.Signal(syscall.SIGTERM)
+		for {
+			var line string
+			select {
+			case s, ok := <-m.lines:
+				if !ok {
+					return
+				}
+				line = s
+			case <-ctx.Done():
+				return
+			}
+			if _, err := pipe.Write([]byte(line + "\n")); err != nil {
+				return
+			}
+		}
+	}()
+	return
+}

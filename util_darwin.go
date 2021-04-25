@@ -2,13 +2,13 @@ package zenity
 
 import "github.com/ncruces/zenity/internal/zenutil"
 
-func getButtons(dialog, okcancel bool, opts options) (btns zenutil.Buttons) {
+func getButtons(dialog, okcancel bool, opts options) (btns zenutil.DialogButtons) {
 	if !okcancel {
 		opts.cancelLabel = nil
 		opts.defaultCancel = false
 	}
 
-	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || (dialog != okcancel) {
+	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || dialog != okcancel {
 		if opts.okLabel == nil {
 			opts.okLabel = stringPtr("OK")
 		}

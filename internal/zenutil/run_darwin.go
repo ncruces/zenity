@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -51,7 +50,8 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 	return cmd.Output()
 }
 
-func RunProgress(ctx context.Context, env []string) (m *progressDialog, err error) {
+// RunProgress is internal.
+func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog, err error) {
 	t, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
@@ -108,18 +108,19 @@ func RunProgress(ctx context.Context, env []string) (m *progressDialog, err erro
 	m = &progressDialog{
 		done:  make(chan struct{}),
 		lines: make(chan string),
+		max:   max,
 	}
 	go func() {
-		defer func() {
-			pipe.Close()
-			err := cmd.Wait()
-			if cerr := ctx.Err(); cerr != nil {
-				err = cerr
-			}
-			m.err = err
-			close(m.done)
-			os.RemoveAll(t)
-		}()
+		err := cmd.Wait()
+		if cerr := ctx.Err(); cerr != nil {
+			err = cerr
+		}
+		m.err = err
+		close(m.done)
+		os.RemoveAll(t)
+	}()
+	go func() {
+		defer pipe.Close()
 		for {
 			var line string
 			select {
@@ -138,52 +139,6 @@ func RunProgress(ctx context.Context, env []string) (m *progressDialog, err erro
 		}
 	}()
 	return
-}
-
-type progressDialog struct {
-	err   error
-	done  chan struct{}
-	lines chan string
-}
-
-func (m *progressDialog) send(line string) error {
-	select {
-	case m.lines <- line:
-		return nil
-	case <-m.done:
-		return m.err
-	}
-}
-
-func (m *progressDialog) Close() error {
-	close(m.lines)
-	<-m.done
-	return m.err
-}
-
-func (m *progressDialog) Text(text string) error {
-	return m.send("#" + text)
-}
-
-func (m *progressDialog) Value(value int) error {
-	return m.send(strconv.Itoa(value))
-}
-
-// File is internal.
-type File struct {
-	Operation string
-	Separator string
-	Options   FileOptions
-}
-
-// FileOptions is internal.
-type FileOptions struct {
-	Prompt     *string  `json:"withPrompt,omitempty"`
-	Type       []string `json:"ofType,omitempty"`
-	Name       string   `json:"defaultName,omitempty"`
-	Location   string   `json:"defaultLocation,omitempty"`
-	Multiple   bool     `json:"multipleSelectionsAllowed,omitempty"`
-	Invisibles bool     `json:"invisibles,omitempty"`
 }
 
 // Dialog is internal.
@@ -208,6 +163,25 @@ type DialogOptions struct {
 	Timeout int      `json:"givingUpAfter,omitempty"`
 }
 
+// DialogButtons is internal.
+type DialogButtons struct {
+	Buttons []string
+	Default int
+	Cancel  int
+	Extra   int
+}
+
+// SetButtons is internal.
+func (d *Dialog) SetButtons(btns DialogButtons) {
+	d.Options.Buttons = btns.Buttons
+	d.Options.Default = btns.Default
+	d.Options.Cancel = btns.Cancel
+	if btns.Extra > 0 {
+		name := btns.Buttons[btns.Extra-1]
+		d.Extra = &name
+	}
+}
+
 // List is internal.
 type List struct {
 	Items     []string
@@ -226,6 +200,23 @@ type ListOptions struct {
 	Empty    bool     `json:"emptySelectionAllowed,omitempty"`
 }
 
+// File is internal.
+type File struct {
+	Operation string
+	Separator string
+	Options   FileOptions
+}
+
+// FileOptions is internal.
+type FileOptions struct {
+	Prompt     *string  `json:"withPrompt,omitempty"`
+	Type       []string `json:"ofType,omitempty"`
+	Name       string   `json:"defaultName,omitempty"`
+	Location   string   `json:"defaultLocation,omitempty"`
+	Multiple   bool     `json:"multipleSelectionsAllowed,omitempty"`
+	Invisibles bool     `json:"invisibles,omitempty"`
+}
+
 // Notify is internal.
 type Notify struct {
 	Text    string
@@ -236,21 +227,4 @@ type Notify struct {
 type NotifyOptions struct {
 	Title    *string `json:"withTitle,omitempty"`
 	Subtitle string  `json:"subtitle,omitempty"`
-}
-
-type Buttons struct {
-	Buttons []string
-	Default int
-	Cancel  int
-	Extra   int
-}
-
-func (d *Dialog) SetButtons(btns Buttons) {
-	d.Options.Buttons = btns.Buttons
-	d.Options.Default = btns.Default
-	d.Options.Cancel = btns.Cancel
-	if btns.Extra > 0 {
-		name := btns.Buttons[btns.Extra-1]
-		d.Extra = &name
-	}
 }

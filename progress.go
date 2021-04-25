@@ -8,14 +8,26 @@ func Progress(options ...Option) (ProgressDialog, error) {
 	return progress(applyOptions(options))
 }
 
+// ProgressDialog allows you to interact with the progress indication dialog.
 type ProgressDialog interface {
+	// Text sets the dialog text.
 	Text(string) error
+
+	// Value sets how much of the task has been completed.
 	Value(int) error
+
+	// MaxValue gets how much work the task requires in total.
+	MaxValue() int
+
+	// Close closes the dialog.
 	Close() error
+
+	// Done returns a channel that's closed when the dialog is closed.
+	Done() <-chan struct{}
 }
 
 // MaxValue returns an Option to set the maximum value (macOS only).
-// The default value is 100.
+// The default maximum value is 100.
 func MaxValue(value int) Option {
 	return funcOption(func(o *options) { o.maxValue = value })
 }

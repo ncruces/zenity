@@ -118,4 +118,4 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 	return string(b), err
 }}).Parse(` + "`{{.Templates}}`" + `))
 
-var progress =` + "`\n{{.Progress}}`\n"))
+var progress = ` + "`\n{{.Progress}}`\n"))

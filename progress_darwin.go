@@ -17,5 +17,5 @@ func progress(opts options) (ProgressDialog, error) {
 	if opts.maxValue >= 0 {
 		env = append(env, "total="+strconv.Itoa(opts.maxValue))
 	}
-	return zenutil.RunProgress(opts.ctx, env)
+	return zenutil.RunProgress(opts.ctx, opts.maxValue, env)
 }

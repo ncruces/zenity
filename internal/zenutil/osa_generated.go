@@ -50,7 +50,7 @@ app.includeStandardAdditions=true
 void app.displayNotification({{json .Text}},{{json .Options}})
 {{- end}}`))
 
-var progress =`
+var progress = `
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
