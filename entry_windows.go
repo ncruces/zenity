@@ -5,9 +5,8 @@ import (
 )
 
 func entry(text string, opts options) (out string, ok bool, err error) {
-	var title string
-	if opts.title != nil {
-		title = *opts.title
+	if opts.title == nil {
+		opts.title = stringPtr("")
 	}
 	if opts.okLabel == nil {
 		opts.okLabel = stringPtr("OK")
@@ -15,10 +14,7 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	if opts.cancelLabel == nil {
 		opts.cancelLabel = stringPtr("Cancel")
 	}
-	return entryDlg(title, text, opts)
-}
 
-func entryDlg(title, text string, opts options) (out string, ok bool, err error) {
 	defer setup()()
 	font := getFont()
 	defer font.Delete()
@@ -95,16 +91,16 @@ func entryDlg(title, text string, opts options) (out string, ok bool, err error)
 	defer unregisterClass.Call(cls, instance)
 
 	wnd, _, _ = createWindowEx.Call(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
-		cls, strptr(title),
+		cls, strptr(*opts.title),
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
-		281, 141, 0, 0, instance)
+		281, 141, 0, 0, instance, 0)
 
 	textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr(text),
 		0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
-		12, 10, 241, 16, wnd, 0, instance)
+		12, 10, 241, 16, wnd, 0, instance, 0)
 
 	var flags uintptr = 0x50030080 // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|ES_AUTOHSCROLL
 	if opts.hideText {
@@ -113,21 +109,21 @@ func entryDlg(title, text string, opts options) (out string, ok bool, err error)
 	editCtl, _, _ = createWindowEx.Call(0x200, // WS_EX_CLIENTEDGE
 		strptr("EDIT"), strptr(opts.entryText),
 		flags,
-		12, 30, 241, 24, wnd, 0, instance)
+		12, 30, 241, 24, wnd, 0, instance, 0)
 
 	okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		0x50030001, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
-		12, 66, 75, 24, wnd, 1 /* IDOK */, instance)
+		12, 66, 75, 24, wnd, 1 /* IDOK */, instance, 0)
 	cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		12, 66, 75, 24, wnd, 2 /* IDCANCEL */, instance)
+		12, 66, 75, 24, wnd, 2 /* IDCANCEL */, instance, 0)
 	if opts.extraButton != nil {
 		extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-			12, 66, 75, 24, wnd, 7 /* IDNO */, instance)
+			12, 66, 75, 24, wnd, 7 /* IDNO */, instance, 0)
 	}
 
 	layout(getDPI(wnd))

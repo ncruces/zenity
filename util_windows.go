@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	comctl32 = syscall.NewLazyDLL("comctl32.dll")
 	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 	gdi32    = syscall.NewLazyDLL("gdi32.dll")
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
@@ -21,6 +22,7 @@ var (
 	user32   = syscall.NewLazyDLL("user32.dll")
 	wtsapi32 = syscall.NewLazyDLL("wtsapi32.dll")
 
+	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
 
 	deleteObject       = gdi32.NewProc("DeleteObject")
@@ -110,6 +112,10 @@ func setup() context.CancelFunc {
 			}
 		}
 	}
+
+	var icc _INITCOMMONCONTROLSEX
+	icc.Size = uint32(unsafe.Sizeof(icc))
+	icc.ICC = 0x00004020 // ICC_STANDARD_CLASSES|ICC_PROGRESS_CLASS
 
 	return func() {
 		if old != 0 {
@@ -284,6 +290,26 @@ func registerClass(instance, proc uintptr) (uintptr, error) {
 	return ret, err
 }
 
+// https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
+// ULONG_PTR EnableVisualStyles(VOID)
+// {
+//     TCHAR dir[MAX_PATH];
+//     ULONG_PTR ulpActivationCookie = FALSE;
+//     ACTCTX actCtx =
+//     {
+//         sizeof(actCtx),
+//         ACTCTX_FLAG_RESOURCE_NAME_VALID
+//             | ACTCTX_FLAG_SET_PROCESS_DEFAULT
+//             | ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID,
+//         TEXT("shell32.dll"), 0, 0, dir, (LPCTSTR)124
+//     };
+//     UINT cch = GetSystemDirectory(dir, sizeof(dir) / sizeof(*dir));
+//     if (cch >= sizeof(dir) / sizeof(*dir)) { return FALSE; /*shouldn't happen*/ }
+//     dir[cch] = TEXT('\0');
+//     ActivateActCtx(CreateActCtx(&actCtx), &ulpActivationCookie);
+//     return ulpActivationCookie;
+// }
+
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
 func messageLoop(wnd uintptr) error {
 	getMessage := getMessage.Addr()
@@ -392,6 +418,12 @@ type _WNDCLASSEX struct {
 	MenuName   *uint16
 	ClassName  *uint16
 	IconSm     uintptr
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-initcommoncontrolsex
+type _INITCOMMONCONTROLSEX struct {
+	Size uint32
+	ICC  uint32
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
