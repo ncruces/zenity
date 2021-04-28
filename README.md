@@ -19,8 +19,7 @@ Implemented dialogs:
 
 Behavior on Windows, macOS and other Unixes might differ slightly.
 Some of that is intended (reflecting platform differences),
-other bits are unfortunate limitations,
-others still are open to be fixed.
+other bits are unfortunate limitations.
 
 ## Why?
 
@@ -37,7 +36,8 @@ Why reinvent this particular wheel?
     * Explorer shell not required
     * works in Server Core
   * Unicode support
-  * High DPI support (no manifest required)
+  * High DPI (no manifest required)
+  * Visual Styles (no manifest required)
   * WSL/Cygwin/MSYS2 [support](https://github.com/ncruces/zenity/wiki/Zenity-for-WSL,-Cygwin,-MSYS2)
 * on macOS:
   * only dependency is `osascript`

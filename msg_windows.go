@@ -80,7 +80,7 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 	return hookDialog(opts.ctx, func(wnd uintptr) {
 		enumChildWindows.Call(wnd,
 			syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
-				name := [8]uint16{}
+				var name [8]uint16
 				getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
 				if syscall.UTF16ToString(name[:]) == "Button" {
 					ctl, _, _ := getDlgCtrlID.Call(wnd)

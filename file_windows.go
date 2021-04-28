@@ -37,7 +37,7 @@ func selectFile(opts options) (string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -82,7 +82,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768 + 1024*256]uint16{}
+	var res [32768 + 1024*256]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -158,7 +158,7 @@ func selectFileSave(opts options) (string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -339,7 +339,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	}
 	defer coTaskMemFree.Call(ptr)
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
 
 	str := syscall.UTF16ToString(res[:])

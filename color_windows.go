@@ -9,7 +9,7 @@ import (
 var (
 	chooseColor = comdlg32.NewProc("ChooseColorW")
 
-	savedColors = [16]uint32{}
+	savedColors [16]uint32
 	colorsMutex sync.Mutex
 )
 

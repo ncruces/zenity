@@ -129,7 +129,7 @@ func progress(opts options) (ProgressDialog, error) {
 	centerWindow(wnd)
 	showWindow.Call(wnd, 1 /* SW_SHOWNORMAL */, 0)
 	if opts.maxValue < 0 {
-		sendMessage.Call(progCtl, 0x410 /* PBM_SETMARQUEE */, 1, 0)
+		sendMessage.Call(progCtl, 0x40a /* PBM_SETMARQUEE */, 1, 0)
 	} else {
 		sendMessage.Call(progCtl, 0x402 /* PBM_SETPOS */, 33, 0)
 		sendMessage.Call(progCtl, 0x406 /* PBM_SETRANGE32 */, 0, uintptr(opts.maxValue))
