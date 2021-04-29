@@ -72,6 +72,7 @@ var (
 	destroyWindow                = user32.NewProc("DestroyWindow")
 	createWindowEx               = user32.NewProc("CreateWindowExW")
 	showWindow                   = user32.NewProc("ShowWindow")
+	enableWindow                 = user32.NewProc("EnableWindow")
 	setFocus                     = user32.NewProc("SetFocus")
 	defWindowProc                = user32.NewProc("DefWindowProcW")
 )
@@ -267,8 +268,8 @@ func (f *font) Delete() {
 
 func centerWindow(wnd uintptr) {
 	getMetric := func(i uintptr) int32 {
-		ret, _, _ := getSystemMetrics.Call(i)
-		return int32(ret)
+		n, _, _ := getSystemMetrics.Call(i)
+		return int32(n)
 	}
 
 	var rect _RECT
@@ -295,8 +296,8 @@ func registerClass(instance, proc uintptr) (uintptr, error) {
 	wcx.Background = 5 // COLOR_WINDOW
 	wcx.ClassName = syscall.StringToUTF16Ptr(name)
 
-	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
-	return ret, err
+	atom, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
+	return atom, err
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
@@ -308,16 +309,16 @@ func messageLoop(wnd uintptr) error {
 
 	for {
 		var msg _MSG
-		ret, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
-		if int32(ret) == -1 {
+		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
+		if int32(s) == -1 {
 			return err
 		}
-		if ret == 0 {
+		if s == 0 {
 			return nil
 		}
 
-		ret, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
-		if ret == 0 {
+		s, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
+		if s == 0 {
 			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
 			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
 		}

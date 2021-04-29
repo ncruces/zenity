@@ -99,8 +99,8 @@ func listDlg(text string, items []string, multiple bool, opts options) (out []st
 			layout(dpi(uint32(wparam) >> 16))
 
 		default:
-			ret, _, _ := syscall.Syscall6(defWindowProc, 4, wnd, uintptr(msg), wparam, lparam, 0, 0)
-			return ret
+			res, _, _ := syscall.Syscall6(defWindowProc, 4, wnd, uintptr(msg), wparam, lparam, 0, 0)
+			return res
 		}
 
 		return 0
