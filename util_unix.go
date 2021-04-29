@@ -55,23 +55,23 @@ func appendIcon(args []string, opts options) []string {
 	return args
 }
 
-func strResult(opts options, out []byte, err error) (string, bool, error) {
+func strResult(opts options, out []byte, err error) (string, error) {
 	out = bytes.TrimSuffix(out, []byte{'\n'})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
 		if opts.extraButton != nil && *opts.extraButton == string(out) {
-			return "", false, ErrExtraButton
+			return "", ErrExtraButton
 		}
-		return "", false, nil
+		return "", ErrCanceled
 	}
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
-	return string(out), true, nil
+	return string(out), nil
 }
 
 func lstResult(opts options, out []byte, err error) ([]string, error) {
-	str, ok, err := strResult(opts, out, err)
-	if ok {
+	str, err := strResult(opts, out, err)
+	if err == nil {
 		return strings.Split(str, zenutil.Separator), nil
 	}
 	return nil, err

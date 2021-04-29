@@ -251,7 +251,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		return "", nil, opts.ctx.Err()
 	}
 	if hr == 0x800704c7 { // ERROR_CANCELLED
-		return "", nil, nil
+		return "", nil, ErrCanceled
 	}
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
@@ -335,7 +335,7 @@ func browseForFolder(opts options) (string, []string, error) {
 		return "", nil, opts.ctx.Err()
 	}
 	if ptr == 0 {
-		return "", nil, nil
+		return "", nil, ErrCanceled
 	}
 	defer coTaskMemFree.Call(ptr)
 

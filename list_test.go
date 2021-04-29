@@ -47,7 +47,7 @@ func ExampleListMultipleItems() {
 func TestListTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
-	_, _, err := zenity.List("", nil, zenity.Context(ctx))
+	_, err := zenity.List("", nil, zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
@@ -59,7 +59,7 @@ func TestListCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, _, err := zenity.List("", nil, zenity.Context(ctx))
+	_, err := zenity.List("", nil, zenity.Context(ctx))
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}

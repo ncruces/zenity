@@ -38,7 +38,7 @@ func ExampleQuestion() {
 	// Output:
 }
 
-var msgFuncs = []func(string, ...zenity.Option) (bool, error){
+var msgFuncs = []func(string, ...zenity.Option) error{
 	zenity.Error,
 	zenity.Info,
 	zenity.Warning,
@@ -49,7 +49,7 @@ func TestMessageTimeout(t *testing.T) {
 	for _, f := range msgFuncs {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
-		_, err := f("text", zenity.Context(ctx))
+		err := f("text", zenity.Context(ctx))
 		if !os.IsTimeout(err) {
 			t.Error("did not timeout:", err)
 		}
@@ -63,7 +63,7 @@ func TestMessageCancel(t *testing.T) {
 	cancel()
 
 	for _, f := range msgFuncs {
-		_, err := f("text", zenity.Context(ctx))
+		err := f("text", zenity.Context(ctx))
 		if !errors.Is(err, context.Canceled) {
 			t.Error("was not canceled:", err)
 		}

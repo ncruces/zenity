@@ -8,8 +8,6 @@ import (
 
 // SelectFile displays the file selection dialog.
 //
-// Returns an empty string on cancel.
-//
 // Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
 func SelectFile(options ...Option) (string, error) {
 	return selectFile(applyOptions(options))
@@ -17,16 +15,12 @@ func SelectFile(options ...Option) (string, error) {
 
 // SelectFileMutiple displays the multiple file selection dialog.
 //
-// Returns a nil slice on cancel.
-//
 // Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	return selectFileMutiple(applyOptions(options))
 }
 
 // SelectFileSave displays the save file selection dialog.
-//
-// Returns an empty string on cancel.
 //
 // Valid options: Title, Filename, ConfirmOverwrite, ConfirmCreate, ShowHidden,
 // FileFilter(s).

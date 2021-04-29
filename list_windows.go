@@ -5,12 +5,12 @@ import (
 	"unsafe"
 )
 
-func list(text string, items []string, opts options) (string, bool, error) {
+func list(text string, items []string, opts options) (string, error) {
 	items, err := listDlg(text, items, false, opts)
 	if len(items) == 1 {
-		return items[0], true, err
+		return items[0], err
 	}
-	return "", false, err
+	return "", err
 }
 
 func listMultiple(text string, items []string, opts options) ([]string, error) {
@@ -62,6 +62,7 @@ func listDlg(text string, items []string, multiple bool, opts options) (out []st
 			postQuitMessage.Call(0)
 
 		case 0x0010: // WM_CLOSE
+			err = ErrCanceled
 			destroyWindow.Call(wnd)
 
 		case 0x0111: // WM_COMMAND
@@ -88,6 +89,7 @@ func listDlg(text string, items []string, multiple bool, opts options) (out []st
 					}
 				}
 			case 2: // IDCANCEL
+				err = ErrCanceled
 			case 7: // IDNO
 				err = ErrExtraButton
 			}

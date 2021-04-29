@@ -2,11 +2,9 @@ package zenity
 
 // Entry displays the text entry dialog.
 //
-// Returns false on cancel, or ErrExtraButton.
-//
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, EntryText, HideText.
-func Entry(text string, options ...Option) (string, bool, error) {
+func Entry(text string, options ...Option) (string, error) {
 	return entry(text, applyOptions(options))
 }
 

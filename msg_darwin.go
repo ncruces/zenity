@@ -4,7 +4,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, opts options) (bool, error) {
+func message(kind messageKind, text string, opts options) error {
 	var data zenutil.Dialog
 	data.Text = text
 	data.Options.Timeout = zenutil.Timeout
@@ -33,6 +33,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	data.SetButtons(getButtons(dialog, kind == questionKind, opts))
 
 	out, err := zenutil.Run(opts.ctx, "dialog", data)
-	_, ok, err := strResult(opts, out, err)
-	return ok, err
+	_, err = strResult(opts, out, err)
+	return err
 }

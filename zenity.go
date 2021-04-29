@@ -21,6 +21,16 @@ func (e stringErr) Error() string { return string(e) }
 
 func stringPtr(s string) *string { return &s }
 
+// ErrCanceled is returned when the cancel button is pressed,
+// or window functions are used to close the dialog.
+const ErrCanceled = stringErr("dialog canceled")
+
+// ErrExtraButton is returned when the extra button is pressed.
+const ErrExtraButton = stringErr("extra button pressed")
+
+// ErrUnsupported is returned when a combination of options is not supported.
+const ErrUnsupported = stringErr("unsupported option")
+
 type options struct {
 	// General options
 	title       *string

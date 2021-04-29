@@ -137,7 +137,7 @@ func setup() context.CancelFunc {
 func commDlgError() error {
 	s, _, _ := commDlgExtendedError.Call()
 	if s == 0 {
-		return nil
+		return ErrCanceled
 	} else {
 		return fmt.Errorf("Common Dialog error: %x", s)
 	}

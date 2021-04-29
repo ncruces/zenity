@@ -51,7 +51,7 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog, err error) {
+func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, error) {
 	t, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
@@ -98,14 +98,14 @@ func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog,
 	if err != nil {
 		return nil, err
 	}
-	if err = cmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	m = &progressDialog{
+	dlg := &progressDialog{
 		done:  make(chan struct{}),
 		lines: make(chan string),
 		max:   max,
@@ -115,8 +115,8 @@ func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog,
 		if cerr := ctx.Err(); cerr != nil {
 			err = cerr
 		}
-		m.err = err
-		close(m.done)
+		dlg.err = err
+		close(dlg.done)
 		os.RemoveAll(t)
 	}()
 	go func() {
@@ -124,7 +124,7 @@ func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog,
 		for {
 			var line string
 			select {
-			case s, ok := <-m.lines:
+			case s, ok := <-dlg.lines:
 				if !ok {
 					return
 				}
@@ -138,7 +138,7 @@ func RunProgress(ctx context.Context, max int, env []string) (m *progressDialog,
 			}
 		}
 	}()
-	return
+	return dlg, nil
 }
 
 // Dialog is internal.

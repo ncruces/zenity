@@ -20,9 +20,9 @@ func selectColor(opts options) (color.Color, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	str, ok, err := strResult(opts, out, err)
-	if ok {
-		return zenutil.ParseColor(str), nil
+	str, err := strResult(opts, out, err)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return zenutil.ParseColor(str), nil
 }

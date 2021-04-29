@@ -4,7 +4,7 @@ import (
 	"syscall"
 )
 
-func entry(text string, opts options) (out string, ok bool, err error) {
+func entry(text string, opts options) (out string, err error) {
 	if opts.title == nil {
 		opts.title = stringPtr("")
 	}
@@ -49,6 +49,7 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 			postQuitMessage.Call(0)
 
 		case 0x0010: // WM_CLOSE
+			err = ErrCanceled
 			destroyWindow.Call(wnd)
 
 		case 0x0111: // WM_COMMAND
@@ -57,8 +58,8 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 				return 1
 			case 1, 6: // IDOK, IDYES
 				out = getWindowString(editCtl)
-				ok = true
 			case 2: // IDCANCEL
+				err = ErrCanceled
 			case 7: // IDNO
 				err = ErrExtraButton
 			}
@@ -76,17 +77,17 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	}
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", false, opts.ctx.Err()
+		return "", opts.ctx.Err()
 	}
 
 	instance, _, err := getModuleHandle.Call(0)
 	if instance == 0 {
-		return "", false, err
+		return "", err
 	}
 
 	cls, err := registerClass(instance, syscall.NewCallback(proc))
 	if cls == 0 {
-		return "", false, err
+		return "", err
 	}
 	defer unregisterClass.Call(cls, instance)
 
@@ -145,13 +146,13 @@ func entry(text string, opts options) (out string, ok bool, err error) {
 	}
 
 	// set default values
-	out, ok, err = "", false, nil
+	out, err = "", nil
 
 	if err := messageLoop(wnd); err != nil {
-		return "", false, err
+		return "", err
 	}
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", false, opts.ctx.Err()
+		return "", opts.ctx.Err()
 	}
-	return out, ok, err
+	return out, err
 }

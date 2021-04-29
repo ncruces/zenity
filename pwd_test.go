@@ -18,7 +18,7 @@ func ExamplePassword() {
 func TestPasswordTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
-	_, _, _, err := zenity.Password(zenity.Context(ctx))
+	_, _, err := zenity.Password(zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
@@ -30,7 +30,7 @@ func TestPasswordCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, _, _, err := zenity.Password(zenity.Context(ctx))
+	_, _, err := zenity.Password(zenity.Context(ctx))
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}

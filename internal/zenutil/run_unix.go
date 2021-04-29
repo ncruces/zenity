@@ -42,7 +42,7 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog, err error) {
+func RunProgress(ctx context.Context, max int, args []string) (*progressDialog, error) {
 	if Command && path != "" {
 		if Timeout > 0 {
 			args = append(args, "--timeout", strconv.Itoa(Timeout))
@@ -55,14 +55,14 @@ func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog
 	if err != nil {
 		return nil, err
 	}
-	if err = cmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	m = &progressDialog{
+	dlg := &progressDialog{
 		done:    make(chan struct{}),
 		lines:   make(chan string),
 		percent: true,
@@ -71,7 +71,7 @@ func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog
 	go func() {
 		err := cmd.Wait()
 		select {
-		case _, ok := <-m.lines:
+		case _, ok := <-dlg.lines:
 			if !ok {
 				err = nil
 			}
@@ -80,15 +80,15 @@ func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog
 		if cerr := ctx.Err(); cerr != nil {
 			err = cerr
 		}
-		m.err = err
-		close(m.done)
+		dlg.err = err
+		close(dlg.done)
 	}()
 	go func() {
 		defer cmd.Process.Signal(syscall.SIGTERM)
 		for {
 			var line string
 			select {
-			case s, ok := <-m.lines:
+			case s, ok := <-dlg.lines:
 				if !ok {
 					return
 				}
@@ -101,5 +101,5 @@ func RunProgress(ctx context.Context, max int, args []string) (m *progressDialog
 			}
 		}
 	}()
-	return
+	return dlg, nil
 }

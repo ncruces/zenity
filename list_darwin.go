@@ -4,7 +4,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func list(text string, items []string, opts options) (string, bool, error) {
+func list(text string, items []string, opts options) (string, error) {
 	var data zenutil.List
 	data.Items = items
 	data.Options.Prompt = &text

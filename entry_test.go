@@ -19,7 +19,7 @@ func ExampleEntry() {
 func TestEntryTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
-	_, _, err := zenity.Entry("", zenity.Context(ctx))
+	_, err := zenity.Entry("", zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
@@ -31,7 +31,7 @@ func TestEntryCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, _, err := zenity.Entry("", zenity.Context(ctx))
+	_, err := zenity.Entry("", zenity.Context(ctx))
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}

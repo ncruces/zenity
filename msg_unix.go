@@ -6,7 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func message(kind messageKind, text string, opts options) (bool, error) {
+func message(kind messageKind, text string, opts options) error {
 	args := []string{"--text", text, "--no-markup"}
 	switch kind {
 	case questionKind:
@@ -47,6 +47,6 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	_, ok, err := strResult(opts, out, err)
-	return ok, err
+	_, err = strResult(opts, out, err)
+	return err
 }

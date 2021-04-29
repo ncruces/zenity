@@ -14,37 +14,37 @@ type progressDialog struct {
 	max     int
 }
 
-func (m *progressDialog) send(line string) error {
+func (d *progressDialog) send(line string) error {
 	select {
-	case m.lines <- line:
+	case d.lines <- line:
 		return nil
-	case <-m.done:
-		return m.err
+	case <-d.done:
+		return d.err
 	}
 }
 
-func (m *progressDialog) Close() error {
-	close(m.lines)
-	<-m.done
-	return m.err
+func (d *progressDialog) Close() error {
+	close(d.lines)
+	<-d.done
+	return d.err
 }
 
-func (m *progressDialog) Text(text string) error {
-	return m.send("#" + text)
+func (d *progressDialog) Text(text string) error {
+	return d.send("#" + text)
 }
 
-func (m *progressDialog) Value(value int) error {
-	if m.percent {
-		return m.send(strconv.FormatFloat(100*float64(value)/float64(m.max), 'f', -1, 64))
+func (d *progressDialog) Value(value int) error {
+	if d.percent {
+		return d.send(strconv.FormatFloat(100*float64(value)/float64(d.max), 'f', -1, 64))
 	} else {
-		return m.send(strconv.Itoa(value))
+		return d.send(strconv.Itoa(value))
 	}
 }
 
-func (m *progressDialog) MaxValue() int {
-	return m.max
+func (d *progressDialog) MaxValue() int {
+	return d.max
 }
 
-func (m *progressDialog) Done() <-chan struct{} {
-	return m.done
+func (d *progressDialog) Done() <-chan struct{} {
+	return d.done
 }

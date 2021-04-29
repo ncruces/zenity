@@ -2,10 +2,8 @@ package zenity
 
 // Password displays the password dialog.
 //
-// Returns false on cancel, or ErrExtraButton.
-//
 // Valid options: Title, OKLabel, CancelLabel, ExtraButton, Icon, Username.
-func Password(options ...Option) (usr string, pw string, ok bool, err error) {
+func Password(options ...Option) (usr string, pw string, err error) {
 	return password(applyOptions(options))
 }
 

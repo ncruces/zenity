@@ -100,27 +100,27 @@ func main() {
 
 	switch {
 	case errorDlg:
-		okResult(zenity.Error(text, opts...))
+		errResult(zenity.Error(text, opts...))
 	case infoDlg:
-		okResult(zenity.Info(text, opts...))
+		errResult(zenity.Info(text, opts...))
 	case warningDlg:
-		okResult(zenity.Warning(text, opts...))
+		errResult(zenity.Warning(text, opts...))
 	case questionDlg:
-		okResult(zenity.Question(text, opts...))
+		errResult(zenity.Question(text, opts...))
 
 	case entryDlg:
-		strOKResult(zenity.Entry(text, opts...))
+		strResult(zenity.Entry(text, opts...))
 
 	case listDlg:
 		if multiple {
-			listResult(zenity.ListMultiple(text, flag.Args(), opts...))
+			lstResult(zenity.ListMultiple(text, flag.Args(), opts...))
 		} else {
-			strOKResult(zenity.List(text, flag.Args(), opts...))
+			strResult(zenity.List(text, flag.Args(), opts...))
 		}
 
 	case passwordDlg:
-		_, pw, ok, err := zenity.Password(opts...)
-		strOKResult(pw, ok, err)
+		_, pw, err := zenity.Password(opts...)
+		strResult(pw, err)
 
 	case fileSelectionDlg:
 		switch {
@@ -129,11 +129,11 @@ func main() {
 		case save:
 			strResult(egestPath(zenity.SelectFileSave(opts...)))
 		case multiple:
-			listResult(egestPaths(zenity.SelectFileMutiple(opts...)))
+			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
 		}
 
 	case colorSelectionDlg:
-		colorResult(zenity.SelectColor(opts...))
+		colResult(zenity.SelectColor(opts...))
 
 	case notification:
 		errResult(zenity.Notify(text, opts...))
@@ -395,6 +395,9 @@ func errResult(err error) {
 	if os.IsTimeout(err) {
 		os.Exit(5)
 	}
+	if err == zenity.ErrCanceled {
+		os.Exit(1)
+	}
 	if err == zenity.ErrExtraButton {
 		os.Stdout.WriteString(extraButton)
 		os.Stdout.WriteString(zenutil.LineBreak)
@@ -408,60 +411,29 @@ func errResult(err error) {
 	os.Exit(0)
 }
 
-func okResult(ok bool, err error) {
-	if err != nil {
-		errResult(err)
-	}
-	if ok {
-		os.Exit(0)
-	}
-	os.Exit(1)
-}
-
 func strResult(s string, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if s == "" {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
-func listResult(l []string, err error) {
+func lstResult(l []string, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if l == nil {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
-func colorResult(c color.Color, err error) {
+func colResult(c color.Color, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if c == nil {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
-	os.Stdout.WriteString(zenutil.LineBreak)
-	os.Exit(0)
-}
-
-func strOKResult(s string, ok bool, err error) {
-	if err != nil {
-		errResult(err)
-	}
-	if !ok {
-		os.Exit(1)
-	}
-	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }

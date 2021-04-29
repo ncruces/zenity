@@ -4,7 +4,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func entry(text string, opts options) (string, bool, error) {
+func entry(text string, opts options) (string, error) {
 	var data zenutil.Dialog
 	data.Text = text
 	data.Operation = "displayDialog"

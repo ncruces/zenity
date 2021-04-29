@@ -2,24 +2,18 @@ package zenity
 
 // List displays the list dialog.
 //
-// Returns false on cancel, or ErrExtraButton.
-//
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, DefaultItems, DisallowEmpty.
-func List(text string, items []string, options ...Option) (string, bool, error) {
+func List(text string, items []string, options ...Option) (string, error) {
 	return list(text, items, applyOptions(options))
 }
 
 // ListItems displays the list dialog.
-//
-// Returns false on cancel, or ErrExtraButton.
-func ListItems(text string, items ...string) (string, bool, error) {
+func ListItems(text string, items ...string) (string, error) {
 	return List(text, items)
 }
 
 // ListMultiple displays the list dialog, allowing multiple items to be selected.
-//
-// Returns a nil slice on cancel, or ErrExtraButton.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, DefaultItems, DisallowEmpty.
@@ -28,8 +22,6 @@ func ListMultiple(text string, items []string, options ...Option) ([]string, err
 }
 
 // ListMultipleItems displays the list dialog, allowing multiple items to be selected.
-//
-// Returns a nil slice on cancel, or ErrExtraButton.
 func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }
