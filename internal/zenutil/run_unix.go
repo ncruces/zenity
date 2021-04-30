@@ -63,43 +63,14 @@ func RunProgress(ctx context.Context, max int, args []string) (*progressDialog, 
 	}
 
 	dlg := &progressDialog{
-		done:    make(chan struct{}),
-		lines:   make(chan string),
-		percent: true,
+		ctx:     ctx,
+		cmd:     cmd,
 		max:     max,
+		percent: true,
+		lines:   make(chan string),
+		done:    make(chan struct{}),
 	}
-	go func() {
-		err := cmd.Wait()
-		select {
-		case _, ok := <-dlg.lines:
-			if !ok {
-				err = nil
-			}
-		default:
-		}
-		if cerr := ctx.Err(); cerr != nil {
-			err = cerr
-		}
-		dlg.err = err
-		close(dlg.done)
-	}()
-	go func() {
-		defer cmd.Process.Signal(syscall.SIGTERM)
-		for {
-			var line string
-			select {
-			case s, ok := <-dlg.lines:
-				if !ok {
-					return
-				}
-				line = s
-			case <-ctx.Done():
-				return
-			}
-			if _, err := pipe.Write([]byte(line + "\n")); err != nil {
-				return
-			}
-		}
-	}()
+	go dlg.pipe(pipe)
+	go dlg.wait()
 	return dlg, nil
 }

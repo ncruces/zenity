@@ -10,4 +10,5 @@ var (
 	Command   bool
 	Timeout   int
 	Separator = "\x00"
+	Canceled  error
 )

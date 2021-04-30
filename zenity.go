@@ -13,6 +13,8 @@ package zenity
 import (
 	"context"
 	"image/color"
+
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 type stringErr string
@@ -30,6 +32,10 @@ const ErrExtraButton = stringErr("extra button pressed")
 
 // ErrUnsupported is returned when a combination of options is not supported.
 const ErrUnsupported = stringErr("unsupported option")
+
+func init() {
+	zenutil.Canceled = ErrCanceled
+}
 
 type options struct {
 	// General options

@@ -106,37 +106,15 @@ func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, e
 	}
 
 	dlg := &progressDialog{
-		done:  make(chan struct{}),
-		lines: make(chan string),
+		cmd:   cmd,
 		max:   max,
+		lines: make(chan string),
+		done:  make(chan struct{}),
 	}
+	go dlg.pipe(pipe)
 	go func() {
-		err := cmd.Wait()
-		if cerr := ctx.Err(); cerr != nil {
-			err = cerr
-		}
-		dlg.err = err
-		close(dlg.done)
-		os.RemoveAll(t)
-	}()
-	go func() {
-		defer pipe.Close()
-		for {
-			var line string
-			select {
-			case s, ok := <-dlg.lines:
-				if !ok {
-					return
-				}
-				line = s
-			case <-ctx.Done():
-				return
-			case <-time.After(40 * time.Millisecond):
-			}
-			if _, err := pipe.Write([]byte(line + "\n")); err != nil {
-				return
-			}
-		}
+		defer os.RemoveAll(t)
+		dlg.wait()
 	}()
 	return dlg, nil
 }

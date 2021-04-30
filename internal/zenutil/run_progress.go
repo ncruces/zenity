@@ -3,15 +3,25 @@
 package zenutil
 
 import (
+	"context"
+	"io"
+	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
+	"sync/atomic"
+	"time"
 )
 
 type progressDialog struct {
-	err     error
-	done    chan struct{}
-	lines   chan string
-	percent bool
+	ctx     context.Context
+	cmd     *exec.Cmd
 	max     int
+	percent bool
+	closed  int32
+	lines   chan string
+	done    chan struct{}
+	err     error
 }
 
 func (d *progressDialog) send(line string) error {
@@ -21,12 +31,6 @@ func (d *progressDialog) send(line string) error {
 	case <-d.done:
 		return d.err
 	}
-}
-
-func (d *progressDialog) Close() error {
-	close(d.lines)
-	<-d.done
-	return d.err
 }
 
 func (d *progressDialog) Text(text string) error {
@@ -47,4 +51,62 @@ func (d *progressDialog) MaxValue() int {
 
 func (d *progressDialog) Done() <-chan struct{} {
 	return d.done
+}
+
+func (d *progressDialog) Complete() error {
+	close(d.lines)
+	select {
+	case <-d.done:
+		return d.err
+	default:
+		return nil
+	}
+}
+
+func (d *progressDialog) Close() error {
+	atomic.StoreInt32(&d.closed, 1)
+	d.cmd.Process.Signal(os.Interrupt)
+	<-d.done
+	return d.err
+}
+
+func (d *progressDialog) wait() {
+	err := d.cmd.Wait()
+	if cerr := d.ctx.Err(); cerr != nil {
+		err = cerr
+	}
+	if eerr, ok := err.(*exec.ExitError); ok {
+		switch {
+		case eerr.ExitCode() == -1 && atomic.LoadInt32(&d.closed) != 0:
+			err = nil
+		case eerr.ExitCode() == 1:
+			err = Canceled
+		}
+	}
+	d.err = err
+	close(d.done)
+}
+
+func (d *progressDialog) pipe(w io.WriteCloser) {
+	defer w.Close()
+	var timeout = time.Second
+	if runtime.GOOS == "darwin" {
+		timeout = 40 * time.Millisecond
+	}
+	for {
+		var line string
+		select {
+		case s, ok := <-d.lines:
+			if !ok {
+				return
+			}
+			line = s
+		case <-d.ctx.Done():
+			return
+		case <-time.After(timeout):
+		}
+		if _, err := w.Write([]byte(line + "\n")); err != nil {
+			return
+		}
+	}
 }

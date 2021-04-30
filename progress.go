@@ -19,6 +19,9 @@ type ProgressDialog interface {
 	// MaxValue gets how much work the task requires in total.
 	MaxValue() int
 
+	// Complete marks the task completed.
+	Complete() error
+
 	// Close closes the dialog.
 	Close() error
 
