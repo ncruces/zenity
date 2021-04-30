@@ -5,8 +5,12 @@ app.activate()
 ObjC.import('stdlib')
 ObjC.import('readline')
 
-try { Progress.totalUnitCount = $.getenv('total') } catch { }
-try { Progress.description = $.getenv('description') } catch { }
+{{- if .Total}}
+    Progress.totalUnitCount = {{.Total}}
+{{- end}}
+{{- if .Description}}
+    Progress.description = {{json .Description}}
+{{- end}}
 
 while (true) {
     var s

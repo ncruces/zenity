@@ -29,7 +29,7 @@ type ProgressDialog interface {
 	Done() <-chan struct{}
 }
 
-// MaxValue returns an Option to set the maximum value (macOS only).
+// MaxValue returns an Option to set the maximum value (Windows and macOS only).
 // The default maximum value is 100.
 func MaxValue(value int) Option {
 	return funcOption(func(o *options) { o.maxValue = value })
@@ -40,7 +40,7 @@ func Pulsate() Option {
 	return funcOption(func(o *options) { o.maxValue = -1 })
 }
 
-// NoCancel returns an Option to hide the Cancel button (Unix only).
+// NoCancel returns an Option to hide the Cancel button (Windows and Unix only).
 func NoCancel() Option {
 	return funcOption(func(o *options) { o.noCancel = true })
 }

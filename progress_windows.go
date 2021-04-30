@@ -48,25 +48,31 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 	defer font.Delete()
 	defWindowProc := defWindowProc.Addr()
 
-	var wnd, textCtl, progCtl uintptr
-	var okBtn, cancelBtn, extraBtn uintptr
-
 	layout := func(dpi dpi) {
 		hfont := font.ForDPI(dpi)
-		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
-		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
-		setWindowPos.Call(progCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
-		if extraBtn == 0 {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		sendMessage.Call(dlg.textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(dlg.okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(dlg.cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+		sendMessage.Call(dlg.extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
+		setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(dlg.textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(dlg.progCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		if dlg.extraBtn == 0 {
+			if dlg.cancelBtn == 0 {
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			} else {
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			}
 		} else {
-			sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			if dlg.cancelBtn == 0 {
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)     // SWP_NOZORDER
+				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			} else {
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(12), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
+				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			}
 		}
 	}
 
@@ -118,54 +124,52 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 	}
 	defer unregisterClass.Call(cls, instance)
 
-	wnd, _, _ = createWindowEx.Call(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
+	dlg.wnd, _, _ = createWindowEx.Call(0x10101, // WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME
 		cls, strptr(*opts.title),
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
 		281, 141, 0, 0, instance, 0)
 
-	textCtl, _, _ = createWindowEx.Call(0,
+	dlg.textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), 0,
 		0x5002e080, // WS_CHILD|WS_VISIBLE|WS_GROUP|SS_WORDELLIPSIS|SS_EDITCONTROL|SS_NOPREFIX
-		12, 10, 241, 16, wnd, 0, instance, 0)
+		12, 10, 241, 16, dlg.wnd, 0, instance, 0)
 
 	var flags uintptr = 0x50000001 // WS_CHILD|WS_VISIBLE|PBS_SMOOTH
 	if opts.maxValue < 0 {
 		flags |= 0x8 // PBS_MARQUEE
 	}
-	progCtl, _, _ = createWindowEx.Call(0,
+	dlg.progCtl, _, _ = createWindowEx.Call(0,
 		strptr("msctls_progress32"), // PROGRESS_CLASS
 		0, flags,
-		12, 30, 241, 24, wnd, 0, instance, 0)
+		12, 30, 241, 24, dlg.wnd, 0, instance, 0)
 
-	okBtn, _, _ = createWindowEx.Call(0,
+	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		0x58030001, // WS_CHILD|WS_VISIBLE|WS_DISABLED|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
-		12, 66, 75, 24, wnd, 1 /* IDOK */, instance, 0)
-	cancelBtn, _, _ = createWindowEx.Call(0,
-		strptr("BUTTON"), strptr(*opts.cancelLabel),
-		0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-		12, 66, 75, 24, wnd, 2 /* IDCANCEL */, instance, 0)
+		12, 66, 75, 24, dlg.wnd, 1 /* IDOK */, instance, 0)
+	if !opts.noCancel {
+		dlg.cancelBtn, _, _ = createWindowEx.Call(0,
+			strptr("BUTTON"), strptr(*opts.cancelLabel),
+			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
+			12, 66, 75, 24, dlg.wnd, 2 /* IDCANCEL */, instance, 0)
+	}
 	if opts.extraButton != nil {
-		extraBtn, _, _ = createWindowEx.Call(0,
+		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-			12, 66, 75, 24, wnd, 7 /* IDNO */, instance, 0)
+			12, 66, 75, 24, dlg.wnd, 7 /* IDNO */, instance, 0)
 	}
 
-	layout(getDPI(wnd))
-	centerWindow(wnd)
-	showWindow.Call(wnd, 1 /* SW_SHOWNORMAL */, 0)
+	layout(getDPI(dlg.wnd))
+	centerWindow(dlg.wnd)
+	showWindow.Call(dlg.wnd, 1 /* SW_SHOWNORMAL */, 0)
 	if opts.maxValue < 0 {
-		sendMessage.Call(progCtl, 0x40a /* PBM_SETMARQUEE */, 1, 0)
+		sendMessage.Call(dlg.progCtl, 0x40a /* PBM_SETMARQUEE */, 1, 0)
 	} else {
-		sendMessage.Call(progCtl, 0x406 /* PBM_SETRANGE32 */, 0, uintptr(opts.maxValue))
+		sendMessage.Call(dlg.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, uintptr(opts.maxValue))
 	}
-	dlg.prog = progCtl
-	dlg.text = textCtl
-	dlg.ok = okBtn
-	dlg.wnd = wnd
 	dlg.init.Done()
 
 	if opts.ctx != nil {
@@ -174,7 +178,7 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+				sendMessage.Call(dlg.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
 			case <-wait:
 			}
 		}()
@@ -183,7 +187,7 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 	// set default values
 	err = nil
 
-	if err := messageLoop(wnd); err != nil {
+	if err := messageLoop(dlg.wnd); err != nil {
 		return err
 	}
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -193,26 +197,22 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 }
 
 type progressDialog struct {
-	err  error
-	done chan struct{}
-	init sync.WaitGroup
-	prog uintptr
-	text uintptr
-	wnd  uintptr
-	ok   uintptr
-	max  int
-}
-
-func (d *progressDialog) Close() error {
-	sendMessage.Call(d.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
-	<-d.done
-	return d.err
+	max       int
+	done      chan struct{}
+	init      sync.WaitGroup
+	wnd       uintptr
+	textCtl   uintptr
+	progCtl   uintptr
+	okBtn     uintptr
+	cancelBtn uintptr
+	extraBtn  uintptr
+	err       error
 }
 
 func (d *progressDialog) Text(text string) error {
 	select {
 	default:
-		setWindowText.Call(d.text, strptr(text))
+		setWindowText.Call(d.textCtl, strptr(text))
 		return nil
 	case <-d.done:
 		return d.err
@@ -222,9 +222,9 @@ func (d *progressDialog) Text(text string) error {
 func (d *progressDialog) Value(value int) error {
 	select {
 	default:
-		sendMessage.Call(d.prog, 0x402 /* PBM_SETPOS */, uintptr(value), 0)
+		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, uintptr(value), 0)
 		if value >= d.max {
-			enableWindow.Call(d.ok, 1)
+			enableWindow.Call(d.okBtn, 1)
 		}
 		return nil
 	case <-d.done:
@@ -238,4 +238,24 @@ func (d *progressDialog) MaxValue() int {
 
 func (d *progressDialog) Done() <-chan struct{} {
 	return d.done
+}
+
+func (d *progressDialog) Complete() error {
+	select {
+	default:
+		setWindowLong.Call(d.progCtl, intptr(-16) /* GWL_STYLE */, 0x50000001 /* WS_CHILD|WS_VISIBLE|PBS_SMOOTH */)
+		sendMessage.Call(d.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, 1)
+		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, 1, 0)
+		enableWindow.Call(d.okBtn, 1)
+		enableWindow.Call(d.cancelBtn, 0)
+		return nil
+	case <-d.done:
+		return d.err
+	}
+}
+
+func (d *progressDialog) Close() error {
+	sendMessage.Call(d.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+	<-d.done
+	return d.err
 }

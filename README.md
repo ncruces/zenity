@@ -13,8 +13,9 @@ Implemented dialogs:
 * [text entry](https://github.com/ncruces/zenity/wiki/Text-Entry-dialog)
 * [list](https://github.com/ncruces/zenity/wiki/List-dialog) (simple)
 * [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
-* [file selection](https://github.com/ncruces/zenity/wiki/File-Selection-dialog)
-* [color selection](https://github.com/ncruces/zenity/wiki/Color-Selection-dialog)
+* [file selection](https://github.com/ncruces/zenity/wiki/File-selection-dialog)
+* [color selection](https://github.com/ncruces/zenity/wiki/Color-selection-dialog)
+* [progress](https://github.com/ncruces/zenity/wiki/Progress-dialog)
 * [notification](https://github.com/ncruces/zenity/wiki/Notification)
 
 Behavior on Windows, macOS and other Unixes might differ slightly.

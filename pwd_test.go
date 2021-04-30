@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExamplePassword() {
@@ -15,18 +16,19 @@ func ExamplePassword() {
 	// Output:
 }
 
-func TestPasswordTimeout(t *testing.T) {
+func TestPassword_timeout(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	defer cancel()
 
 	_, _, err := zenity.Password(zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
-
-	cancel()
 }
 
-func TestPasswordCancel(t *testing.T) {
+func TestPassword_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

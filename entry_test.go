@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleEntry() {
@@ -16,18 +17,19 @@ func ExampleEntry() {
 	// Output:
 }
 
-func TestEntryTimeout(t *testing.T) {
+func TestEntry_timeout(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	defer cancel()
 
 	_, err := zenity.Entry("", zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
-
-	cancel()
 }
 
-func TestEntryCancel(t *testing.T) {
+func TestEntry_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

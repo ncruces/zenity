@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 const defaultPath = ``
@@ -77,7 +78,7 @@ var fileFuncs = []func(...zenity.Option) (string, error){
 	},
 }
 
-func TestFileTimeout(t *testing.T) {
+func TestFile_timeout(t *testing.T) {
 	for _, f := range fileFuncs {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
@@ -87,10 +88,12 @@ func TestFileTimeout(t *testing.T) {
 		}
 
 		cancel()
+		goleak.VerifyNone(t)
 	}
 }
 
-func TestFileCancel(t *testing.T) {
+func TestFile_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

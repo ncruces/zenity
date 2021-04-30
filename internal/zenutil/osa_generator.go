@@ -21,11 +21,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var args struct {
-		Templates string
-		Progress  string
-	}
-
 	var str strings.Builder
 
 	for _, file := range files {
@@ -39,16 +34,11 @@ func main() {
 			log.Fatal(err)
 		}
 
-		name = strings.TrimSuffix(name, filepath.Ext(name))
-		if name == "progress" {
-			args.Progress = string(data)
-		} else {
-			str.WriteString("\n" + `{{define "`)
-			str.WriteString(name)
-			str.WriteString(`" -}}` + "\n")
-			str.Write(data)
-			str.WriteString("\n{{- end}}")
-		}
+		str.WriteString("\n" + `{{define "`)
+		str.WriteString(strings.TrimSuffix(name, filepath.Ext(name)))
+		str.WriteString(`" -}}` + "\n")
+		str.Write(data)
+		str.WriteString("\n{{- end}}")
 	}
 
 	out, err := os.Create("osa_generated.go")
@@ -56,8 +46,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	args.Templates = str.String()
-	err = generator.Execute(out, args)
+	err = generator.Execute(out, str.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,6 +105,4 @@ import (
 var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	return string(b), err
-}}).Parse(` + "`{{.Templates}}`" + `))
-
-var progress = ` + "`\n{{.Progress}}`\n"))
+}}).Parse(` + "`{{.}}`))\n"))

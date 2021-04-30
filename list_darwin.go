@@ -5,6 +5,10 @@ import (
 )
 
 func list(text string, items []string, opts options) (string, error) {
+	if opts.extraButton != nil {
+		return "", ErrUnsupported
+	}
+
 	var data zenutil.List
 	data.Items = items
 	data.Options.Prompt = &text
@@ -19,6 +23,10 @@ func list(text string, items []string, opts options) (string, error) {
 }
 
 func listMultiple(text string, items []string, opts options) ([]string, error) {
+	if opts.extraButton != nil {
+		return nil, ErrUnsupported
+	}
+
 	var data zenutil.List
 	data.Items = items
 	data.Options.Prompt = &text

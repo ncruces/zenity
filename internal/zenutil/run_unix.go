@@ -3,6 +3,7 @@
 package zenutil
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
@@ -42,24 +43,29 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, args []string) (*progressDialog, error) {
+func RunProgress(ctx context.Context, max int, extra *string, args []string) (*progressDialog, error) {
 	if Command && path != "" {
 		if Timeout > 0 {
 			args = append(args, "--timeout", strconv.Itoa(Timeout))
 		}
 		syscall.Exec(path, append([]string{tool}, args...), os.Environ())
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	cmd := exec.Command(tool, args...)
+	cmd := exec.CommandContext(ctx, tool, args...)
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
+	var out *bytes.Buffer
+	if extra != nil {
+		out = &bytes.Buffer{}
+		cmd.Stdout = out
+	}
 	if err := cmd.Start(); err != nil {
 		return nil, err
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 
 	dlg := &progressDialog{
@@ -71,6 +77,6 @@ func RunProgress(ctx context.Context, max int, args []string) (*progressDialog, 
 		done:    make(chan struct{}),
 	}
 	go dlg.pipe(pipe)
-	go dlg.wait()
+	go dlg.wait(extra, out)
 	return dlg, nil
 }

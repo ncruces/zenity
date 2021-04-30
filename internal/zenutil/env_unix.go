@@ -13,5 +13,4 @@ var (
 	Command   bool
 	Timeout   int
 	Separator = "\x1e"
-	Canceled  error
 )

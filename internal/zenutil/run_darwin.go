@@ -7,27 +7,23 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"syscall"
-	"time"
 )
 
 // Run is internal.
 func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
-	var buf strings.Builder
-
+	var buf bytes.Buffer
 	err := scripts.ExecuteTemplate(&buf, script, data)
 	if err != nil {
 		return nil, err
 	}
 
-	script = buf.String()
 	if Command {
 		// Try to use syscall.Exec, fallback to exec.Command.
 		if path, err := exec.LookPath("osascript"); err != nil {
 		} else if t, err := ioutil.TempFile("", ""); err != nil {
 		} else if err := os.Remove(t.Name()); err != nil {
-		} else if _, err := t.WriteString(script); err != nil {
+		} else if _, err := t.Write(buf.Bytes()); err != nil {
 		} else if _, err := t.Seek(0, 0); err != nil {
 		} else if err := syscall.Dup2(int(t.Fd()), syscall.Stdin); err != nil {
 		} else if err := os.Stderr.Close(); err != nil {
@@ -38,7 +34,7 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 
 	if ctx != nil {
 		cmd := exec.CommandContext(ctx, "osascript", "-l", "JavaScript")
-		cmd.Stdin = strings.NewReader(script)
+		cmd.Stdin = &buf
 		out, err := cmd.Output()
 		if ctx.Err() != nil {
 			err = ctx.Err()
@@ -46,45 +42,57 @@ func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
 		return out, err
 	}
 	cmd := exec.Command("osascript", "-l", "JavaScript")
-	cmd.Stdin = strings.NewReader(script)
+	cmd.Stdin = &buf
 	return cmd.Output()
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, error) {
+func RunProgress(ctx context.Context, max int, data Progress) (dlg *progressDialog, err error) {
+	var buf bytes.Buffer
+	err = scripts.ExecuteTemplate(&buf, "progress", data)
+	if err != nil {
+		return nil, err
+	}
+
 	t, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
+			if ctx != nil && ctx.Err() != nil {
+				err = ctx.Err()
+			}
 			os.RemoveAll(t)
 		}
 	}()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	var cmd *exec.Cmd
 	name := filepath.Join(t, "progress.app")
 
-	cmd = exec.Command("osacompile", "-l", "JavaScript", "-o", name)
-	cmd.Stdin = strings.NewReader(progress)
+	cmd = exec.CommandContext(ctx, "osacompile", "-l", "JavaScript", "-o", name)
+	cmd.Stdin = &buf
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
 	plist := filepath.Join(name, "Contents/Info.plist")
 
-	cmd = exec.Command("defaults", "write", plist, "LSUIElement", "true")
+	cmd = exec.CommandContext(ctx, "defaults", "write", plist, "LSUIElement", "true")
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
-	cmd = exec.Command("defaults", "write", plist, "CFBundleName", "")
+	cmd = exec.CommandContext(ctx, "defaults", "write", plist, "CFBundleName", "")
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
 	var executable string
-	cmd = exec.Command("defaults", "read", plist, "CFBundleExecutable")
+	cmd = exec.CommandContext(ctx, "defaults", "read", plist, "CFBundleExecutable")
 	if out, err := cmd.Output(); err != nil {
 		return nil, err
 	} else {
@@ -92,8 +100,7 @@ func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, e
 		executable = filepath.Join(name, "Contents/MacOS", string(out))
 	}
 
-	cmd = exec.Command(executable)
-	cmd.Env = env
+	cmd = exec.CommandContext(ctx, executable)
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -101,11 +108,9 @@ func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, e
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 
-	dlg := &progressDialog{
+	dlg = &progressDialog{
+		ctx:   ctx,
 		cmd:   cmd,
 		max:   max,
 		lines: make(chan string),
@@ -114,7 +119,7 @@ func RunProgress(ctx context.Context, max int, env []string) (*progressDialog, e
 	go dlg.pipe(pipe)
 	go func() {
 		defer os.RemoveAll(t)
-		dlg.wait()
+		dlg.wait(nil, nil)
 	}()
 	return dlg, nil
 }
@@ -185,7 +190,6 @@ type File struct {
 	Options   FileOptions
 }
 
-// FileOptions is internal.
 type FileOptions struct {
 	Prompt     *string  `json:"withPrompt,omitempty"`
 	Type       []string `json:"ofType,omitempty"`
@@ -205,4 +209,10 @@ type Notify struct {
 type NotifyOptions struct {
 	Title    *string `json:"withTitle,omitempty"`
 	Subtitle string  `json:"subtitle,omitempty"`
+}
+
+// Progress is internal.
+type Progress struct {
+	Description *string
+	Total       *int
 }

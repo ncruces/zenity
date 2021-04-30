@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleList() {
@@ -44,18 +45,19 @@ func ExampleListMultipleItems() {
 	// Output:
 }
 
-func TestListTimeout(t *testing.T) {
+func TestList_timeout(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	defer cancel()
 
 	_, err := zenity.List("", nil, zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
-
-	cancel()
 }
 
-func TestListCancel(t *testing.T) {
+func TestList_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

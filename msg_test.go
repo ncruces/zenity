@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleError() {
@@ -45,7 +46,7 @@ var msgFuncs = []func(string, ...zenity.Option) error{
 	zenity.Question,
 }
 
-func TestMessageTimeout(t *testing.T) {
+func TestMessage_timeout(t *testing.T) {
 	for _, f := range msgFuncs {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
@@ -55,10 +56,12 @@ func TestMessageTimeout(t *testing.T) {
 		}
 
 		cancel()
+		goleak.VerifyNone(t)
 	}
 }
 
-func TestMessageCancel(t *testing.T) {
+func TestMessage_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

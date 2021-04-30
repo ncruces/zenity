@@ -3,7 +3,6 @@
 package zenity
 
 import (
-	"bytes"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -56,9 +55,8 @@ func appendIcon(args []string, opts options) []string {
 }
 
 func strResult(opts options, out []byte, err error) (string, error) {
-	out = bytes.TrimSuffix(out, []byte{'\n'})
 	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil && *opts.extraButton == string(out) {
+		if opts.extraButton != nil && *opts.extraButton+"\n" == string(out) {
 			return "", ErrExtraButton
 		}
 		return "", ErrCanceled

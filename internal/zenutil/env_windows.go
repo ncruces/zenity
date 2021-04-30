@@ -10,5 +10,4 @@ var (
 	Command   bool
 	Timeout   int
 	Separator string
-	Canceled  error
 )

@@ -66,6 +66,7 @@ var (
 	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
 	setWindowPos                 = user32.NewProc("SetWindowPos")
 	getWindowRect                = user32.NewProc("GetWindowRect")
+	setWindowLong                = user32.NewProc("SetWindowLongPtrW")
 	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
 	unregisterClass              = user32.NewProc("UnregisterClassW")
 	registerClassEx              = user32.NewProc("RegisterClassExW")

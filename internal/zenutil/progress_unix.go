@@ -3,6 +3,7 @@
 package zenutil
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -54,13 +55,9 @@ func (d *progressDialog) Done() <-chan struct{} {
 }
 
 func (d *progressDialog) Complete() error {
+	err := d.Value(d.max)
 	close(d.lines)
-	select {
-	case <-d.done:
-		return d.err
-	default:
-		return nil
-	}
+	return err
 }
 
 func (d *progressDialog) Close() error {
@@ -70,7 +67,7 @@ func (d *progressDialog) Close() error {
 	return d.err
 }
 
-func (d *progressDialog) wait() {
+func (d *progressDialog) wait(extra *string, out *bytes.Buffer) {
 	err := d.cmd.Wait()
 	if cerr := d.ctx.Err(); cerr != nil {
 		err = cerr
@@ -80,7 +77,11 @@ func (d *progressDialog) wait() {
 		case eerr.ExitCode() == -1 && atomic.LoadInt32(&d.closed) != 0:
 			err = nil
 		case eerr.ExitCode() == 1:
-			err = Canceled
+			if extra != nil && *extra+"\n" == string(out.Bytes()) {
+				err = ErrExtraButton
+			} else {
+				err = ErrCanceled
+			}
 		}
 	}
 	d.err = err
@@ -103,7 +104,10 @@ func (d *progressDialog) pipe(w io.WriteCloser) {
 			line = s
 		case <-d.ctx.Done():
 			return
+		case <-d.done:
+			return
 		case <-time.After(timeout):
+			// line = ""
 		}
 		if _, err := w.Write([]byte(line + "\n")); err != nil {
 			return
