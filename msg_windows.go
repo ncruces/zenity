@@ -12,7 +12,7 @@ var (
 	getDlgCtrlID = user32.NewProc("GetDlgCtrlID")
 )
 
-func message(kind messageKind, text string, opts options) (bool, error) {
+func message(kind messageKind, text string, opts options) error {
 	var flags uintptr
 
 	switch {
@@ -48,7 +48,7 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil {
 		unhook, err := hookMessageLabels(kind, opts)
 		if err != nil {
-			return false, err
+			return err
 		}
 		defer unhook()
 	}
@@ -62,17 +62,17 @@ func message(kind messageKind, text string, opts options) (bool, error) {
 	s, _, err := messageBox.Call(0, strptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return false, opts.ctx.Err()
+		return opts.ctx.Err()
 	}
 	switch s {
 	case 1, 6: // IDOK, IDYES
-		return true, nil
+		return nil
 	case 2: // IDCANCEL
-		return false, nil
+		return ErrCanceled
 	case 7: // IDNO
-		return false, ErrExtraButton
+		return ErrExtraButton
 	default:
-		return false, err
+		return err
 	}
 }
 
@@ -80,7 +80,7 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 	return hookDialog(opts.ctx, func(wnd uintptr) {
 		enumChildWindows.Call(wnd,
 			syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
-				name := [8]uint16{}
+				var name [8]uint16
 				getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
 				if syscall.UTF16ToString(name[:]) == "Button" {
 					ctl, _, _ := getDlgCtrlID.Call(wnd)
@@ -89,11 +89,7 @@ func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFun
 					case 1, 6: // IDOK, IDYES
 						text = opts.okLabel
 					case 2: // IDCANCEL
-						if kind == questionKind {
-							text = opts.cancelLabel
-						} else {
-							text = opts.okLabel
-						}
+						text = opts.cancelLabel
 					case 7: // IDNO
 						text = opts.extraButton
 					}

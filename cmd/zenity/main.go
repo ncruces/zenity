@@ -34,6 +34,7 @@ var (
 	passwordDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
+	progressDlg       bool
 	notification      bool
 
 	// General options
@@ -73,6 +74,13 @@ var (
 	defaultColor string
 	showPalette  bool
 
+	// Progress options
+	percentage float64
+	pulsate    bool
+	autoClose  bool
+	autoKill   bool
+	noCancel   bool
+
 	// Windows specific options
 	cygpath bool
 	wslpath bool
@@ -95,32 +103,32 @@ func main() {
 	if zenutil.Timeout > 0 {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(zenutil.Timeout)*time.Second)
 		opts = append(opts, zenity.Context(ctx))
-		_ = cancel
+		defer cancel()
 	}
 
 	switch {
 	case errorDlg:
-		okResult(zenity.Error(text, opts...))
+		errResult(zenity.Error(text, opts...))
 	case infoDlg:
-		okResult(zenity.Info(text, opts...))
+		errResult(zenity.Info(text, opts...))
 	case warningDlg:
-		okResult(zenity.Warning(text, opts...))
+		errResult(zenity.Warning(text, opts...))
 	case questionDlg:
-		okResult(zenity.Question(text, opts...))
+		errResult(zenity.Question(text, opts...))
 
 	case entryDlg:
-		strOKResult(zenity.Entry(text, opts...))
+		strResult(zenity.Entry(text, opts...))
 
 	case listDlg:
 		if multiple {
-			listResult(zenity.ListMultiple(text, flag.Args(), opts...))
+			lstResult(zenity.ListMultiple(text, flag.Args(), opts...))
 		} else {
-			strOKResult(zenity.List(text, flag.Args(), opts...))
+			strResult(zenity.List(text, flag.Args(), opts...))
 		}
 
 	case passwordDlg:
-		_, pw, ok, err := zenity.Password(opts...)
-		strOKResult(pw, ok, err)
+		_, pw, err := zenity.Password(opts...)
+		strResult(pw, err)
 
 	case fileSelectionDlg:
 		switch {
@@ -129,17 +137,21 @@ func main() {
 		case save:
 			strResult(egestPath(zenity.SelectFileSave(opts...)))
 		case multiple:
-			listResult(egestPaths(zenity.SelectFileMutiple(opts...)))
+			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
 		}
 
 	case colorSelectionDlg:
-		colorResult(zenity.SelectColor(opts...))
+		colResult(zenity.SelectColor(opts...))
+
+	case progressDlg:
+		errResult(progress(opts...))
 
 	case notification:
 		errResult(zenity.Notify(text, opts...))
-	}
 
-	flag.Usage()
+	default:
+		flag.Usage()
+	}
 }
 
 func setupFlags() {
@@ -153,6 +165,7 @@ func setupFlags() {
 	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
+	flag.BoolVar(&progressDlg, "progress", false, "Display progress indication dialog")
 	flag.BoolVar(&notification, "notification", false, "Display notification")
 
 	// General options
@@ -165,12 +178,12 @@ func setupFlags() {
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
+	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
 	// Message options
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
-	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
 	// Entry options
 	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
@@ -193,6 +206,15 @@ func setupFlags() {
 	// Color selection options
 	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
 	flag.BoolVar(&showPalette, "show-palette", false, "Show the palette")
+
+	// Progress options
+	flag.Float64Var(&percentage, "percentage", 0, "Set initial `percentage`")
+	flag.BoolVar(&pulsate, "pulsate", false, "Pulsate progress bar")
+	flag.BoolVar(&noCancel, "no-cancel", false, "Hide Cancel button (Windows and Unix only)")
+	flag.BoolVar(&autoClose, "auto-close", false, "Dismiss the dialog when 100% has been reached")
+	if runtime.GOOS != "windows" {
+		flag.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
+	}
 
 	// Windows specific options
 	if runtime.GOOS == "windows" {
@@ -240,6 +262,9 @@ func validateFlags() {
 		n++
 	}
 	if colorSelectionDlg {
+		n++
+	}
+	if progressDlg {
 		n++
 	}
 	if notification {
@@ -295,6 +320,11 @@ func loadFlags() []zenity.Option {
 	case passwordDlg:
 		setDefault(&title, "Type your password")
 		setDefault(&icon, "dialog-password")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
+	case progressDlg:
+		setDefault(&title, "Progress")
+		setDefault(&text, "Running...")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
 	default:
@@ -388,12 +418,24 @@ func loadFlags() []zenity.Option {
 		opts = append(opts, zenity.ShowPalette())
 	}
 
+	// Progress options
+
+	if pulsate {
+		opts = append(opts, zenity.Pulsate())
+	}
+	if noCancel {
+		opts = append(opts, zenity.NoCancel())
+	}
+
 	return opts
 }
 
 func errResult(err error) {
 	if os.IsTimeout(err) {
 		os.Exit(5)
+	}
+	if err == zenity.ErrCanceled {
+		os.Exit(1)
 	}
 	if err == zenity.ErrExtraButton {
 		os.Stdout.WriteString(extraButton)
@@ -408,60 +450,29 @@ func errResult(err error) {
 	os.Exit(0)
 }
 
-func okResult(ok bool, err error) {
-	if err != nil {
-		errResult(err)
-	}
-	if ok {
-		os.Exit(0)
-	}
-	os.Exit(1)
-}
-
 func strResult(s string, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if s == "" {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
-func listResult(l []string, err error) {
+func lstResult(l []string, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if l == nil {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }
 
-func colorResult(c color.Color, err error) {
+func colResult(c color.Color, err error) {
 	if err != nil {
 		errResult(err)
-	}
-	if c == nil {
-		os.Exit(1)
 	}
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
-	os.Stdout.WriteString(zenutil.LineBreak)
-	os.Exit(0)
-}
-
-func strOKResult(s string, ok bool, err error) {
-	if err != nil {
-		errResult(err)
-	}
-	if !ok {
-		os.Exit(1)
-	}
-	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
 	os.Exit(0)
 }

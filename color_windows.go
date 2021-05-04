@@ -9,7 +9,7 @@ import (
 var (
 	chooseColor = comdlg32.NewProc("ChooseColorW")
 
-	savedColors = [16]uint32{}
+	savedColors [16]uint32
 	colorsMutex sync.Mutex
 )
 
@@ -32,7 +32,7 @@ func selectColor(opts options) (color.Color, error) {
 	if opts.color != nil {
 		args.Flags |= 0x1 // CC_RGBINIT
 		n := color.NRGBAModel.Convert(opts.color).(color.NRGBA)
-		args.RgbResult = uint32(n.R) | (uint32(n.G) << 8) | (uint32(n.B) << 16)
+		args.RgbResult = uint32(n.R) | uint32(n.G)<<8 | uint32(n.B)<<16
 	}
 	if opts.showPalette {
 		args.Flags |= 0x4 // CC_PREVENTFULLOPEN

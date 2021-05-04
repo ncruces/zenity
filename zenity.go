@@ -13,13 +13,21 @@ package zenity
 import (
 	"context"
 	"image/color"
+
+	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-type stringErr string
-
-func (e stringErr) Error() string { return string(e) }
-
 func stringPtr(s string) *string { return &s }
+
+// ErrCanceled is returned when the cancel button is pressed,
+// or window functions are used to close the dialog.
+const ErrCanceled = zenutil.ErrCanceled
+
+// ErrExtraButton is returned when the extra button is pressed.
+const ErrExtraButton = zenutil.ErrExtraButton
+
+// ErrUnsupported is returned when a combination of options is not supported.
+const ErrUnsupported = zenutil.ErrUnsupported
 
 type options struct {
 	// General options
@@ -56,6 +64,11 @@ type options struct {
 	// Color selection options
 	color       color.Color
 	showPalette bool
+
+	// Progress indication options
+	maxValue      int
+	noCancel      bool
+	timeRemaining bool
 
 	// Context for timeout
 	ctx context.Context

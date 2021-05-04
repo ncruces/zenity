@@ -18,8 +18,7 @@ func selectFile(opts options) (string, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
-	str, _, err := strResult(opts, out, err)
-	return str, err
+	return strResult(opts, out, err)
 }
 
 func selectFileMutiple(opts options) ([]string, error) {
@@ -54,6 +53,5 @@ func selectFileSave(opts options) (string, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, "file", data)
-	str, _, err := strResult(opts, out, err)
-	return str, err
+	return strResult(opts, out, err)
 }

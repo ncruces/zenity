@@ -37,7 +37,7 @@ func selectFile(opts options) (string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -82,7 +82,7 @@ func selectFileMutiple(opts options) ([]string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768 + 1024*256]uint16{}
+	var res [32768 + 1024*256]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -158,7 +158,7 @@ func selectFileSave(opts options) (string, error) {
 		args.Filter = &initFilters(opts.fileFilters)[0]
 	}
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
@@ -251,7 +251,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		return "", nil, opts.ctx.Err()
 	}
 	if hr == 0x800704c7 { // ERROR_CANCELLED
-		return "", nil, nil
+		return "", nil, ErrCanceled
 	}
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
@@ -335,11 +335,11 @@ func browseForFolder(opts options) (string, []string, error) {
 		return "", nil, opts.ctx.Err()
 	}
 	if ptr == 0 {
-		return "", nil, nil
+		return "", nil, ErrCanceled
 	}
 	defer coTaskMemFree.Call(ptr)
 
-	res := [32768]uint16{}
+	var res [32768]uint16
 	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
 
 	str := syscall.UTF16ToString(res[:])

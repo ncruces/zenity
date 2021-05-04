@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleSelectColor() {
@@ -24,18 +25,19 @@ func ExampleSelectColor_palette() {
 	// Output:
 }
 
-func TestSelectColorTimeout(t *testing.T) {
+func TestSelectColor_timeout(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	defer cancel()
 
 	_, err := zenity.SelectColor(zenity.Context(ctx))
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
-
-	cancel()
 }
 
-func TestSelectColorCancel(t *testing.T) {
+func TestSelectColor_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

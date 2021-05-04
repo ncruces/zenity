@@ -2,8 +2,11 @@
 
 package zenity
 
-func password(opts options) (string, string, bool, error) {
+func password(opts options) (string, string, error) {
+	if opts.username {
+		return "", "", ErrUnsupported
+	}
 	opts.hideText = true
-	str, ok, err := entry("Password:", opts)
-	return "", str, ok, err
+	str, err := entry("Password:", opts)
+	return "", str, err
 }

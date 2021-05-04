@@ -6,7 +6,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func list(text string, items []string, opts options) (string, bool, error) {
+func list(text string, items []string, opts options) (string, error) {
 	args := []string{"--list", "--column=", "--hide-header", "--text", text}
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)

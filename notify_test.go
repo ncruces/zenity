@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleNotify() {
@@ -15,7 +16,8 @@ func ExampleNotify() {
 	// Output:
 }
 
-func TestNotifyCancel(t *testing.T) {
+func TestNotify_cancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

@@ -4,7 +4,6 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,7 +16,7 @@ import (
 func main() {
 	dir := os.Args[1]
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,12 +25,7 @@ func main() {
 
 	for _, file := range files {
 		name := file.Name()
-
-		str.WriteString("\n" + `{{define "`)
-		str.WriteString(strings.TrimSuffix(name, filepath.Ext(name)))
-		str.WriteString(`" -}}` + "\n")
-
-		data, err := ioutil.ReadFile(filepath.Join(dir, name))
+		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -40,6 +34,9 @@ func main() {
 			log.Fatal(err)
 		}
 
+		str.WriteString("\n" + `{{define "`)
+		str.WriteString(strings.TrimSuffix(name, filepath.Ext(name)))
+		str.WriteString(`" -}}` + "\n")
 		str.Write(data)
 		str.WriteString("\n{{- end}}")
 	}
@@ -108,5 +105,4 @@ import (
 var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	return string(b), err
-}}).Parse(` + "`{{.}}`" + `))
-`))
+}}).Parse(` + "`{{.}}`))\n"))

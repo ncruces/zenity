@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	comctl32 = syscall.NewLazyDLL("comctl32.dll")
 	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 	gdi32    = syscall.NewLazyDLL("gdi32.dll")
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
@@ -21,6 +22,7 @@ var (
 	user32   = syscall.NewLazyDLL("user32.dll")
 	wtsapi32 = syscall.NewLazyDLL("wtsapi32.dll")
 
+	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
 
 	deleteObject       = gdi32.NewProc("DeleteObject")
@@ -30,6 +32,10 @@ var (
 	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
 	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
 	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
+	getSystemDirectory = kernel32.NewProc("GetSystemDirectoryW")
+	createActCtx       = kernel32.NewProc("CreateActCtxW")
+	activateActCtx     = kernel32.NewProc("ActivateActCtx")
+	deactivateActCtx   = kernel32.NewProc("DeactivateActCtx")
 
 	coInitializeEx   = ole32.NewProc("CoInitializeEx")
 	coUninitialize   = ole32.NewProc("CoUninitialize")
@@ -60,12 +66,14 @@ var (
 	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
 	setWindowPos                 = user32.NewProc("SetWindowPos")
 	getWindowRect                = user32.NewProc("GetWindowRect")
+	setWindowLong                = user32.NewProc("SetWindowLongPtrW")
 	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
 	unregisterClass              = user32.NewProc("UnregisterClassW")
 	registerClassEx              = user32.NewProc("RegisterClassExW")
 	destroyWindow                = user32.NewProc("DestroyWindow")
 	createWindowEx               = user32.NewProc("CreateWindowExW")
 	showWindow                   = user32.NewProc("ShowWindow")
+	enableWindow                 = user32.NewProc("EnableWindow")
 	setFocus                     = user32.NewProc("SetFocus")
 	defWindowProc                = user32.NewProc("DefWindowProcW")
 )
@@ -96,24 +104,33 @@ func setup() context.CancelFunc {
 		setForegroundWindow.Call(hwnd)
 	}
 
-	var old uintptr
 	runtime.LockOSThread()
+
+	var restore uintptr
+	cookie := enableVisualStyles()
 	if setThreadDpiAwarenessContext.Find() == nil {
 		// try:
 		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
 		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE
 		//   DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 		for i := -4; i <= -2; i++ {
-			restore, _, _ := setThreadDpiAwarenessContext.Call(uintptr(i))
+			restore, _, _ = setThreadDpiAwarenessContext.Call(uintptr(i))
 			if restore != 0 {
 				break
 			}
 		}
 	}
 
+	var icc _INITCOMMONCONTROLSEX
+	icc.Size = uint32(unsafe.Sizeof(icc))
+	icc.ICC = 0x00004020 // ICC_STANDARD_CLASSES|ICC_PROGRESS_CLASS
+
 	return func() {
-		if old != 0 {
-			setThreadDpiAwarenessContext.Call(old)
+		if restore != 0 {
+			setThreadDpiAwarenessContext.Call(restore)
+		}
+		if cookie != 0 {
+			deactivateActCtx.Call(cookie)
 		}
 		runtime.UnlockOSThread()
 	}
@@ -122,7 +139,7 @@ func setup() context.CancelFunc {
 func commDlgError() error {
 	s, _, _ := commDlgExtendedError.Call()
 	if s == 0 {
-		return nil
+		return ErrCanceled
 	} else {
 		return fmt.Errorf("Common Dialog error: %x", s)
 	}
@@ -139,7 +156,7 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 	hook, _, err = setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(func(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			if lparam.Message == 0x0110 { // WM_INITDIALOG
-				name := [8]uint16{}
+				var name [8]uint16
 				getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
 				if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
 					var close bool
@@ -252,8 +269,8 @@ func (f *font) Delete() {
 
 func centerWindow(wnd uintptr) {
 	getMetric := func(i uintptr) int32 {
-		ret, _, _ := getSystemMetrics.Call(i)
-		return int32(ret)
+		n, _, _ := getSystemMetrics.Call(i)
+		return int32(n)
 	}
 
 	var rect _RECT
@@ -280,8 +297,8 @@ func registerClass(instance, proc uintptr) (uintptr, error) {
 	wcx.Background = 5 // COLOR_WINDOW
 	wcx.ClassName = syscall.StringToUTF16Ptr(name)
 
-	ret, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
-	return ret, err
+	atom, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
+	return atom, err
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
@@ -293,20 +310,60 @@ func messageLoop(wnd uintptr) error {
 
 	for {
 		var msg _MSG
-		ret, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
-		if int32(ret) == -1 {
+		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
+		if int32(s) == -1 {
 			return err
 		}
-		if ret == 0 {
+		if s == 0 {
 			return nil
 		}
 
-		ret, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
-		if ret == 0 {
+		s, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
+		if s == 0 {
 			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
 			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
 		}
 	}
+}
+
+// https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
+func enableVisualStyles() (cookie uintptr) {
+	var dir [260]uint16
+	n, _, _ := getSystemDirectory.Call(uintptr(unsafe.Pointer(&dir[0])), uintptr(len(dir)))
+	if n == 0 || int(n) >= len(dir) {
+		return
+	}
+
+	var ctx _ACTCTX
+	ctx.Size = uint32(unsafe.Sizeof(ctx))
+	ctx.Flags = 0x01c // ACTCTX_FLAG_RESOURCE_NAME_VALID|ACTCTX_FLAG_SET_PROCESS_DEFAULT|ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID
+	ctx.Source = syscall.StringToUTF16Ptr("shell32.dll")
+	ctx.AssemblyDirectory = &dir[0]
+	ctx.ResourceName = 124
+
+	if h, _, _ := createActCtx.Call(uintptr(unsafe.Pointer(&ctx))); h != 0 {
+		activateActCtx.Call(h, uintptr(unsafe.Pointer(&cookie)))
+	}
+	return
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-actctxw
+type _ACTCTX struct {
+	Size                  uint32
+	Flags                 uint32
+	Source                *uint16
+	ProcessorArchitecture uint16
+	LangId                uint16
+	AssemblyDirectory     *uint16
+	ResourceName          uintptr
+	ApplicationName       *uint16
+	Module                uintptr
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-initcommoncontrolsex
+type _INITCOMMONCONTROLSEX struct {
+	Size uint32
+	ICC  uint32
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
