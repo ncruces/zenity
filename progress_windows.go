@@ -54,24 +54,24 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 		sendMessage.Call(dlg.okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(dlg.cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(dlg.extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(133), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
 		setWindowPos.Call(dlg.textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
-		setWindowPos.Call(dlg.progCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(dlg.progCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
 		if dlg.extraBtn == 0 {
 			if dlg.cancelBtn == 0 {
-				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(178), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 			} else {
-				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 			}
 		} else {
 			if dlg.cancelBtn == 0 {
-				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)     // SWP_NOZORDER
-				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(95), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4)     // SWP_NOZORDER
+				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(178), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 			} else {
-				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(12), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
-				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+				setWindowPos.Call(dlg.okBtn, 0, dpi.Scale(12), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
+				setWindowPos.Call(dlg.extraBtn, 0, dpi.Scale(95), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
+				setWindowPos.Call(dlg.cancelBtn, 0, dpi.Scale(178), dpi.Scale(58), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
 			}
 		}
 	}
@@ -129,7 +129,7 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 		0x84c80000, // WS_POPUPWINDOW|WS_CLIPSIBLINGS|WS_DLGFRAME
 		0x80000000, // CW_USEDEFAULT
 		0x80000000, // CW_USEDEFAULT
-		281, 141, 0, 0, instance, 0)
+		281, 133, 0, 0, instance, 0)
 
 	dlg.textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), 0,
@@ -143,23 +143,23 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 	dlg.progCtl, _, _ = createWindowEx.Call(0,
 		strptr("msctls_progress32"), // PROGRESS_CLASS
 		0, flags,
-		12, 30, 241, 24, dlg.wnd, 0, instance, 0)
+		12, 30, 241, 16, dlg.wnd, 0, instance, 0)
 
 	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		0x58030001, // WS_CHILD|WS_VISIBLE|WS_DISABLED|WS_GROUP|WS_TABSTOP|BS_DEFPUSHBUTTON
-		12, 66, 75, 24, dlg.wnd, 1 /* IDOK */, instance, 0)
+		12, 58, 75, 24, dlg.wnd, 1 /* IDOK */, instance, 0)
 	if !opts.noCancel {
 		dlg.cancelBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.cancelLabel),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-			12, 66, 75, 24, dlg.wnd, 2 /* IDCANCEL */, instance, 0)
+			12, 58, 75, 24, dlg.wnd, 2 /* IDCANCEL */, instance, 0)
 	}
 	if opts.extraButton != nil {
 		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			0x50010000, // WS_CHILD|WS_VISIBLE|WS_GROUP|WS_TABSTOP
-			12, 66, 75, 24, dlg.wnd, 7 /* IDNO */, instance, 0)
+			12, 58, 75, 24, dlg.wnd, 7 /* IDNO */, instance, 0)
 	}
 
 	layout(getDPI(dlg.wnd))
