@@ -1,3 +1,5 @@
+// +build windows darwin dev
+
 package main
 
 import (

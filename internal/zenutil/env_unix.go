@@ -1,4 +1,4 @@
-// +build !windows,!darwin,!js
+// +build !windows,!darwin
 
 // Package zenutil is internal. DO NOT USE.
 package zenutil

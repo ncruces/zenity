@@ -1,4 +1,4 @@
-// +build !windows,!js
+// +build darwin dev
 
 package main
 

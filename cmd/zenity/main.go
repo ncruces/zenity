@@ -1,3 +1,5 @@
+// +build windows darwin dev
+
 package main
 
 import (
@@ -16,8 +18,6 @@ import (
 	"github.com/ncruces/zenity"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
-
-//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 
 const (
 	unspecified = "\x00"
