@@ -350,7 +350,7 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	d, n := splitDirAndName(filename)
 	e := filepath.Ext(n)
 	if n != "" {
-		copy(name, syscall.StringToUTF16(filename))
+		copy(name, syscall.StringToUTF16(n))
 	}
 	if d != "" {
 		dir = syscall.StringToUTF16Ptr(d)
