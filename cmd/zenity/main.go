@@ -82,6 +82,7 @@ var (
 	noCancel   bool
 
 	// Windows specific options
+	unixeol bool
 	cygpath bool
 	wslpath bool
 )
@@ -100,6 +101,9 @@ func main() {
 	validateFlags()
 	opts := loadFlags()
 	zenutil.Command = true
+	if unixeol {
+		zenutil.LineBreak = "\n"
+	}
 	if zenutil.Timeout > 0 {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(zenutil.Timeout)*time.Second)
 		opts = append(opts, zenity.Context(ctx))
@@ -218,6 +222,7 @@ func setupFlags() {
 
 	// Windows specific options
 	if runtime.GOOS == "windows" {
+		flag.BoolVar(&unixeol, "unixeol", false, "Use Unix line endings (Windows only)")
 		flag.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
 		flag.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
 	}
