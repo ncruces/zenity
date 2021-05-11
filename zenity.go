@@ -128,6 +128,8 @@ func ExtraButton(extra string) Option {
 // DialogIcon is the enumeration for dialog icons.
 type DialogIcon int
 
+func (i DialogIcon) apply(o *options) { o.icon = i }
+
 // The stock dialog icons.
 const (
 	ErrorIcon DialogIcon = iota + 1
@@ -139,9 +141,7 @@ const (
 )
 
 // Icon returns an Option to set the dialog icon.
-func Icon(icon DialogIcon) Option {
-	return funcOption(func(o *options) { o.icon = icon })
-}
+func Icon(icon DialogIcon) Option { return icon }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
 //

@@ -12,7 +12,7 @@ import (
 func ExampleNotify() {
 	zenity.Notify("There are system updates necessary!",
 		zenity.Title("Warning"),
-		zenity.Icon(zenity.InfoIcon))
+		zenity.InfoIcon)
 	// Output:
 }
 

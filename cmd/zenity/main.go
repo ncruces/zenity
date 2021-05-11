@@ -376,7 +376,7 @@ func loadFlags() []zenity.Option {
 	case "":
 		ico = zenity.NoIcon
 	}
-	opts = append(opts, zenity.Icon(ico))
+	opts = append(opts, ico)
 
 	// Message options
 

@@ -16,7 +16,7 @@ func notify(opts ...zenity.Option) error {
 	}
 
 	zenutil.Command = false
-	var icon zenity.DialogIcon
+	icon := zenity.InfoIcon
 	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
 		line := scanner.Text()
 		var cmd, msg string
@@ -43,7 +43,7 @@ func notify(opts ...zenity.Option) error {
 				icon = zenity.NoIcon
 			}
 		case "message", "tooltip":
-			opts := []zenity.Option{zenity.Icon(icon)}
+			opts := []zenity.Option{icon}
 			if n := strings.IndexByte(msg, '\n'); n >= 0 {
 				opts = append(opts, zenity.Title(msg[:n]))
 				msg = msg[n+1:]
