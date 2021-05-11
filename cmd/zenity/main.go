@@ -38,20 +38,20 @@ var (
 	notification      bool
 
 	// General options
-	title       string
-	width       uint
-	height      uint
-	okLabel     string
-	cancelLabel string
-	extraButton string
-	text        string
-	icon        string
-	multiple    bool
+	title         string
+	width         uint
+	height        uint
+	okLabel       string
+	cancelLabel   string
+	extraButton   string
+	text          string
+	icon          string
+	multiple      bool
+	defaultCancel bool
 
 	// Message options
-	noWrap        bool
-	ellipsize     bool
-	defaultCancel bool
+	noWrap    bool
+	ellipsize bool
 
 	// Entry options
 	entryText string
@@ -80,6 +80,9 @@ var (
 	autoClose  bool
 	autoKill   bool
 	noCancel   bool
+
+	// Notify options
+	listen bool
 
 	// Windows specific options
 	unixeol bool
@@ -151,7 +154,7 @@ func main() {
 		errResult(progress(opts...))
 
 	case notification:
-		errResult(zenity.Notify(text, opts...))
+		errResult(notify(opts...))
 
 	default:
 		flag.Usage()
@@ -219,6 +222,9 @@ func setupFlags() {
 	if runtime.GOOS != "windows" {
 		flag.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
 	}
+
+	// Notify options
+	flag.BoolVar(&listen, "listen", false, "Listen for commands on stdin")
 
 	// Windows specific options
 	if runtime.GOOS == "windows" {
@@ -332,6 +338,8 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Running...")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
+	case notification:
+		setDefault(&icon, "dialog-information")
 	default:
 		setDefault(&text, "")
 	}

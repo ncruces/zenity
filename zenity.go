@@ -31,23 +31,23 @@ const ErrUnsupported = zenutil.ErrUnsupported
 
 type options struct {
 	// General options
-	title       *string
-	width       uint
-	height      uint
-	okLabel     *string
-	cancelLabel *string
-	extraButton *string
-	icon        DialogIcon
+	title         *string
+	width         uint
+	height        uint
+	okLabel       *string
+	cancelLabel   *string
+	extraButton   *string
+	icon          DialogIcon
+	defaultCancel bool
+
+	// Message options
+	noWrap    bool
+	ellipsize bool
 
 	// Entry options
 	entryText string
 	hideText  bool
 	username  bool
-
-	// Message options
-	noWrap        bool
-	ellipsize     bool
-	defaultCancel bool
 
 	// List options
 	disallowEmpty bool
