@@ -219,9 +219,7 @@ func setupFlags() {
 	flag.BoolVar(&pulsate, "pulsate", false, "Pulsate progress bar")
 	flag.BoolVar(&noCancel, "no-cancel", false, "Hide Cancel button (Windows and Unix only)")
 	flag.BoolVar(&autoClose, "auto-close", false, "Dismiss the dialog when 100% has been reached")
-	if runtime.GOOS != "windows" {
-		flag.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
-	}
+	flag.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
 
 	// Notify options
 	flag.BoolVar(&listen, "listen", false, "Listen for commands on stdin")

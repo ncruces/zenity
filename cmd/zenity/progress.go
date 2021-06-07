@@ -69,6 +69,8 @@ func progress(opts ...zenity.Option) (err error) {
 	if err := dlg.Complete(); err != nil {
 		return err
 	}
-	<-dlg.Done()
+	if !autoClose {
+		<-dlg.Done()
+	}
 	return dlg.Close()
 }

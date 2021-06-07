@@ -257,5 +257,8 @@ func (d *progressDialog) Complete() error {
 func (d *progressDialog) Close() error {
 	sendMessage.Call(d.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
 	<-d.done
+	if d.err == ErrCanceled {
+		return nil
+	}
 	return d.err
 }
