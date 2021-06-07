@@ -22,6 +22,18 @@ Behavior on Windows, macOS and other Unixes might differ slightly.
 Some of that is intended (reflecting platform differences),
 other bits are unfortunate limitations.
 
+## Installing
+
+The Go package:
+
+    go get github.com/ncruces/zenity
+
+The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/):
+
+    brew install ncruces/tap/zenity
+
+Or download the [latest release](https://github.com/ncruces/zenity/releases/latest).
+
 ## Why?
 
 There are a bunch of other dialog packages for Go.\
