@@ -62,7 +62,8 @@ func Filename(filename string) Option {
 // FileFilter is an Option that sets a filename filter.
 //
 // macOS hides filename filters from the user,
-// and only supports filtering by extension (or "type").
+// and only supports filtering by extension
+// (or "uniform type identifiers").
 //
 // Patterns may use the GTK syntax on all platforms:
 // https://developer.gnome.org/pygtk/stable/class-gtkfilefilter.html#method-gtkfilefilter--add-pattern
@@ -92,11 +93,14 @@ func (f FileFilters) name() {
 }
 
 // Windows' patterns are case insensitive, don't support character classes or escaping.
-// First we remove character classes, then escaping. Patterns with literal wildcards are invalid (match nothing).
+//
+// First we remove character classes, then escaping. Patterns with literal wildcards are invalid.
 // The semicolon is a separator, so we replace it with the single character wildcard.
+// Empty and invalid patterns are ignored.
 func (f FileFilters) simplify() {
-	for _, filter := range f {
-		for i, pattern := range filter.Patterns {
+	for i, filter := range f {
+		var n = 0
+		for _, pattern := range filter.Patterns {
 			var escape, invalid bool
 			var buf strings.Builder
 			for _, r := range removeClasses(pattern) {
@@ -114,22 +118,35 @@ func (f FileFilters) simplify() {
 				buf.WriteRune(r)
 				escape = false
 			}
-			if invalid {
-				filter.Patterns[i] = ""
-			} else {
-				filter.Patterns[i] = buf.String()
+			if buf.Len() > 0 && !invalid {
+				filter.Patterns[n] = buf.String()
+				n++
 			}
+		}
+		if n == 0 {
+			f[i].Patterns = nil
+		} else {
+			f[i].Patterns = filter.Patterns[:n]
 		}
 	}
 }
 
-// macOS filters by "type"; the case insensitive literal extension is a good proxy.
-// So we extract the extension from each pattern, remove character classes, then escaping.
+// macOS types may be specified as extension strings without the leading period,
+// or as uniform type identifiers:
+// https://developer.apple.com/library/archive/documentation/LanguagesUtilities/Conceptual/MacAutomationScriptingGuide/PromptforaFileorFolder.html
+//
+// First check for uniform type identifiers.
+// Then we extract the extension from each pattern, remove character classes, then escaping.
 // If an extension contains a wildcard, any type is accepted.
 func (f FileFilters) types() []string {
 	var res []string
 	for _, filter := range f {
 		for _, pattern := range filter.Patterns {
+			if isUniformTypeIdentifier(pattern) {
+				res = append(res, pattern)
+				continue
+			}
+
 			ext := pattern[strings.LastIndexByte(pattern, '.')+1:]
 
 			var escape bool
@@ -146,10 +163,16 @@ func (f FileFilters) types() []string {
 				}
 				buf.WriteRune(r)
 			}
-			res = append(res, buf.String())
+			if buf.Len() > 0 {
+				res = append(res, buf.String())
+			}
 		}
 	}
-	return res
+	if res == nil {
+		return nil
+	}
+	// Workaround for macOS bug: first type cannot be a four letter extension, so prepend empty string.
+	return append([]string{""}, res...)
 }
 
 // Remove character classes from pattern, assuming case insensitivity.
@@ -211,6 +234,34 @@ func findClass(pattern string) (start, end int) {
 		}
 	}
 	return -1, -1
+}
+
+// Uniform type identifiers use the reverse-DNS format:
+// https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/understanding_utis/understand_utis_conc/understand_utis_conc.html
+func isUniformTypeIdentifier(pattern string) bool {
+	labels := strings.Split(pattern, ".")
+	if len(labels) < 2 {
+		return false
+	}
+
+	for _, label := range labels {
+		if len := len(label); len == 0 || label[0] == '-' || label[len-1] == '-' {
+			return false
+		}
+		for _, r := range label {
+			switch {
+			case r == '-' || r > '\x7f' ||
+				'a' <= r && r <= 'z' ||
+				'A' <= r && r <= 'Z' ||
+				'0' <= r && r <= '9':
+				continue
+			default:
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func splitDirAndName(path string) (dir, name string) {
