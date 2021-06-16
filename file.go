@@ -96,10 +96,11 @@ func (f FileFilters) name() {
 //
 // First we remove character classes, then escaping. Patterns with literal wildcards are invalid.
 // The semicolon is a separator, so we replace it with the single character wildcard.
-// Empty and invalid patterns are ignored.
+// Empty and invalid filters/patterns are ignored.
 func (f FileFilters) simplify() {
-	for i, filter := range f {
-		var n = 0
+	var i = 0
+	for _, filter := range f {
+		var j = 0
 		for _, pattern := range filter.Patterns {
 			var escape, invalid bool
 			var buf strings.Builder
@@ -119,15 +120,18 @@ func (f FileFilters) simplify() {
 				escape = false
 			}
 			if buf.Len() > 0 && !invalid {
-				filter.Patterns[n] = buf.String()
-				n++
+				filter.Patterns[j] = buf.String()
+				j++
 			}
 		}
-		if n == 0 {
-			f[i].Patterns = nil
-		} else {
-			f[i].Patterns = filter.Patterns[:n]
+		if j > 0 {
+			filter.Patterns = filter.Patterns[:j]
+			f[i] = filter
+			i++
 		}
+	}
+	for ; i < len(f); i++ {
+		f[i] = FileFilter{}
 	}
 }
 
