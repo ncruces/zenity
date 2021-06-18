@@ -3,7 +3,6 @@ package zenity_test
 import (
 	"context"
 	"errors"
-	"log"
 	"testing"
 	"time"
 
@@ -15,7 +14,7 @@ func ExampleProgress() {
 	dlg, err := zenity.Progress(
 		zenity.Title("Update System Logs"))
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	defer dlg.Close()
 
@@ -49,7 +48,7 @@ func ExampleProgress_pulsate() {
 		zenity.Title("Update System Logs"),
 		zenity.Pulsate())
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	defer dlg.Close()
 
@@ -77,6 +76,9 @@ func TestProgress_cancel(t *testing.T) {
 	cancel()
 
 	_, err := zenity.Progress(zenity.Context(ctx))
+	if err, skip := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}
@@ -87,6 +89,9 @@ func TestProgress_cancelAfter(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	dlg, err := zenity.Progress(zenity.Context(ctx))
+	if err, skip := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

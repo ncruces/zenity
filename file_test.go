@@ -83,6 +83,9 @@ func TestFile_timeout(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
 		_, err := f(zenity.Context(ctx))
+		if err, skip := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
 		if !os.IsTimeout(err) {
 			t.Error("did not timeout:", err)
 		}
@@ -99,6 +102,9 @@ func TestFile_cancel(t *testing.T) {
 
 	for _, f := range fileFuncs {
 		_, err := f(zenity.Context(ctx))
+		if err, skip := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
 		if !errors.Is(err, context.Canceled) {
 			t.Error("was not canceled:", err)
 		}
