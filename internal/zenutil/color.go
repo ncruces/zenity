@@ -47,8 +47,11 @@ func ParseColor(s string) color.Color {
 		}
 	}
 
-	c, _ := colornames.Map[strings.ToLower(s)]
-	return c
+	c, ok := colornames.Map[strings.ToLower(s)]
+	if ok {
+		return c
+	}
+	return nil
 }
 
 // UnparseColor is internal.

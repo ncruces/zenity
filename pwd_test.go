@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -13,6 +14,13 @@ import (
 
 func ExamplePassword() {
 	zenity.Password(zenity.Title("Type your password"))
+	// Output:
+}
+
+func ExamplePassword_username() {
+	zenity.Password(
+		zenity.Title("Type your username and password"),
+		zenity.Username())
 	// Output:
 }
 
@@ -41,5 +49,25 @@ func TestPassword_cancel(t *testing.T) {
 	}
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
+	}
+}
+
+func TestPassword_username(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, _, err := zenity.Password(zenity.Context(ctx), zenity.Username())
+	if err, skip := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		if !errors.Is(err, zenity.ErrUnsupported) {
+			t.Error("was not unsupported:", err)
+		}
+	} else {
+		if !errors.Is(err, context.Canceled) {
+			t.Error("was not canceled:", err)
+		}
 	}
 }
