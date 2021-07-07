@@ -76,7 +76,7 @@ func TestProgress_cancel(t *testing.T) {
 	cancel()
 
 	_, err := zenity.Progress(zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !errors.Is(err, context.Canceled) {
@@ -89,7 +89,7 @@ func TestProgress_cancelAfter(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	dlg, err := zenity.Progress(zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if err != nil {

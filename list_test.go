@@ -51,7 +51,7 @@ func TestList_timeout(t *testing.T) {
 	defer cancel()
 
 	_, err := zenity.List("", nil, zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !os.IsTimeout(err) {
@@ -65,7 +65,7 @@ func TestList_cancel(t *testing.T) {
 	cancel()
 
 	_, err := zenity.List("", nil, zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !errors.Is(err, context.Canceled) {

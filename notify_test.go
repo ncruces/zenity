@@ -22,7 +22,7 @@ func TestNotify_cancel(t *testing.T) {
 	cancel()
 
 	err := zenity.Notify("text", zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !errors.Is(err, context.Canceled) {

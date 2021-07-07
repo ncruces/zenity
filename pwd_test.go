@@ -30,7 +30,7 @@ func TestPassword_timeout(t *testing.T) {
 	defer cancel()
 
 	_, _, err := zenity.Password(zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !os.IsTimeout(err) {
@@ -44,7 +44,7 @@ func TestPassword_cancel(t *testing.T) {
 	cancel()
 
 	_, _, err := zenity.Password(zenity.Context(ctx))
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if !errors.Is(err, context.Canceled) {
@@ -58,7 +58,7 @@ func TestPassword_username(t *testing.T) {
 	cancel()
 
 	_, _, err := zenity.Password(zenity.Context(ctx), zenity.Username())
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {

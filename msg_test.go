@@ -51,7 +51,7 @@ func TestMessage_timeout(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
 
 		err := f("text", zenity.Context(ctx))
-		if err, skip := skip(err); skip {
+		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
 		}
 		if !os.IsTimeout(err) {
@@ -70,7 +70,7 @@ func TestMessage_cancel(t *testing.T) {
 
 	for _, f := range msgFuncs {
 		err := f("text", zenity.Context(ctx))
-		if err, skip := skip(err); skip {
+		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
 		}
 		if !errors.Is(err, context.Canceled) {

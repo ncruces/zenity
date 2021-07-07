@@ -4,7 +4,7 @@ package zenutil
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
@@ -12,7 +12,7 @@ import (
 
 func TestRun(t *testing.T) {
 	_, err := Run(nil, []string{"--version"})
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if err != nil {
@@ -22,7 +22,7 @@ func TestRun(t *testing.T) {
 
 func TestRun_context(t *testing.T) {
 	_, err := Run(context.TODO(), []string{"--version"})
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if err != nil {
@@ -32,7 +32,7 @@ func TestRun_context(t *testing.T) {
 
 func TestRunProgress(t *testing.T) {
 	_, err := RunProgress(nil, 100, nil, []string{"--version"})
-	if err, skip := skip(err); skip {
+	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
 	if err != nil {
@@ -40,14 +40,14 @@ func TestRunProgress(t *testing.T) {
 	}
 }
 
-func skip(err error) (error, bool) {
+func skip(err error) (bool, error) {
 	if _, ok := err.(*exec.Error); ok {
-		// zenity/osascript/etc were not found in path
-		return err, true
+		// zenity was not found in path
+		return true, err
 	}
 	if err != nil && os.Getenv("DISPLAY") == "" {
 		// no display
-		return errors.New("no display"), true
+		return true, fmt.Errorf("no display: %w", err)
 	}
-	return nil, false
+	return false, err
 }

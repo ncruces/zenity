@@ -1,7 +1,7 @@
 package zenity_test
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -14,14 +14,16 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
 }
 
-func skip(err error) (error, bool) {
-	if _, ok := err.(*exec.Error); ok {
-		// zenity/osascript/etc were not found in path
-		return err, true
+func skip(err error) (bool, error) {
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+		if _, ok := err.(*exec.Error); ok {
+			// zenity was not found in path
+			return true, err
+		}
+		if err != nil && os.Getenv("DISPLAY") == "" {
+			// no display
+			return true, fmt.Errorf("no display: %w", err)
+		}
 	}
-	if err != nil && os.Getenv("DISPLAY") == "" && !(runtime.GOOS == "windows" || runtime.GOOS == "darwin") {
-		// no display
-		return errors.New("no display"), true
-	}
-	return nil, false
+	return false, err
 }
