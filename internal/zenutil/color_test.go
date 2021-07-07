@@ -21,11 +21,11 @@ func TestColor_names(t *testing.T) {
 		c1 := colornames.Map[test]
 		c2 := ParseColor(test)
 		c3 := ParseColor(UnparseColor(c1))
-		if !colorEq(c1, c2) {
-			t.Errorf("ParseColor(%s) = %v, want %v", test, c2, c1)
+		if !ColorEquals(c1, c2) {
+			t.Errorf("ParseColor(%s) = %v; want %v", test, c2, c1)
 		}
-		if !colorEq(c1, c3) {
-			t.Errorf("ParseColor(UnparseColor(%v)) = %v, want %v", c1, c3, c1)
+		if !ColorEquals(c1, c3) {
+			t.Errorf("ParseColor(UnparseColor(%v)) = %v; want %v", c1, c3, c1)
 		}
 	}
 }
@@ -39,8 +39,8 @@ func TestColor_colors(t *testing.T) {
 	}
 	for _, test := range tests {
 		c := ParseColor(UnparseColor(test))
-		if !colorEq(c, test) {
-			t.Errorf("ParseColor(UnparseColor(%v)) = %v, want %v", test, c, test)
+		if !ColorEquals(c, test) {
+			t.Errorf("ParseColor(UnparseColor(%v)) = %v; want %v", test, c, test)
 		}
 	}
 }
@@ -73,17 +73,8 @@ func TestColor_strings(t *testing.T) {
 	}
 	for _, test := range tests {
 		c := ParseColor(test.data)
-		if !colorEq(c, test.want) {
-			t.Errorf("ParseColor(%s) = %v, want %v", test.data, c, test.want)
+		if !ColorEquals(c, test.want) {
+			t.Errorf("ParseColor(%s) = %v; want %v", test.data, c, test.want)
 		}
 	}
-}
-
-func colorEq(c1, c2 color.Color) bool {
-	if c1 == nil || c2 == nil {
-		return c1 == c2
-	}
-	r1, g1, b1, a1 := c1.RGBA()
-	r2, g2, b2, a2 := c2.RGBA()
-	return r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2
 }

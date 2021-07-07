@@ -15,7 +15,7 @@ func Test_appendTitle(t *testing.T) {
 	got := appendTitle(nil, options{title: stringPtr("Title")})
 	want := []string{"--title", "Title"}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("appendTitle() = %v, want %v", got, want)
+		t.Errorf("appendTitle() = %v; want %v", got, want)
 	}
 }
 
@@ -32,7 +32,7 @@ func Test_appendButtons(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := appendButtons(nil, tt.opts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("appendButtons() = %v, want %v", got, tt.want)
+				t.Errorf("appendButtons() = %v; want %v", got, tt.want)
 			}
 		})
 	}
@@ -50,7 +50,7 @@ func Test_appendWidthHeight(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := appendWidthHeight(nil, tt.opts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("appendWidthHeight() = %v, want %v", got, tt.want)
+				t.Errorf("appendWidthHeight() = %v; want %v", got, tt.want)
 			}
 		})
 	}
@@ -72,7 +72,7 @@ func Test_appendIcon(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := appendIcon(nil, tt.opts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("appendIcon() = %v, want %v", got, tt.want)
+				t.Errorf("appendIcon() = %v; want %v", got, tt.want)
 			}
 		})
 	}
@@ -83,13 +83,13 @@ func Test_strResult(t *testing.T) {
 	cancel := exec.Command("false").Run()
 
 	if out, err := strResult(options{}, []byte("out"), nil); out != "out" || err != nil {
-		t.Errorf("strResult(out, nil) = %q, %v", out, err)
+		t.Errorf(`strResult("out", nil) = %q, %v`, out, err)
 	}
 	if out, err := strResult(options{}, []byte("out"), sentinel); out != "" || err != sentinel {
-		t.Errorf("strResult(out, nil) = %q, %v", out, err)
+		t.Errorf(`strResult("out", error) = %q, %v`, out, err)
 	}
 	if out, err := strResult(options{}, []byte("out"), cancel); out != "" || err != ErrCanceled {
-		t.Errorf("strResult(out, nil) = %q, %v", out, err)
+		t.Errorf(`strResult("out", cancel) = %q, %v`, out, err)
 	}
 }
 
@@ -99,15 +99,15 @@ func Test_lstResult(t *testing.T) {
 	cancel := exec.Command("false").Run()
 
 	if out, err := lstResult(options{}, []byte("out"), nil); !reflect.DeepEqual(out, []string{"out"}) || err != nil {
-		t.Errorf("lstResult(out, nil) = %v, %v", out, err)
+		t.Errorf(`lstResult("out", nil) = %v, %v`, out, err)
 	}
 	if out, err := lstResult(options{}, []byte("one|two"), nil); !reflect.DeepEqual(out, []string{"one", "two"}) || err != nil {
-		t.Errorf("lstResult(out, nil) = %v, %v", out, err)
+		t.Errorf(`lstResult("one|two", nil) = %v, %v`, out, err)
 	}
 	if out, err := lstResult(options{}, []byte("out"), sentinel); out != nil || err != sentinel {
-		t.Errorf("lstResult(out, nil) = %v, %v", out, err)
+		t.Errorf(`lstResult("out", error) = %v, %v`, out, err)
 	}
 	if out, err := lstResult(options{}, []byte("out"), cancel); out != nil || err != ErrCanceled {
-		t.Errorf("lstResult(out, nil) = %q, %v", out, err)
+		t.Errorf(`lstResult("out", cancel) = %v, %v`, out, err)
 	}
 }

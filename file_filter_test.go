@@ -17,7 +17,7 @@ func TestFileFilters_name(t *testing.T) {
 	for i, tt := range tests {
 		tt.data.name()
 		if got := tt.data[0].Name; got != tt.want {
-			t.Errorf("FileFilters.name[%d] = %q, want %q", i, got, tt.want)
+			t.Errorf("FileFilters.name[%d] = %q; want %q", i, got, tt.want)
 		}
 	}
 }
@@ -46,7 +46,7 @@ func TestFileFilters_simplify(t *testing.T) {
 	for i, tt := range tests {
 		tt.data.simplify()
 		if got := tt.data[0].Patterns; !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("FileFilters.simplify[%d] = %q, want %q", i, got, tt.want)
+			t.Errorf("FileFilters.simplify[%d] = %q; want %q", i, got, tt.want)
 		}
 	}
 }
@@ -75,7 +75,7 @@ func TestFileFilters_types(t *testing.T) {
 	}
 	for i, tt := range tests {
 		if got := tt.data.types(); !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("FileFilters.types[%d] = %v, want %v", i, got, tt.want)
+			t.Errorf("FileFilters.types[%d] = %v; want %v", i, got, tt.want)
 		}
 	}
 }

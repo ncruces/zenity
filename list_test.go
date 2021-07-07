@@ -3,7 +3,9 @@ package zenity_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -70,5 +72,58 @@ func TestList_cancel(t *testing.T) {
 	}
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
+	}
+}
+
+func TestList_script(t *testing.T) {
+	items := []string{"apples", "oranges", "bananas", "strawberries"}
+	tests := []struct {
+		name string
+		call string
+		opts []zenity.Option
+		want string
+		err  error
+	}{
+		{name: "Cancel", call: "cancel", want: "", err: zenity.ErrCanceled},
+		{name: "Apples", call: "select apples", want: "apples", err: nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			text, err := zenity.List(fmt.Sprintf("Please, %s.", tt.call), items, tt.opts...)
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if text != tt.want || err != tt.err {
+				t.Errorf("List() = %q, %v; want %q, %v", text, err, tt.want, tt.err)
+			}
+		})
+	}
+}
+
+func TestListMultiple_script(t *testing.T) {
+	items := []string{"apples", "oranges", "bananas", "strawberries"}
+	tests := []struct {
+		name string
+		call string
+		opts []zenity.Option
+		want []string
+		err  error
+	}{
+		{name: "Cancel", call: "cancel", want: nil, err: zenity.ErrCanceled},
+		{name: "Nothing", call: "select nothing", want: []string{}, err: nil},
+		{name: "Apples", call: "select apples", want: []string{"apples"}, err: nil},
+		{name: "Apples & Oranges", call: "select apples and oranges",
+			want: []string{"apples", "oranges"}, err: nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := zenity.ListMultiple(fmt.Sprintf("Please, %s.", tt.call), items, tt.opts...)
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if !reflect.DeepEqual(got, tt.want) || err != tt.err {
+				t.Errorf("ListMultiple() = %q, %v; want %v, %v", got, err, tt.want, tt.err)
+			}
+		})
 	}
 }

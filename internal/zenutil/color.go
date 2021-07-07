@@ -63,3 +63,13 @@ func UnparseColor(c color.Color) string {
 		return fmt.Sprintf("rgba(%d,%d,%d,%f)", n.R, n.G, n.B, float32(n.A)/255)
 	}
 }
+
+// ColorEquals is internal.
+func ColorEquals(c1, c2 color.Color) bool {
+	if c1 == nil || c2 == nil {
+		return c1 == c2
+	}
+	r1, g1, b1, a1 := c1.RGBA()
+	r2, g2, b2, a2 := c2.RGBA()
+	return r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2
+}

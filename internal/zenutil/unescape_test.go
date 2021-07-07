@@ -27,7 +27,7 @@ func TestUnescape(t *testing.T) {
 	}
 	for _, tt := range tests {
 		if got := Unescape(tt.data); got != tt.want {
-			t.Errorf("Unescape(%q) = %q, want %q", tt.data, got, tt.want)
+			t.Errorf("Unescape(%q) = %q; want %q", tt.data, got, tt.want)
 		}
 	}
 }
