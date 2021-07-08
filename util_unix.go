@@ -71,8 +71,11 @@ func strResult(opts options, out []byte, err error) (string, error) {
 
 func lstResult(opts options, out []byte, err error) ([]string, error) {
 	str, err := strResult(opts, out, err)
-	if err == nil {
-		return strings.Split(str, zenutil.Separator), nil
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	if len(out) == 0 {
+		return []string{}, nil
+	}
+	return strings.Split(str, zenutil.Separator), nil
 }

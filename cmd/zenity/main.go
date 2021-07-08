@@ -474,8 +474,10 @@ func lstResult(l []string, err error) {
 	if err != nil {
 		errResult(err)
 	}
-	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
-	os.Stdout.WriteString(zenutil.LineBreak)
+	if len(l) > 0 {
+		os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
+		os.Stdout.WriteString(zenutil.LineBreak)
+	}
 	os.Exit(0)
 }
 

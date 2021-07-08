@@ -98,6 +98,9 @@ func Test_lstResult(t *testing.T) {
 	sentinel := errors.New("sentinel")
 	cancel := exec.Command("false").Run()
 
+	if out, err := lstResult(options{}, []byte(""), nil); !reflect.DeepEqual(out, []string{}) || err != nil {
+		t.Errorf(`lstResult("out", nil) = %v, %v`, out, err)
+	}
 	if out, err := lstResult(options{}, []byte("out"), nil); !reflect.DeepEqual(out, []string{"out"}) || err != nil {
 		t.Errorf(`lstResult("out", nil) = %v, %v`, out, err)
 	}

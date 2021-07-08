@@ -2,4 +2,4 @@ var app = Application.currentApplication()
 app.includeStandardAdditions = true
 
 var res = app.chooseFromList({{json .Items}}, {{json .Options}})
-res.join({{json .Separator}})
+if (res.length !== 0) res.join({{json .Separator}})
