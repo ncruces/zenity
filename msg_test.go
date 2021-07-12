@@ -3,6 +3,7 @@ package zenity_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -39,42 +40,95 @@ func ExampleQuestion() {
 	// Output:
 }
 
-var msgFuncs = []func(string, ...zenity.Option) error{
-	zenity.Error,
-	zenity.Info,
-	zenity.Warning,
-	zenity.Question,
+var msgFuncs = []struct {
+	name string
+	fn   func(string, ...zenity.Option) error
+}{
+	{"Error", zenity.Error},
+	{"Info", zenity.Info},
+	{"Warning", zenity.Warning},
+	{"Question", zenity.Question},
 }
 
 func TestMessage_timeout(t *testing.T) {
-	for _, f := range msgFuncs {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	for _, tt := range msgFuncs {
+		t.Run(tt.name, func(t *testing.T) {
+			defer goleak.VerifyNone(t)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+			defer cancel()
 
-		err := f("text", zenity.Context(ctx))
-		if skip, err := skip(err); skip {
-			t.Skip("skipping:", err)
-		}
-		if !os.IsTimeout(err) {
-			t.Error("did not timeout:", err)
-		}
-
-		cancel()
-		goleak.VerifyNone(t)
+			err := tt.fn("text", zenity.Context(ctx))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if !os.IsTimeout(err) {
+				t.Error("did not timeout:", err)
+			}
+		})
 	}
 }
 
 func TestMessage_cancel(t *testing.T) {
-	defer goleak.VerifyNone(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	for _, tt := range msgFuncs {
+		t.Run(tt.name, func(t *testing.T) {
+			defer goleak.VerifyNone(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-	for _, f := range msgFuncs {
-		err := f("text", zenity.Context(ctx))
-		if skip, err := skip(err); skip {
-			t.Skip("skipping:", err)
-		}
-		if !errors.Is(err, context.Canceled) {
-			t.Error("was not canceled:", err)
-		}
+			err := tt.fn("text", zenity.Context(ctx))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if !errors.Is(err, context.Canceled) {
+				t.Error("was not canceled:", err)
+			}
+		})
+	}
+}
+
+func TestMessage_script(t *testing.T) {
+	for _, tt := range msgFuncs {
+		t.Run(tt.name+"OK", func(t *testing.T) {
+			err := tt.fn("Please, press OK.", zenity.OKLabel("OK"))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if err != nil {
+				t.Errorf("%s() = %v; want nil", tt.name, err)
+			}
+		})
+		t.Run(tt.name+"Extra", func(t *testing.T) {
+			err := tt.fn("Please, press Extra.", zenity.ExtraButton("Extra"))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if err != zenity.ErrExtraButton {
+				t.Errorf("%s() = %v; want %v", tt.name, err, zenity.ErrExtraButton)
+			}
+		})
+	}
+
+	tests := []struct {
+		name string
+		call string
+		err  error
+	}{
+		{name: "QuestionYes", call: "press Yes", err: nil},
+		{name: "QuestionNo", call: "press No", err: zenity.ErrExtraButton},
+		{name: "QuestionCancel", call: "cancel", err: zenity.ErrCanceled},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := zenity.Question(fmt.Sprintf("Please, %s.", tt.call),
+				zenity.OKLabel("Yes"),
+				zenity.ExtraButton("No"),
+				zenity.CancelLabel("Cancel"))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if err != tt.err {
+				t.Errorf("Questtion() = %v; want %v", err, tt.err)
+			}
+		})
 	}
 }

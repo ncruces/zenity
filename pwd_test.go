@@ -62,7 +62,7 @@ func TestPassword_username(t *testing.T) {
 		t.Skip("skipping:", err)
 	}
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		if !errors.Is(err, zenity.ErrUnsupported) {
+		if err != zenity.ErrUnsupported {
 			t.Error("was not unsupported:", err)
 		}
 	} else {

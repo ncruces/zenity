@@ -1,8 +1,8 @@
 # Zenity dialogs for Golang, Windows and macOS
 
-[![PkgGoDev](https://pkg.go.dev/badge/image)](https://pkg.go.dev/github.com/ncruces/zenity)
+[![Go Reference](https://pkg.go.dev/badge/image)](https://pkg.go.dev/github.com/ncruces/zenity)
 [![Go Report](https://goreportcard.com/badge/github.com/ncruces/zenity)](https://goreportcard.com/report/github.com/ncruces/zenity)
-[![Go Report](https://gocover.io/_badge/github.com/ncruces/zenity)](https://gocover.io/github.com/ncruces/zenity)
+[![Go Cover](https://gocover.io/_badge/github.com/ncruces/zenity)](https://gocover.io/github.com/ncruces/zenity)
 
 This repo includes both a cross-platform Go package providing
 [Zenity](https://help.gnome.org/users/zenity/stable/)-like dialogs
