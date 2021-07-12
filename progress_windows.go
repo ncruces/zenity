@@ -21,6 +21,8 @@ func progress(opts options) (ProgressDialog, error) {
 	}
 	if opts.ctx == nil {
 		opts.ctx = context.Background()
+	} else if cerr := opts.ctx.Err(); cerr != nil {
+		return nil, cerr
 	}
 
 	dlg := &progressDialog{
@@ -43,6 +45,7 @@ func progress(opts options) (ProgressDialog, error) {
 }
 
 func progressDlg(opts options, dlg *progressDialog) (err error) {
+	defer dlg.init.Done()
 	defer setup()()
 	font := getFont()
 	defer font.Delete()
@@ -170,6 +173,7 @@ func progressDlg(opts options, dlg *progressDialog) (err error) {
 	} else {
 		sendMessage.Call(dlg.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, uintptr(opts.maxValue))
 	}
+	defer dlg.init.Add(1)
 	dlg.init.Done()
 
 	if opts.ctx != nil {
