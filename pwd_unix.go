@@ -19,7 +19,7 @@ func password(opts options) (string, string, error) {
 	out, err := zenutil.Run(opts.ctx, args)
 	str, err := strResult(opts, out, err)
 	if err == nil && opts.username {
-		if split := strings.SplitN(string(out), "|", 2); len(split) == 2 {
+		if split := strings.SplitN(str, "|", 2); len(split) == 2 {
 			return split[0], split[1], nil
 		}
 	}

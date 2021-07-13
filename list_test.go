@@ -20,14 +20,12 @@ func ExampleList() {
 		zenity.Title("Select items from the list"),
 		zenity.DisallowEmpty(),
 	)
-	// Output:
 }
 
 func ExampleListItems() {
 	zenity.ListItems(
 		"Select items from the list below:",
 		"apples", "oranges", "bananas", "strawberries")
-	// Output:
 }
 
 func ExampleListMultiple() {
@@ -37,14 +35,12 @@ func ExampleListMultiple() {
 		zenity.Title("Select items from the list"),
 		zenity.DefaultItems("apples", "bananas"),
 	)
-	// Output:
 }
 
 func ExampleListMultipleItems() {
 	zenity.ListMultipleItems(
 		"Select items from the list below:",
 		"apples", "oranges", "bananas", "strawberries")
-	// Output:
 }
 
 func TestList_timeout(t *testing.T) {
@@ -80,21 +76,20 @@ func TestList_script(t *testing.T) {
 	tests := []struct {
 		name string
 		call string
-		opts []zenity.Option
 		want string
 		err  error
 	}{
-		{name: "Cancel", call: "cancel", want: "", err: zenity.ErrCanceled},
-		{name: "Apples", call: "select apples", want: "apples", err: nil},
+		{name: "Cancel", call: "cancel", err: zenity.ErrCanceled},
+		{name: "Apples", call: "select apples", want: "apples"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			text, err := zenity.List(fmt.Sprintf("Please, %s.", tt.call), items, tt.opts...)
+			got, err := zenity.ListItems(fmt.Sprintf("Please, %s.", tt.call), items...)
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
 			}
-			if text != tt.want || err != tt.err {
-				t.Errorf("List() = %q, %v; want %q, %v", text, err, tt.want, tt.err)
+			if got != tt.want || err != tt.err {
+				t.Errorf("List() = %q, %v; want %q, %v", got, err, tt.want, tt.err)
 			}
 		})
 	}
@@ -105,19 +100,18 @@ func TestListMultiple_script(t *testing.T) {
 	tests := []struct {
 		name string
 		call string
-		opts []zenity.Option
 		want []string
 		err  error
 	}{
-		{name: "Cancel", call: "cancel", want: nil, err: zenity.ErrCanceled},
-		{name: "Nothing", call: "select nothing", want: []string{}, err: nil},
-		{name: "Apples", call: "select apples", want: []string{"apples"}, err: nil},
+		{name: "Cancel", call: "cancel", err: zenity.ErrCanceled},
+		{name: "Nothing", call: "select nothing", want: []string{}},
+		{name: "Apples", call: "select apples", want: []string{"apples"}},
 		{name: "Apples & Oranges", call: "select apples and oranges",
-			want: []string{"apples", "oranges"}, err: nil},
+			want: []string{"apples", "oranges"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := zenity.ListMultiple(fmt.Sprintf("Please, %s.", tt.call), items, tt.opts...)
+			got, err := zenity.ListMultipleItems(fmt.Sprintf("Please, %s.", tt.call), items...)
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
 			}

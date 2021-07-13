@@ -199,6 +199,9 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		_CLSID_FileOpenDialog, 0, 0x17, // CLSCTX_ALL
 		_IID_IFileOpenDialog, uintptr(unsafe.Pointer(&dialog)))
 	if int32(hr) < 0 {
+		if multi {
+			return "", nil, ErrUnsupported
+		}
 		return browseForFolder(opts)
 	}
 	defer dialog.Call(dialog.Release)

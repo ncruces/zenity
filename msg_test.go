@@ -113,7 +113,7 @@ func TestMessage_script(t *testing.T) {
 		call string
 		err  error
 	}{
-		{name: "QuestionYes", call: "press Yes", err: nil},
+		{name: "QuestionYes", call: "press Yes"},
 		{name: "QuestionNo", call: "press No", err: zenity.ErrExtraButton},
 		{name: "QuestionCancel", call: "cancel", err: zenity.ErrCanceled},
 	}

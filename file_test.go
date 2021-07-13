@@ -3,6 +3,7 @@ package zenity_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -22,7 +23,6 @@ func ExampleSelectFile() {
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 		})
-	// Output:
 }
 
 func ExampleSelectFileMutiple() {
@@ -33,7 +33,6 @@ func ExampleSelectFileMutiple() {
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 		})
-	// Output:
 }
 
 func ExampleSelectFileSave() {
@@ -52,61 +51,154 @@ func ExampleSelectFile_directory() {
 	zenity.SelectFile(
 		zenity.Filename(defaultPath),
 		zenity.Directory())
-	// Output:
 }
 
 func ExampleSelectFileMutiple_directory() {
 	zenity.SelectFileMutiple(
 		zenity.Filename(defaultPath),
 		zenity.Directory())
-	// Output:
 }
 
-var fileFuncs = []func(...zenity.Option) (string, error){
-	zenity.SelectFile,
-	zenity.SelectFileSave,
-	func(o ...zenity.Option) (string, error) {
+var fileFuncs = []struct {
+	name string
+	fn   func(...zenity.Option) (string, error)
+}{
+	{"Open", zenity.SelectFile},
+	{"Save", zenity.SelectFileSave},
+	{"Directory", func(o ...zenity.Option) (string, error) {
 		return zenity.SelectFile(append(o, zenity.Directory())...)
-	},
-	func(o ...zenity.Option) (string, error) {
+	}},
+	{"Mutiple", func(o ...zenity.Option) (string, error) {
 		_, err := zenity.SelectFileMutiple(append(o, zenity.Directory())...)
 		return "", err
-	},
-	func(o ...zenity.Option) (string, error) {
+	}},
+	{"MutipleDirectory", func(o ...zenity.Option) (string, error) {
 		_, err := zenity.SelectFileMutiple(o...)
 		return "", err
-	},
+	}},
 }
 
-func TestFile_timeout(t *testing.T) {
-	for _, f := range fileFuncs {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+func TestSelectFile_timeout(t *testing.T) {
+	for _, tt := range fileFuncs {
+		t.Run(tt.name, func(t *testing.T) {
+			defer goleak.VerifyNone(t)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+			defer cancel()
 
-		_, err := f(zenity.Context(ctx))
-		if skip, err := skip(err); skip {
-			t.Skip("skipping:", err)
-		}
-		if !os.IsTimeout(err) {
-			t.Error("did not timeout:", err)
-		}
-
-		cancel()
-		goleak.VerifyNone(t)
+			_, err := tt.fn(zenity.Context(ctx))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if !os.IsTimeout(err) {
+				t.Error("did not timeout:", err)
+			}
+		})
 	}
 }
 
-func TestFile_cancel(t *testing.T) {
-	defer goleak.VerifyNone(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+func TestSelectFile_cancel(t *testing.T) {
+	for _, tt := range fileFuncs {
+		t.Run(tt.name, func(t *testing.T) {
+			defer goleak.VerifyNone(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-	for _, f := range fileFuncs {
-		_, err := f(zenity.Context(ctx))
+			_, err := tt.fn(zenity.Context(ctx))
+			if skip, err := skip(err); skip {
+				t.Skip("skipping:", err)
+			}
+			if !errors.Is(err, context.Canceled) {
+				t.Error("was not canceled:", err)
+			}
+		})
+	}
+}
+
+func TestSelectFile_script(t *testing.T) {
+	t.Run("Cancel", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
+		str, err := zenity.SelectFile()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
 		}
-		if !errors.Is(err, context.Canceled) {
-			t.Error("was not canceled:", err)
+		if str != "" || err != zenity.ErrCanceled {
+			t.Errorf("SelectFile() = %q, %v; want %q, %v", str, err, "", zenity.ErrCanceled)
 		}
-	}
+	})
+	t.Run("File", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, pick any file."))
+		str, err := zenity.SelectFile()
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if str == "" || err != nil {
+			t.Errorf("SelectFile() = %q, %v; want [path], nil", str, err)
+		}
+		if _, serr := os.Stat(str); serr != nil {
+			t.Errorf("SelectFile() = %q, %v; %v", str, err, serr)
+		}
+	})
+	t.Run("Directory", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, pick any directory."))
+		str, err := zenity.SelectFile(zenity.Directory())
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if str == "" || err != nil {
+			t.Errorf("SelectFile() = %q, %v; want [path], nil", str, err)
+		}
+		if s, serr := os.Stat(str); serr != nil {
+			t.Errorf("SelectFile() = %q, %v; %v", str, err, serr)
+		} else if !s.IsDir() {
+			t.Errorf("SelectFile() = %q, %v; not a directory", str, err)
+		}
+	})
+}
+
+func TestSelectFileMutiple_script(t *testing.T) {
+	t.Run("Cancel", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
+		lst, err := zenity.SelectFileMutiple()
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if lst != nil || err != zenity.ErrCanceled {
+			t.Errorf("SelectFileMutiple() = %v, %v; want nil, %v", lst, err, zenity.ErrCanceled)
+		}
+	})
+	t.Run("Files", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, pick two files."))
+		lst, err := zenity.SelectFileMutiple()
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if lst == nil || err != nil {
+			t.Errorf("SelectFileMutiple() = %v, %v; want [path, path], nil", lst, err)
+		}
+		for _, str := range lst {
+			if _, serr := os.Stat(str); serr != nil {
+				t.Errorf("SelectFileMutiple() = %q, %v; %v", lst, err, serr)
+			}
+		}
+	})
+	t.Run("Directories", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file selection dialog, pick two directories."))
+		lst, err := zenity.SelectFileMutiple(zenity.Directory())
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if err == zenity.ErrUnsupported {
+			t.Skip("was not unsupported:", err)
+		}
+		if lst == nil || err != nil {
+			t.Errorf("SelectFileMutiple() = %v, %v; want [path, path], nil", lst, err)
+		}
+		for _, str := range lst {
+			if s, serr := os.Stat(str); serr != nil {
+				t.Errorf("SelectFileMutiple() = %q, %v; %v", str, err, serr)
+			} else if !s.IsDir() {
+				t.Errorf("SelectFileMutiple() = %q, %v; not a directory", str, err)
+			}
+		}
+	})
 }

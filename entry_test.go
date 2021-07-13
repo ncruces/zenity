@@ -15,7 +15,6 @@ import (
 func ExampleEntry() {
 	zenity.Entry("Enter new text:",
 		zenity.Title("Add a new entry"))
-	// Output:
 }
 
 func TestEntry_timeout(t *testing.T) {
@@ -54,20 +53,20 @@ func TestEntry_script(t *testing.T) {
 		want string
 		err  error
 	}{
-		{name: "Cancel", call: "cancel", want: "", err: zenity.ErrCanceled},
-		{name: "123", call: "enter 123", want: "123", err: nil},
-		{name: "abc", call: "enter abc", want: "abc", err: nil},
-		{name: "Password", call: "press OK", want: "xpto", err: nil,
-			opts: []zenity.Option{zenity.HideText(), zenity.EntryText("xpto")}},
+		{name: "Cancel", call: "cancel", err: zenity.ErrCanceled},
+		{name: "123", call: "enter 123", want: "123"},
+		{name: "abc", call: "enter abc", want: "abc"},
+		{name: "Password", call: "press OK", want: "Χρτο",
+			opts: []zenity.Option{zenity.HideText(), zenity.EntryText("Χρτο")}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			text, err := zenity.Entry(fmt.Sprintf("Please, %s.", tt.call), tt.opts...)
+			got, err := zenity.Entry(fmt.Sprintf("Please, %s.", tt.call), tt.opts...)
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
 			}
-			if text != tt.want || err != tt.err {
-				t.Errorf("Entry() = %q, %v; want %q, %v", text, err, tt.want, tt.err)
+			if got != tt.want || err != tt.err {
+				t.Errorf("Entry() = %q, %v; want %q, %v", got, err, tt.want, tt.err)
 			}
 		})
 	}

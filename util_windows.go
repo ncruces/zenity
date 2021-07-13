@@ -124,6 +124,7 @@ func setup() context.CancelFunc {
 	var icc _INITCOMMONCONTROLSEX
 	icc.Size = uint32(unsafe.Sizeof(icc))
 	icc.ICC = 0x00004020 // ICC_STANDARD_CLASSES|ICC_PROGRESS_CLASS
+	initCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
 
 	return func() {
 		if restore != 0 {

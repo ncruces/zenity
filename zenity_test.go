@@ -42,12 +42,16 @@ func Test_applyOptions(t *testing.T) {
 		{name: "ConfirmCreate", args: ConfirmCreate(), want: options{confirmCreate: true}},
 		{name: "ShowHidden", args: ShowHidden(), want: options{showHidden: true}},
 		{name: "Filename", args: Filename("file.go"), want: options{filename: "file.go"}},
-		{name: "FileFilters", args: FileFilter{"Go files", []string{"*.go"}}, want: options{
+		{name: "FileFilter", args: FileFilter{"Go files", []string{"*.go"}}, want: options{
+			fileFilters: FileFilters{{"Go files", []string{"*.go"}}},
+		}},
+		{name: "FileFilters", args: FileFilters{{"Go files", []string{"*.go"}}}, want: options{
 			fileFilters: FileFilters{{"Go files", []string{"*.go"}}},
 		}},
 
 		// Progress indication options
 		{name: "MaxValue", args: MaxValue(100), want: options{maxValue: 100}},
+		{name: "Pulsate", args: Pulsate(), want: options{maxValue: -1}},
 		{name: "NoCancel", args: NoCancel(), want: options{noCancel: true}},
 		{name: "TimeRemaining", args: TimeRemaining(), want: options{timeRemaining: true}},
 
