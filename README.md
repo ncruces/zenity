@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/image)](https://pkg.go.dev/github.com/ncruces/zenity)
 [![Go Report](https://goreportcard.com/badge/github.com/ncruces/zenity)](https://goreportcard.com/report/github.com/ncruces/zenity)
 [![Go Cover](https://gocover.io/_badge/github.com/ncruces/zenity)](https://gocover.io/github.com/ncruces/zenity)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 This repo includes both a cross-platform Go package providing
 [Zenity](https://help.gnome.org/users/zenity/stable/)-like dialogs
