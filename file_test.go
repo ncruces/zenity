@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -44,7 +45,6 @@ func ExampleSelectFileSave() {
 			{"Web files", []string{"*.html", "*.js", "*.css"}},
 			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
 		})
-	// Output:
 }
 
 func ExampleSelectFile_directory() {
@@ -199,6 +199,33 @@ func TestSelectFileMutiple_script(t *testing.T) {
 			} else if !s.IsDir() {
 				t.Errorf("SelectFileMutiple() = %q, %v; not a directory", str, err)
 			}
+		}
+	})
+}
+
+func TestSelectFileSave_script(t *testing.T) {
+	t.Run("Cancel", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file save dialog, cancel."))
+		str, err := zenity.SelectFileSave()
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if str != "" || err != zenity.ErrCanceled {
+			t.Errorf("SelectFileSave() = %q, %v; want %q, %v", str, err, "", zenity.ErrCanceled)
+		}
+	})
+	t.Run("Name", func(t *testing.T) {
+		zenity.Info(fmt.Sprintf("In the file save dialog, press OK."))
+		str, err := zenity.SelectFileSave(
+			zenity.ConfirmOverwrite(),
+			zenity.Filename("Χρτο.go"),
+			zenity.FileFilter{"Go files", []string{"*.go"}},
+		)
+		if skip, err := skip(err); skip {
+			t.Skip("skipping:", err)
+		}
+		if _, name := filepath.Split(str); name != "Χρτο.go" || err != nil {
+			t.Errorf("SelectFileSave() = %q, %v; want %q, nil", str, err, "Χρτο.go")
 		}
 	})
 }
