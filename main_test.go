@@ -20,8 +20,8 @@ func skip(err error) (bool, error) {
 			// zenity was not found in path
 			return true, err
 		}
-		if err != nil && os.Getenv("DISPLAY") == "" {
-			// no display
+		if err != nil && os.Getenv("DISPLAY") == "" && os.Getenv("WSL_DISTRO_NAME") == "" {
+			// no display, not WSL
 			return true, fmt.Errorf("no display: %w", err)
 		}
 	}

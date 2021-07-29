@@ -19,7 +19,7 @@ func ExampleEntry() {
 
 func TestEntry_timeout(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
 
 	_, err := zenity.Entry("", zenity.Context(ctx))

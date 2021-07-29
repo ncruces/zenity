@@ -191,6 +191,7 @@ func setupFlags() {
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
+	flag.Bool("no-markup", true, "Do not enable Pango markup")
 
 	// Entry options
 	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")

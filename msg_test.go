@@ -54,7 +54,7 @@ func TestMessage_timeout(t *testing.T) {
 	for _, tt := range msgFuncs {
 		t.Run(tt.name, func(t *testing.T) {
 			defer goleak.VerifyNone(t)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 			defer cancel()
 
 			err := tt.fn("text", zenity.Context(ctx))
