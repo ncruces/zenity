@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"image/color"
 	"os"
 	"os/exec"
@@ -22,6 +23,8 @@ import (
 const (
 	unspecified = "\x00"
 )
+
+var tag = "v0.0.0"
 
 var (
 	// Application Options
@@ -88,6 +91,9 @@ var (
 	unixeol bool
 	cygpath bool
 	wslpath bool
+
+	// Command options
+	version bool
 )
 
 func init() {
@@ -233,6 +239,7 @@ func setupFlags() {
 	}
 
 	// Command options
+	flag.BoolVar(&version, "version", false, "Show version of program")
 	flag.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog `timeout` in seconds")
 	flag.StringVar(&zenutil.Separator, "separator", "|", "Set output `separator` character")
 
@@ -247,6 +254,11 @@ func setupFlags() {
 
 func validateFlags() {
 	var n int
+	if version {
+		fmt.Printf("zenity %s %s/%s\n", tag, runtime.GOOS, runtime.GOARCH)
+		fmt.Println("https://github.com/ncruces/zenity")
+		os.Exit(0)
+	}
 	if errorDlg {
 		n++
 	}
