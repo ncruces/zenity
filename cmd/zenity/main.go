@@ -11,9 +11,11 @@ import (
 	"image/color"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ncruces/zenity"
@@ -113,11 +115,15 @@ func main() {
 	if unixeol {
 		zenutil.LineBreak = "\n"
 	}
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 	if zenutil.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(zenutil.Timeout)*time.Second)
-		opts = append(opts, zenity.Context(ctx))
+		c, cancel := context.WithTimeout(ctx, time.Duration(zenutil.Timeout)*time.Second)
 		defer cancel()
+		ctx = c
 	}
+	opts = append(opts, zenity.Context(ctx))
 
 	switch {
 	case errorDlg:
@@ -458,7 +464,7 @@ func errResult(err error) {
 	if os.IsTimeout(err) {
 		os.Exit(5)
 	}
-	if err == zenity.ErrCanceled {
+	if err == zenity.ErrCanceled || err == context.Canceled {
 		os.Exit(1)
 	}
 	if err == zenity.ErrExtraButton {
@@ -471,36 +477,24 @@ func errResult(err error) {
 		os.Stderr.WriteString(zenutil.LineBreak)
 		os.Exit(-1)
 	}
-	os.Exit(0)
 }
 
 func strResult(s string, err error) {
-	if err != nil {
-		errResult(err)
-	}
+	errResult(err)
 	os.Stdout.WriteString(s)
 	os.Stdout.WriteString(zenutil.LineBreak)
-	os.Exit(0)
 }
 
 func lstResult(l []string, err error) {
-	if err != nil {
-		errResult(err)
-	}
-	if len(l) > 0 {
-		os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
-		os.Stdout.WriteString(zenutil.LineBreak)
-	}
-	os.Exit(0)
+	errResult(err)
+	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
+	os.Stdout.WriteString(zenutil.LineBreak)
 }
 
 func colResult(c color.Color, err error) {
-	if err != nil {
-		errResult(err)
-	}
+	errResult(err)
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
 	os.Stdout.WriteString(zenutil.LineBreak)
-	os.Exit(0)
 }
 
 func ingestPath(path string) string {

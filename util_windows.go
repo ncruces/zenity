@@ -17,6 +17,7 @@ var (
 	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
 	gdi32    = syscall.NewLazyDLL("gdi32.dll")
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+	ntdll    = syscall.NewLazyDLL("ntdll.dll")
 	ole32    = syscall.NewLazyDLL("ole32.dll")
 	shell32  = syscall.NewLazyDLL("shell32.dll")
 	user32   = syscall.NewLazyDLL("user32.dll")

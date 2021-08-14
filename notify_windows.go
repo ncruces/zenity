@@ -1,16 +1,19 @@
 package zenity
 
 import (
+	"math/rand"
 	"runtime"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 var (
-	shellNotifyIcon = shell32.NewProc("Shell_NotifyIconW")
-	wtsSendMessage  = wtsapi32.NewProc("WTSSendMessageW")
+	rtlGetNtVersionNumbers = ntdll.NewProc("RtlGetNtVersionNumbers")
+	shellNotifyIcon        = shell32.NewProc("Shell_NotifyIconW")
+	wtsSendMessage         = wtsapi32.NewProc("WTSSendMessageW")
 )
 
 func notify(text string, opts options) error {
@@ -20,7 +23,7 @@ func notify(text string, opts options) error {
 
 	var args _NOTIFYICONDATA
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.ID = 0x378eb49c    // random
+	args.ID = rand.Uint32()
 	args.Flags = 0x00000010 // NIF_INFO
 	args.State = 0x00000001 // NIS_HIDDEN
 
@@ -50,6 +53,24 @@ func notify(text string, opts options) error {
 			return wtsMessage(text, opts)
 		}
 		return err
+	}
+
+	var major, minor, build uint32
+	rtlGetNtVersionNumbers.Call(
+		uintptr(unsafe.Pointer(&major)),
+		uintptr(unsafe.Pointer(&minor)),
+		uintptr(unsafe.Pointer(&build)))
+
+	// On Windows 7 (6.1) and lower, wait up to 10 seconds to clean up.
+	if major < 6 || major == 6 && minor < 2 {
+		if opts.ctx != nil {
+			select {
+			case <-opts.ctx.Done():
+			case <-time.After(10 * time.Second):
+			}
+		} else {
+			time.Sleep(10 * time.Second)
+		}
 	}
 
 	shellNotifyIcon.Call(2 /* NIM_DELETE */, uintptr(unsafe.Pointer(&args)))
