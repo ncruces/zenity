@@ -132,7 +132,7 @@ func setup() context.CancelFunc {
 			setThreadDpiAwarenessContext.Call(restore)
 		}
 		if cookie != 0 {
-			deactivateActCtx.Call(cookie)
+			deactivateActCtx.Call(0, cookie)
 		}
 		runtime.UnlockOSThread()
 	}
