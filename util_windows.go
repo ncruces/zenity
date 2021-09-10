@@ -10,18 +10,20 @@ import (
 	"sync/atomic"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 var (
-	comctl32 = syscall.NewLazyDLL("comctl32.dll")
-	comdlg32 = syscall.NewLazyDLL("comdlg32.dll")
-	gdi32    = syscall.NewLazyDLL("gdi32.dll")
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
-	ntdll    = syscall.NewLazyDLL("ntdll.dll")
-	ole32    = syscall.NewLazyDLL("ole32.dll")
-	shell32  = syscall.NewLazyDLL("shell32.dll")
-	user32   = syscall.NewLazyDLL("user32.dll")
-	wtsapi32 = syscall.NewLazyDLL("wtsapi32.dll")
+	comctl32 = windows.NewLazySystemDLL("comctl32.dll")
+	comdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
+	gdi32    = windows.NewLazySystemDLL("gdi32.dll")
+	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
+	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
+	ole32    = windows.NewLazySystemDLL("ole32.dll")
+	shell32  = windows.NewLazySystemDLL("shell32.dll")
+	user32   = windows.NewLazySystemDLL("user32.dll")
+	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
 
 	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
