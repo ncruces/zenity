@@ -79,25 +79,28 @@ func message(kind messageKind, text string, opts options) error {
 func hookMessageLabels(kind messageKind, opts options) (unhook context.CancelFunc, err error) {
 	return hookDialog(opts.ctx, func(wnd uintptr) {
 		enumChildWindows.Call(wnd,
-			syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
-				var name [8]uint16
-				getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-				if syscall.UTF16ToString(name[:]) == "Button" {
-					ctl, _, _ := getDlgCtrlID.Call(wnd)
-					var text *string
-					switch ctl {
-					case 1, 6: // IDOK, IDYES
-						text = opts.okLabel
-					case 2: // IDCANCEL
-						text = opts.cancelLabel
-					case 7: // IDNO
-						text = opts.extraButton
-					}
-					if text != nil {
-						setWindowText.Call(wnd, strptr(*text))
-					}
-				}
-				return 1
-			}), 0)
+			syscall.NewCallback(hookMessageLabelsCallback),
+			uintptr(unsafe.Pointer(&opts)))
 	})
+}
+
+func hookMessageLabelsCallback(wnd uintptr, lparam *options) uintptr {
+	var name [8]uint16
+	getClassName.Call(wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+	if syscall.UTF16ToString(name[:]) == "Button" {
+		ctl, _, _ := getDlgCtrlID.Call(wnd)
+		var text *string
+		switch ctl {
+		case 1, 6: // IDOK, IDYES
+			text = lparam.okLabel
+		case 2: // IDCANCEL
+			text = lparam.cancelLabel
+		case 7: // IDNO
+			text = lparam.extraButton
+		}
+		if text != nil {
+			setWindowText.Call(wnd, strptr(*text))
+		}
+	}
+	return 1
 }

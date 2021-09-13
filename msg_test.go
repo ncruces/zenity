@@ -132,3 +132,12 @@ func TestMessage_script(t *testing.T) {
 		})
 	}
 }
+
+func TestMessage_callbacks(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for i := 0; i < 2000; i++ {
+		zenity.Error("text", zenity.Context(ctx))
+	}
+}

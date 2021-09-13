@@ -90,21 +90,13 @@ func strptr(s string) uintptr {
 }
 
 func setup() context.CancelFunc {
-	var hwnd uintptr
-	enumWindows.Call(syscall.NewCallback(func(wnd, lparam uintptr) uintptr {
-		var pid uintptr
-		getWindowThreadProcessId.Call(wnd, uintptr(unsafe.Pointer(&pid)))
-		if int(pid) == os.Getpid() {
-			hwnd = wnd
-			return 0
-		}
-		return 1
-	}), 0)
-	if hwnd == 0 {
-		hwnd, _, _ = getConsoleWindow.Call()
+	var wnd uintptr
+	enumWindows.Call(syscall.NewCallback(setupEnumCallback), uintptr(unsafe.Pointer(&wnd)))
+	if wnd == 0 {
+		wnd, _, _ = getConsoleWindow.Call()
 	}
-	if hwnd != 0 {
-		setForegroundWindow.Call(hwnd)
+	if wnd != 0 {
+		setForegroundWindow.Call(wnd)
 	}
 
 	runtime.LockOSThread()
@@ -138,6 +130,16 @@ func setup() context.CancelFunc {
 		}
 		runtime.UnlockOSThread()
 	}
+}
+
+func setupEnumCallback(wnd uintptr, lparam *uintptr) uintptr {
+	var pid uintptr
+	getWindowThreadProcessId.Call(wnd, uintptr(unsafe.Pointer(&pid)))
+	if int(pid) == os.Getpid() {
+		*lparam = wnd
+		return 0 // stop enumeration
+	}
+	return 1 // continue enumeration
 }
 
 func commDlgError() error {

@@ -316,12 +316,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	}
 	if opts.filename != "" {
 		args.LParam = strptr(opts.filename)
-		args.CallbackFunc = syscall.NewCallback(func(wnd uintptr, msg uint32, lparam, data uintptr) uintptr {
-			if msg == 1 { // BFFM_INITIALIZED
-				sendMessage.Call(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
-			}
-			return 0
-		})
+		args.CallbackFunc = syscall.NewCallback(browseForFolderCallback)
 		defer runtime.KeepAlive(opts.filename)
 	}
 
@@ -347,6 +342,13 @@ func browseForFolder(opts options) (string, []string, error) {
 
 	str := syscall.UTF16ToString(res[:])
 	return str, []string{str}, nil
+}
+
+func browseForFolderCallback(wnd uintptr, msg uint32, lparam, data uintptr) uintptr {
+	if msg == 1 { // BFFM_INITIALIZED
+		sendMessage.Call(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
+	}
+	return 0
 }
 
 func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
