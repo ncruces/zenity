@@ -525,6 +525,7 @@ func uuid(s string) uintptr {
 
 type _COMObject struct{}
 
+//go:uintptrescapes
 func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
 	switch nargs := uintptr(len(a)); nargs {
 	case 0:

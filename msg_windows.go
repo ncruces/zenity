@@ -2,7 +2,6 @@ package zenity
 
 import (
 	"context"
-	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -53,13 +52,12 @@ func message(kind messageKind, text string, opts options) error {
 		defer unhook()
 	}
 
-	var title uintptr
+	var title *uint16
 	if opts.title != nil {
-		title = strptr(*opts.title)
-		defer runtime.KeepAlive(*opts.title)
+		title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 
-	s, _, err := messageBox.Call(0, strptr(text), title, flags)
+	s, _, err := messageBox.Call(0, strptr(text), uintptr(unsafe.Pointer(title)), flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()

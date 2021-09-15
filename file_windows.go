@@ -3,7 +3,6 @@ package zenity
 import (
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -315,9 +314,8 @@ func browseForFolder(opts options) (string, []string, error) {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.filename != "" {
-		args.LParam = strptr(opts.filename)
+		args.LParam = syscall.StringToUTF16Ptr(opts.filename)
 		args.CallbackFunc = syscall.NewCallback(browseForFolderCallback)
-		defer runtime.KeepAlive(opts.filename)
 	}
 
 	if opts.ctx != nil {
@@ -420,7 +418,7 @@ type _BROWSEINFO struct {
 	Title        *uint16
 	Flags        uint32
 	CallbackFunc uintptr
-	LParam       uintptr
+	LParam       *uint16
 	Image        int32
 }
 
