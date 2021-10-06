@@ -2,10 +2,13 @@ var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 
-ObjC.import('stdio')
-ObjC.import('stdlib')
-
-var res = app.{{.Operation}}({{json .Text}}, {{json .Options}})
+ObjC.import("stdlib")
+ObjC.import("stdio")
+var opt = {{json .Options}}
+{{- if .IconPath}}
+opt["withIcon"] = Path("{{.IconPath}}")
+{{- end}}
+var res = app.{{.Operation}}({{json .Text}}, opt)
 if (res.gaveUp) {
 	$.exit(5)
 }

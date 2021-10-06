@@ -130,6 +130,7 @@ type Dialog struct {
 	Text      string
 	Extra     *string
 	Options   DialogOptions
+	IconPath  *string
 }
 
 // DialogOptions is internal.
