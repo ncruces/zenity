@@ -25,7 +25,11 @@ app.includeStandardAdditions=true
 app.activate()
 ObjC.import("stdlib")
 ObjC.import("stdio")
-var res=app.{{.Operation}}({{json .Text}},{{json .Options}})
+var opt={{json .Options}}
+{{- if .IconPath}}
+opt["withIcon"]=Path("{{.IconPath}}")
+{{- end}}
+var res=app.{{.Operation}}({{json .Text}},opt)
 if(res.gaveUp){$.exit(5)}
 if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
 $.exit(1)}
