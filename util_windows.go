@@ -287,7 +287,7 @@ func getDPI(wnd uintptr) dpi {
 	return dpi(res)
 }
 
-func (d dpi) Scale(dim uintptr) uintptr {
+func (d dpi) scale(dim uintptr) uintptr {
 	if d == 0 {
 		return dim
 	}
@@ -307,16 +307,16 @@ func getFont() font {
 	return font{logical: metrics.MessageFont}
 }
 
-func (f *font) ForDPI(dpi dpi) uintptr {
-	if h := -int32(dpi.Scale(12)); f.handle == 0 || f.logical.Height != h {
-		f.Delete()
+func (f *font) forDPI(dpi dpi) uintptr {
+	if h := -int32(dpi.scale(12)); f.handle == 0 || f.logical.Height != h {
+		f.delete()
 		f.logical.Height = h
 		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.logical)))
 	}
 	return f.handle
 }
 
-func (f *font) Delete() {
+func (f *font) delete() {
 	if f.handle != 0 {
 		deleteObject.Call(f.handle)
 		f.handle = 0

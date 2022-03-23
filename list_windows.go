@@ -30,29 +30,29 @@ func listDlg(text string, items []string, multiple bool, opts options) (out []st
 
 	defer setup()()
 	font := getFont()
-	defer font.Delete()
+	defer font.delete()
 	defWindowProc := defWindowProc.Addr()
 
 	var wnd, textCtl, listCtl uintptr
 	var okBtn, cancelBtn, extraBtn uintptr
 
 	layout := func(dpi dpi) {
-		hfont := font.ForDPI(dpi)
+		hfont := font.forDPI(dpi)
 		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(listCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
 		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(281), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
-		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4)  // SWP_NOZORDER
-		setWindowPos.Call(listCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(164), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), 0x4)  // SWP_NOZORDER
+		setWindowPos.Call(listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), 0x4) // SWP_NOZORDER
 		if extraBtn == 0 {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(206), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(206), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 		} else {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(206), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(206), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(206), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)   // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 		}
 	}
 

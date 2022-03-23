@@ -17,29 +17,29 @@ func entry(text string, opts options) (out string, err error) {
 
 	defer setup()()
 	font := getFont()
-	defer font.Delete()
+	defer font.delete()
 	defWindowProc := defWindowProc.Addr()
 
 	var wnd, textCtl, editCtl uintptr
 	var okBtn, cancelBtn, extraBtn uintptr
 
 	layout := func(dpi dpi) {
-		hfont := font.ForDPI(dpi)
-		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, hfont, 1)
-		setWindowPos.Call(wnd, 0, 0, 0, dpi.Scale(281), dpi.Scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
-		setWindowPos.Call(textCtl, 0, dpi.Scale(12), dpi.Scale(10), dpi.Scale(241), dpi.Scale(16), 0x4) // SWP_NOZORDER
-		setWindowPos.Call(editCtl, 0, dpi.Scale(12), dpi.Scale(30), dpi.Scale(241), dpi.Scale(24), 0x4) // SWP_NOZORDER
+		font := font.forDPI(dpi)
+		sendMessage.Call(textCtl, 0x0030 /* WM_SETFONT */, font, 1)
+		sendMessage.Call(editCtl, 0x0030 /* WM_SETFONT */, font, 1)
+		sendMessage.Call(okBtn, 0x0030 /* WM_SETFONT */, font, 1)
+		sendMessage.Call(cancelBtn, 0x0030 /* WM_SETFONT */, font, 1)
+		sendMessage.Call(extraBtn, 0x0030 /* WM_SETFONT */, font, 1)
+		setWindowPos.Call(wnd, 0, 0, 0, dpi.scale(281), dpi.scale(141), 0x6)                            // SWP_NOZORDER|SWP_NOMOVE
+		setWindowPos.Call(textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(editCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), 0x4) // SWP_NOZORDER
 		if extraBtn == 0 {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.scale(95), dpi.scale(66), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.scale(178), dpi.scale(66), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 		} else {
-			setWindowPos.Call(okBtn, 0, dpi.Scale(12), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)      // SWP_NOZORDER
-			setWindowPos.Call(extraBtn, 0, dpi.Scale(95), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4)   // SWP_NOZORDER
-			setWindowPos.Call(cancelBtn, 0, dpi.Scale(178), dpi.Scale(66), dpi.Scale(75), dpi.Scale(24), 0x4) // SWP_NOZORDER
+			setWindowPos.Call(okBtn, 0, dpi.scale(12), dpi.scale(66), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+			setWindowPos.Call(extraBtn, 0, dpi.scale(95), dpi.scale(66), dpi.scale(75), dpi.scale(24), 0x4)   // SWP_NOZORDER
+			setWindowPos.Call(cancelBtn, 0, dpi.scale(178), dpi.scale(66), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 		}
 	}
 
