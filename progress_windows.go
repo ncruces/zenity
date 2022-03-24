@@ -33,11 +33,7 @@ func progress(opts options) (ProgressDialog, error) {
 	dlg.init.Add(1)
 
 	go func() {
-		err := progressDlg(opts, dlg)
-		if cerr := opts.ctx.Err(); cerr != nil {
-			err = cerr
-		}
-		dlg.err = err
+		dlg.err = dlg.setup(opts)
 		close(dlg.done)
 	}()
 
@@ -45,8 +41,83 @@ func progress(opts options) (ProgressDialog, error) {
 	return dlg, nil
 }
 
-func progressDlg(opts options, dlg *progressDialog) error {
-	defer dlg.init.Done()
+type progressDialog struct {
+	init sync.WaitGroup
+	done chan struct{}
+	max  int
+	err  error
+
+	wnd       uintptr
+	textCtl   uintptr
+	progCtl   uintptr
+	okBtn     uintptr
+	cancelBtn uintptr
+	extraBtn  uintptr
+	font      font
+}
+
+func (d *progressDialog) Text(text string) error {
+	select {
+	default:
+		setWindowText.Call(d.textCtl, strptr(text))
+		return nil
+	case <-d.done:
+		return d.err
+	}
+}
+
+func (d *progressDialog) Value(value int) error {
+	select {
+	default:
+		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, uintptr(value), 0)
+		if value >= d.max {
+			enableWindow.Call(d.okBtn, 1)
+		}
+		return nil
+	case <-d.done:
+		return d.err
+	}
+}
+
+func (d *progressDialog) MaxValue() int {
+	return d.max
+}
+
+func (d *progressDialog) Done() <-chan struct{} {
+	return d.done
+}
+
+func (d *progressDialog) Complete() error {
+	select {
+	default:
+		setWindowLong.Call(d.progCtl, intptr(-16) /* GWL_STYLE */, 0x50000001 /* WS_CHILD|WS_VISIBLE|PBS_SMOOTH */)
+		sendMessage.Call(d.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, 1)
+		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, 1, 0)
+		enableWindow.Call(d.okBtn, 1)
+		enableWindow.Call(d.cancelBtn, 0)
+		return nil
+	case <-d.done:
+		return d.err
+	}
+}
+
+func (d *progressDialog) Close() error {
+	sendMessage.Call(d.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+	<-d.done
+	if d.err == ErrCanceled {
+		return nil
+	}
+	return d.err
+}
+
+func (dlg *progressDialog) setup(opts options) error {
+	done := false
+	defer func() {
+		if !done {
+			dlg.init.Done()
+		}
+	}()
+
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
@@ -112,8 +183,8 @@ func progressDlg(opts options, dlg *progressDialog) error {
 	} else {
 		sendMessage.Call(dlg.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, uintptr(opts.maxValue))
 	}
-	defer dlg.init.Add(1)
 	dlg.init.Done()
+	done = true
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})
@@ -134,75 +205,6 @@ func progressDlg(opts options, dlg *progressDialog) error {
 		return opts.ctx.Err()
 	}
 	return dlg.err
-}
-
-type progressDialog struct {
-	done chan struct{}
-	init sync.WaitGroup
-	max  int
-	err  error
-
-	wnd       uintptr
-	textCtl   uintptr
-	progCtl   uintptr
-	okBtn     uintptr
-	cancelBtn uintptr
-	extraBtn  uintptr
-	font      font
-}
-
-func (d *progressDialog) Text(text string) error {
-	select {
-	default:
-		setWindowText.Call(d.textCtl, strptr(text))
-		return nil
-	case <-d.done:
-		return d.err
-	}
-}
-
-func (d *progressDialog) Value(value int) error {
-	select {
-	default:
-		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, uintptr(value), 0)
-		if value >= d.max {
-			enableWindow.Call(d.okBtn, 1)
-		}
-		return nil
-	case <-d.done:
-		return d.err
-	}
-}
-
-func (d *progressDialog) MaxValue() int {
-	return d.max
-}
-
-func (d *progressDialog) Done() <-chan struct{} {
-	return d.done
-}
-
-func (d *progressDialog) Complete() error {
-	select {
-	default:
-		setWindowLong.Call(d.progCtl, intptr(-16) /* GWL_STYLE */, 0x50000001 /* WS_CHILD|WS_VISIBLE|PBS_SMOOTH */)
-		sendMessage.Call(d.progCtl, 0x406 /* PBM_SETRANGE32 */, 0, 1)
-		sendMessage.Call(d.progCtl, 0x402 /* PBM_SETPOS */, 1, 0)
-		enableWindow.Call(d.okBtn, 1)
-		enableWindow.Call(d.cancelBtn, 0)
-		return nil
-	case <-d.done:
-		return d.err
-	}
-}
-
-func (d *progressDialog) Close() error {
-	sendMessage.Call(d.wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
-	<-d.done
-	if d.err == ErrCanceled {
-		return nil
-	}
-	return d.err
 }
 
 func (d *progressDialog) layout(dpi dpi) {

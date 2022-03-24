@@ -28,12 +28,31 @@ func listDlg(text string, items []string, multiple bool, opts options) ([]string
 		opts.cancelLabel = stringPtr("Cancel")
 	}
 
-	defer setup()()
 	dlg := &listDialog{
 		items:    items,
 		multiple: multiple,
-		font:     getFont(),
 	}
+	return dlg.setup(text, opts)
+}
+
+type listDialog struct {
+	items    []string
+	multiple bool
+	out      []string
+	err      error
+
+	wnd       uintptr
+	textCtl   uintptr
+	listCtl   uintptr
+	okBtn     uintptr
+	cancelBtn uintptr
+	extraBtn  uintptr
+	font      font
+}
+
+func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
+	defer setup()()
+	dlg.font = getFont()
 	defer dlg.font.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -64,7 +83,7 @@ func listDlg(text string, items []string, multiple bool, opts options) ([]string
 		12, 10, 241, 16, dlg.wnd, 0, instance, 0)
 
 	var flags uintptr = 0x50320000 // WS_CHILD|WS_VISIBLE|WS_VSCROLL|WS_GROUP|WS_TABSTOP
-	if multiple {
+	if dlg.multiple {
 		flags |= 0x0800 // LBS_EXTENDEDSEL
 	}
 	dlg.listCtl, _, _ = createWindowEx.Call(0x200, // WS_EX_CLIENTEDGE
@@ -87,7 +106,7 @@ func listDlg(text string, items []string, multiple bool, opts options) ([]string
 			12, 206, 75, 24, dlg.wnd, 7 /* IDNO */, instance, 0)
 	}
 
-	for _, item := range items {
+	for _, item := range dlg.items {
 		sendMessage.Call(dlg.listCtl, 0x180 /* LB_ADDSTRING */, 0, strptr(item))
 	}
 
@@ -117,38 +136,23 @@ func listDlg(text string, items []string, multiple bool, opts options) ([]string
 	return dlg.out, dlg.err
 }
 
-type listDialog struct {
-	items    []string
-	multiple bool
-	out      []string
-	err      error
-
-	wnd       uintptr
-	textCtl   uintptr
-	listCtl   uintptr
-	okBtn     uintptr
-	cancelBtn uintptr
-	extraBtn  uintptr
-	font      font
-}
-
-func (d *listDialog) layout(dpi dpi) {
-	font := d.font.forDPI(dpi)
-	sendMessage.Call(d.textCtl, 0x0030 /* WM_SETFONT */, font, 1)
-	sendMessage.Call(d.listCtl, 0x0030 /* WM_SETFONT */, font, 1)
-	sendMessage.Call(d.okBtn, 0x0030 /* WM_SETFONT */, font, 1)
-	sendMessage.Call(d.cancelBtn, 0x0030 /* WM_SETFONT */, font, 1)
-	sendMessage.Call(d.extraBtn, 0x0030 /* WM_SETFONT */, font, 1)
-	setWindowPos.Call(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
-	setWindowPos.Call(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), 0x4)  // SWP_NOZORDER
-	setWindowPos.Call(d.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), 0x4) // SWP_NOZORDER
-	if d.extraBtn == 0 {
-		setWindowPos.Call(d.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
-		setWindowPos.Call(d.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
+func (dlg *listDialog) layout(dpi dpi) {
+	font := dlg.font.forDPI(dpi)
+	sendMessage.Call(dlg.textCtl, 0x0030 /* WM_SETFONT */, font, 1)
+	sendMessage.Call(dlg.listCtl, 0x0030 /* WM_SETFONT */, font, 1)
+	sendMessage.Call(dlg.okBtn, 0x0030 /* WM_SETFONT */, font, 1)
+	sendMessage.Call(dlg.cancelBtn, 0x0030 /* WM_SETFONT */, font, 1)
+	sendMessage.Call(dlg.extraBtn, 0x0030 /* WM_SETFONT */, font, 1)
+	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), 0x6)                             // SWP_NOZORDER|SWP_NOMOVE
+	setWindowPos.Call(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), 0x4)  // SWP_NOZORDER
+	setWindowPos.Call(dlg.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), 0x4) // SWP_NOZORDER
+	if dlg.extraBtn == 0 {
+		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 	} else {
-		setWindowPos.Call(d.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
-		setWindowPos.Call(d.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)   // SWP_NOZORDER
-		setWindowPos.Call(d.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
+		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)      // SWP_NOZORDER
+		setWindowPos.Call(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4)   // SWP_NOZORDER
+		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), 0x4) // SWP_NOZORDER
 	}
 }
 
