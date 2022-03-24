@@ -1,4 +1,4 @@
-// +build !windows,!darwin
+//go:build !windows && !darwin
 
 package zenity
 
@@ -26,9 +26,9 @@ func calendar(text string, opts options) (time.Time, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	str, ok, err := strResult(opts, out, err)
-	if ok {
-		return time.Parse("2006-01-02", str)
+	str, err := strResult(opts, out, err)
+	if err != nil {
+		return time.Time{}, err
 	}
-	return time.Time{}, err
+	return time.Parse("2006-01-02", str)
 }

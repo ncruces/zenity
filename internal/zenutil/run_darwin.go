@@ -216,3 +216,12 @@ type Progress struct {
 	Description *string
 	Total       *int
 }
+
+// Date is internal.
+type Date struct {
+	Date    int64
+	Text    string
+	Info    string
+	Format  string
+	Buttons []string
+}
