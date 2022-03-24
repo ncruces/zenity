@@ -1,4 +1,4 @@
-// +build darwin dev
+//go:build darwin || dev
 
 package main
 

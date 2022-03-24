@@ -1,4 +1,4 @@
-// +build windows darwin dev
+//go:build windows || darwin || dev
 
 package main
 
