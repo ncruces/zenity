@@ -137,16 +137,17 @@ func progressDlg(opts options, dlg *progressDialog) error {
 }
 
 type progressDialog struct {
-	max       int
-	done      chan struct{}
-	init      sync.WaitGroup
+	done chan struct{}
+	init sync.WaitGroup
+	max  int
+	err  error
+
 	wnd       uintptr
 	textCtl   uintptr
 	progCtl   uintptr
 	okBtn     uintptr
 	cancelBtn uintptr
 	extraBtn  uintptr
-	err       error
 	font      font
 }
 
@@ -269,7 +270,7 @@ func progressProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:
-		res, _, _ := syscall.Syscall6(defWindowProc.Addr(), 4, wnd, uintptr(msg), wparam, uintptr(unsafe.Pointer(lparam)), 0, 0)
+		res, _, _ := defWindowProc.Call(wnd, uintptr(msg), wparam, uintptr(unsafe.Pointer(lparam)))
 		return res
 	}
 
