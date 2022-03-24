@@ -19,6 +19,30 @@ app.activate()
 var res=app.chooseColor({defaultColor:{{json .}}})
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
 {{- end}}
+{{define "date" -}}
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+app.activate()
+ObjC.import('Cocoa')
+ObjC.import('stdio')
+ObjC.import('stdlib')
+var date=$.NSDatePicker.alloc.init
+date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
+date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
+date.setDateValue($.NSDate.dateWithTimeIntervalSince1970({{.Date}}))
+date.setFrameSize(date.fittingSize)
+var alert=$.NSAlert.alloc.init
+alert.setAccessoryView(date)
+alert.setMessageText({{json .Text}})
+{{- if .Info}}alert.setInformativeText({{json .Info}}){{- end}}
+{{- range .Buttons}}alert.addButtonWithTitle([{{json .}}]){{end}}
+var res=alert.runModal
+switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Buttons}}[2])
+case $.NSAlertSecondButtonReturn:$.exit(1)}
+var fmt=$.NSDateFormatter.alloc.init
+fmt.dateFormat={{json .Format}}
+fmt.stringFromDate(date.dateValue)
+{{- end}}
 {{define "dialog" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
