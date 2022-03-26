@@ -4,6 +4,8 @@ package zenity
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, MaxValue, Pulsate, NoCancel, TimeRemaining.
+//
+// May return: ErrUnsupported
 func Progress(options ...Option) (ProgressDialog, error) {
 	return progress(applyOptions(options))
 }

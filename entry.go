@@ -4,6 +4,8 @@ package zenity
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, EntryText, HideText.
+//
+// May return: ErrCanceled, ErrExtraButton.
 func Entry(text string, options ...Option) (string, error) {
 	return entry(text, applyOptions(options))
 }
