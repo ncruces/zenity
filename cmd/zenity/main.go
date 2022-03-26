@@ -316,22 +316,18 @@ func loadFlags() []zenity.Option {
 	switch {
 	case errorDlg:
 		setDefault(&title, "Error")
-		setDefault(&icon, "dialog-error")
 		setDefault(&text, "An error has occurred.")
 		setDefault(&okLabel, "OK")
 	case infoDlg:
 		setDefault(&title, "Information")
-		setDefault(&icon, "dialog-information")
 		setDefault(&text, "All updates are complete.")
 		setDefault(&okLabel, "OK")
 	case warningDlg:
 		setDefault(&title, "Warning")
-		setDefault(&icon, "dialog-warning")
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "OK")
 	case questionDlg:
 		setDefault(&title, "Question")
-		setDefault(&icon, "dialog-question")
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "Yes")
 		setDefault(&cancelLabel, "No")
@@ -347,7 +343,6 @@ func loadFlags() []zenity.Option {
 		setDefault(&cancelLabel, "Cancel")
 	case passwordDlg:
 		setDefault(&title, "Type your password")
-		setDefault(&icon, "dialog-password")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
 	case progressDlg:
@@ -355,10 +350,6 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Running...")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
-	case notification:
-		setDefault(&icon, "dialog-information")
-	default:
-		setDefault(&text, "")
 	}
 
 	// General options
@@ -390,10 +381,12 @@ func loadFlags() []zenity.Option {
 		ico = zenity.WarningIcon
 	case "dialog-password":
 		ico = zenity.PasswordIcon
-	case "":
+	default:
 		ico = zenity.NoIcon
 	}
-	opts = append(opts, ico)
+	if icon != unspecified {
+		opts = append(opts, ico)
+	}
 
 	// Message options
 

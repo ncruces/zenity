@@ -132,7 +132,8 @@ func (i DialogIcon) apply(o *options) { o.icon = i }
 
 // The stock dialog icons.
 const (
-	ErrorIcon DialogIcon = iota + 1
+	unspecifiedIcon DialogIcon = iota
+	ErrorIcon
 	WarningIcon
 	InfoIcon
 	QuestionIcon

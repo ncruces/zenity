@@ -32,6 +32,17 @@ func message(kind messageKind, text string, opts options) error {
 		flags |= 0x30 // MB_ICONWARNING
 	case InfoIcon:
 		flags |= 0x40 // MB_ICONINFORMATION
+	case unspecifiedIcon:
+		switch kind {
+		case errorKind:
+			flags |= 0x10 // MB_ICONERROR
+		case questionKind:
+			flags |= 0x20 // MB_ICONQUESTION
+		case warningKind:
+			flags |= 0x30 // MB_ICONWARNING
+		case infoKind:
+			flags |= 0x40 // MB_ICONINFORMATION
+		}
 	}
 
 	if kind == questionKind && opts.defaultCancel {
