@@ -191,9 +191,9 @@ func setupFlags() {
 	flag.StringVar(&title, "title", "", "Set the dialog `title`")
 	flag.UintVar(&width, "width", 0, "Set the `width`")
 	flag.UintVar(&height, "height", 0, "Set the `height`")
-	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
-	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
-	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
+	flag.StringVar(&okLabel, "ok-label", "", "Set the `label` of the OK button")
+	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the `label` of the Cancel button")
+	flag.Func("extra-button", "Add an extra `button`", setExtraButton)
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
@@ -210,7 +210,7 @@ func setupFlags() {
 	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
 
 	// List options
-	flag.Func("column", "Set the column header", addColumn)
+	flag.Func("column", "Set the column `header`", addColumn)
 	flag.Bool("hide-header", true, "Hide the column headers")
 	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
 
@@ -221,7 +221,7 @@ func setupFlags() {
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the `filename`")
-	flag.Func("file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
+	flag.Func("file-filter", "Set a filename `filter` (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
 
 	// Color selection options
 	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
@@ -551,12 +551,20 @@ func egestPaths(paths []string, err error) ([]string, error) {
 	return paths, err
 }
 
+func setExtraButton(s string) error {
+	if extraButton != unspecified {
+		return errors.New("multiple extra buttons not supported")
+	}
+	extraButton = s
+	return nil
+}
+
 func addColumn(s string) error {
 	columns++
-	if columns <= 1 {
-		return nil
+	if columns > 1 {
+		return errors.New("multiple columns not supported")
 	}
-	return errors.New("multiple columns not supported")
+	return nil
 }
 
 func addFileFilter(s string) error {
