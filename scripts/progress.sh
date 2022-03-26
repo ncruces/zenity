@@ -16,7 +16,7 @@ zenity --progress \
   --text="Scanning mail logs..." \
   --percentage=0
 
-if [ "$?" = -1 ]; then
+if [ $? = 1 ]; then
   zenity --error \
     --text="Update canceled."
 fi
