@@ -2,8 +2,8 @@ var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 
-ObjC.import("stdlib")
-ObjC.import("stdio")
+ObjC.import('stdio')
+ObjC.import('stdlib')
 
 var res = app.{{.Operation}}({{json .Text}}, {{json .Options}})
 if (res.gaveUp) {

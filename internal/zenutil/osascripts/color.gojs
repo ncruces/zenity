@@ -3,4 +3,4 @@ app.includeStandardAdditions = true
 app.activate()
 
 var res = app.chooseColor({defaultColor: {{json .}}})
-{"rgb(" + res.map(x => Math.round(x * 255)) + ")"}
+{'rgb(' + res.map(x => Math.round(x * 255)) + ')'}
