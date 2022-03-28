@@ -71,8 +71,8 @@ func Filename(filename string) Option {
 // and only supports filtering by extension
 // (or "uniform type identifiers").
 //
-// Patterns may use the GTK syntax on all platforms:
-// https://developer.gnome.org/pygtk/stable/class-gtkfilefilter.html#method-gtkfilefilter--add-pattern
+// Patterns may use the fnmatch syntax on all platforms:
+// https://docs.python.org/3/library/fnmatch.html
 type FileFilter struct {
 	Name     string   // display string that describes the filter (optional)
 	Patterns []string // filter patterns for the display string
