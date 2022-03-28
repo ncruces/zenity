@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,10 +23,15 @@ func main() {
 	}
 
 	var str strings.Builder
+	funcs := template.FuncMap{"json": json.Marshal}
 
 	for _, file := range files {
 		name := file.Name()
 		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = template.New(file.Name()).Funcs(funcs).Parse(string(data))
 		if err != nil {
 			log.Fatal(err)
 		}

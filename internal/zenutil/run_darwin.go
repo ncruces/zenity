@@ -190,6 +190,7 @@ type File struct {
 	Options   FileOptions
 }
 
+// FileOptions is internal.
 type FileOptions struct {
 	Prompt     *string  `json:"withPrompt,omitempty"`
 	Type       []string `json:"ofType,omitempty"`
@@ -219,9 +220,11 @@ type Progress struct {
 
 // Date is internal.
 type Date struct {
-	Date    int64
-	Text    string
-	Info    string
-	Format  string
-	Buttons []string
+	Date   int64
+	Text   string
+	Info   string
+	Format string
+	OK     string
+	Cancel string
+	Extra  *string
 }
