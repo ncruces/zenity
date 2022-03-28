@@ -3,7 +3,7 @@ package zenutil
 // Unescape is internal.
 func Unescape(s string) string {
 	// Apply rules described in:
-	// https://developer.gnome.org/glib/stable/glib-String-Utility-Functions.html#g-strescape
+	// https://docs.gtk.org/glib/func.strescape.html
 
 	const (
 		initial = iota
