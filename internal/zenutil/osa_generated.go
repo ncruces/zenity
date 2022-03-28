@@ -34,10 +34,16 @@ date.setFrameSize(date.fittingSize)
 var alert=$.NSAlert.alloc.init
 alert.setAccessoryView(date)
 alert.setMessageText({{json .Text}})
-{{- if .Info}}alert.setInformativeText({{json .Info}}){{- end}}
-{{- range .Buttons}}alert.addButtonWithTitle([{{json .}}]){{end}}
+alert.addButtonWithTitle({{json .OK}})
+alert.addButtonWithTitle({{json .Cancel}}).keyEquivalent='\033'
+{{- if .Info}}
+alert.setInformativeText({{json .Info}})
+{{- end}}
+{{- if .Extra}}
+alert.addButtonWithTitle({{json .Extra}})
+{{- end}}
 var res=alert.runModal
-switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Buttons}}[2])
+switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Extra}})
 case $.NSAlertSecondButtonReturn:$.exit(1)}
 var fmt=$.NSDateFormatter.alloc.init
 fmt.dateFormat={{json .Format}}

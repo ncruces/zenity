@@ -6,10 +6,10 @@ import (
 
 // Calendar displays the calendar dialog.
 //
-// Returns zero on cancel.
-//
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, Date.
+// Icon, DefaultDate.
+//
+// May return: ErrCanceled.
 func Calendar(text string, options ...Option) (time.Time, error) {
 	return calendar(text, applyOptions(options))
 }
@@ -17,6 +17,6 @@ func Calendar(text string, options ...Option) (time.Time, error) {
 // DefaultDate returns an Option to set the date.
 func DefaultDate(year int, month time.Month, day int) Option {
 	return funcOption(func(o *options) {
-		o.year, o.month, o.day = year, int(month), day
+		o.year, o.month, o.day = &year, month, day
 	})
 }

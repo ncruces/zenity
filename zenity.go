@@ -13,6 +13,7 @@ package zenity
 import (
 	"context"
 	"image/color"
+	"time"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
@@ -54,7 +55,9 @@ type options struct {
 	defaultItems  []string
 
 	// Calendar options
-	year, month, day int
+	month time.Month
+	day   int
+	year  *int
 
 	// File selection options
 	directory        bool

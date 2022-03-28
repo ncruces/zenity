@@ -48,6 +48,16 @@ func getButtons(dialog, okcancel bool, opts options) (btns zenutil.DialogButtons
 	return
 }
 
+func getAlertButtons(opts options) (ok, cancel string, extra *string) {
+	if opts.okLabel == nil {
+		opts.okLabel = stringPtr("OK")
+	}
+	if opts.cancelLabel == nil {
+		opts.cancelLabel = stringPtr("Cancel")
+	}
+	return *opts.okLabel, *opts.cancelLabel, opts.extraButton
+}
+
 func (i DialogIcon) String() string {
 	switch i {
 	case ErrorIcon:
