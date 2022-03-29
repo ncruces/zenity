@@ -10,7 +10,7 @@ import (
 )
 
 func calendar(text string, opts options) (time.Time, error) {
-	args := []string{"--calendar", "--text", text, "--date-format=%F"}
+	args := []string{"--calendar", "--text", text, "--date-format", zenutil.DateFormat}
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
@@ -27,5 +27,5 @@ func calendar(text string, opts options) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return time.Parse("2006-01-02", str)
+	return time.Parse(zenutil.Strftime(zenutil.DateFormat), str)
 }

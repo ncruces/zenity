@@ -36,6 +36,7 @@ var (
 	questionDlg       bool
 	entryDlg          bool
 	listDlg           bool
+	calendarDlg       bool
 	passwordDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
@@ -65,6 +66,11 @@ var (
 	// List options
 	columns    int
 	allowEmpty bool
+
+	// Calendar options
+	year  uint
+	month uint
+	day   uint
 
 	// File selection options
 	save             bool
@@ -145,6 +151,9 @@ func main() {
 			strResult(zenity.List(text, flag.Args(), opts...))
 		}
 
+	case calendarDlg:
+		calResult(zenity.Calendar(text, opts...))
+
 	case passwordDlg:
 		_, pw, err := zenity.Password(opts...)
 		strResult(pw, err)
@@ -181,6 +190,7 @@ func setupFlags() {
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
 	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
 	flag.BoolVar(&listDlg, "list", false, "Display list dialog")
+	flag.BoolVar(&calendarDlg, "calendar", false, "Display calendar dialog")
 	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
@@ -213,6 +223,12 @@ func setupFlags() {
 	flag.Func("column", "Set the column `header`", addColumn)
 	flag.Bool("hide-header", true, "Hide the column headers")
 	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
+
+	// Calendar options
+	flag.UintVar(&year, "year", 0, "Set the calendar `year`")
+	flag.UintVar(&month, "month", 0, "Set the calendar `month`")
+	flag.UintVar(&day, "day", 0, "Set the calendar `day`")
+	flag.StringVar(&zenutil.DateFormat, "date-format", "%m/%d/%Y", "Set the `format` for the returned date")
 
 	// File selection options
 	flag.BoolVar(&save, "save", false, "Activate save mode")
@@ -283,6 +299,9 @@ func validateFlags() {
 	if listDlg {
 		n++
 	}
+	if calendarDlg {
+		n++
+	}
 	if passwordDlg {
 		n++
 	}
@@ -341,13 +360,18 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Select items from the list below:")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
+	case calendarDlg:
+		setDefault(&title, "Calendar selection")
+		setDefault(&text, "Select a date from below:")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
 	case passwordDlg:
 		setDefault(&title, "Type your password")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
 	case progressDlg:
 		setDefault(&title, "Progress")
-		setDefault(&text, "Running...")
+		setDefault(&text, "Running…")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
 	}
@@ -412,6 +436,18 @@ func loadFlags() []zenity.Option {
 	if !allowEmpty {
 		opts = append(opts, zenity.DisallowEmpty())
 	}
+
+	y, m, d := time.Now().Date()
+	if month != 0 {
+		m = time.Month(month)
+	}
+	if day != 0 {
+		d = int(day)
+	}
+	if year != 0 {
+		y = int(year)
+	}
+	opts = append(opts, zenity.DefaultDate(y, m, d))
 
 	// File selection options
 
@@ -481,6 +517,12 @@ func strResult(s string, err error) {
 func lstResult(l []string, err error) {
 	errResult(err)
 	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
+	os.Stdout.WriteString(zenutil.LineBreak)
+}
+
+func calResult(d time.Time, err error) {
+	errResult(err)
+	os.Stdout.WriteString(d.Format(zenutil.Strftime(zenutil.DateFormat)))
 	os.Stdout.WriteString(zenutil.LineBreak)
 }
 
