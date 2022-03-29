@@ -5,8 +5,9 @@ package zenutil
 
 // These are internal.
 var (
-	Command   bool
-	Timeout   int
-	LineBreak = "\n"
-	Separator = "\x1e"
+	Command    bool
+	Timeout    int
+	LineBreak  = "\n"
+	Separator  = "\x1e"
+	DateFormat = "%F"
 )

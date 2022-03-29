@@ -10,7 +10,7 @@ func calendar(text string, opts options) (time.Time, error) {
 	var date zenutil.Date
 
 	date.OK, date.Cancel, date.Extra = getAlertButtons(opts)
-	date.Format = "yyyy-MM-dd"
+	date.Format = zenutil.StrftimeUTS35(zenutil.DateFormat)
 	if opts.time != nil {
 		date.Date = opts.time.Unix()
 	}
@@ -27,5 +27,5 @@ func calendar(text string, opts options) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return time.Parse("2006-01-02", str)
+	return time.Parse(zenutil.Strftime(zenutil.DateFormat), str)
 }
