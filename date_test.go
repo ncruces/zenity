@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"go.uber.org/goleak"
 )
 
 func ExampleCalendar() {
@@ -17,21 +18,28 @@ func ExampleCalendar() {
 }
 
 func TestCalendarTimeout(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second/10)
+	defer goleak.VerifyNone(t)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
+	defer cancel()
 
 	_, err := zenity.Calendar("", zenity.Context(ctx))
+	if skip, err := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
 	if !os.IsTimeout(err) {
 		t.Error("did not timeout:", err)
 	}
-
-	cancel()
 }
 
 func TestCalendarCancel(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	_, err := zenity.Calendar("", zenity.Context(ctx))
+	if skip, err := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}
