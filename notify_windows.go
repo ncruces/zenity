@@ -82,13 +82,13 @@ func wtsMessage(text string, opts options) error {
 
 	switch opts.icon {
 	case ErrorIcon:
-		flags |= 0x10 // MB_ICONERROR
+		flags |= _MB_ICONERROR
 	case QuestionIcon:
-		flags |= 0x20 // MB_ICONQUESTION
+		flags |= _MB_ICONQUESTION
 	case WarningIcon:
-		flags |= 0x30 // MB_ICONWARNING
+		flags |= _MB_ICONWARNING
 	case InfoIcon:
-		flags |= 0x40 // MB_ICONINFORMATION
+		flags |= _MB_ICONINFORMATION
 	}
 
 	title := opts.title

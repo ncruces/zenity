@@ -2,10 +2,11 @@ package zenity
 
 import (
 	"syscall"
+	"time"
 	"unsafe"
 )
 
-func entry(text string, opts options) (string, error) {
+func calendar(text string, opts options) (time.Time, error) {
 	if opts.title == nil {
 		opts.title = stringPtr("")
 	}
@@ -16,40 +17,40 @@ func entry(text string, opts options) (string, error) {
 		opts.cancelLabel = stringPtr("Cancel")
 	}
 
-	dlg := &entryDialog{}
+	dlg := &calendarDialog{}
 	return dlg.setup(text, opts)
 }
 
-type entryDialog struct {
-	out string
+type calendarDialog struct {
+	out time.Time
 	err error
 
 	wnd       uintptr
 	textCtl   uintptr
-	editCtl   uintptr
+	dateCtl   uintptr
 	okBtn     uintptr
 	cancelBtn uintptr
 	extraBtn  uintptr
 	font      font
 }
 
-func (dlg *entryDialog) setup(text string, opts options) (string, error) {
+func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", opts.ctx.Err()
+		return time.Time{}, opts.ctx.Err()
 	}
 
 	instance, _, err := getModuleHandle.Call(0)
 	if instance == 0 {
-		return "", err
+		return time.Time{}, err
 	}
 
-	cls, err := registerClass(instance, syscall.NewCallback(entryProc))
+	cls, err := registerClass(instance, syscall.NewCallback(calendarProc))
 	if cls == 0 {
-		return "", err
+		return time.Time{}, err
 	}
 	defer unregisterClass.Call(cls, instance)
 
@@ -57,42 +58,47 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 		cls, strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 141, 0, 0, instance, uintptr(unsafe.Pointer(dlg)))
+		281, 281, 0, 0, instance, uintptr(unsafe.Pointer(dlg)))
 
 	dlg.textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr(text),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
 		12, 10, 241, 16, dlg.wnd, 0, instance, 0)
 
-	var flags uintptr = _WS_CHILD | _WS_VISIBLE | _WS_GROUP | _WS_TABSTOP | _ES_AUTOHSCROLL
-	if opts.hideText {
-		flags |= _ES_PASSWORD
-	}
-	dlg.editCtl, _, _ = createWindowEx.Call(_WS_EX_CLIENTEDGE,
-		strptr("EDIT"), strptr(opts.entryText),
-		flags,
-		12, 30, 241, 24, dlg.wnd, 0, instance, 0)
+	var flags uintptr = _WS_CHILD | _WS_VISIBLE | _WS_GROUP | _WS_TABSTOP | _MCS_NOTODAY
+	dlg.dateCtl, _, _ = createWindowEx.Call(0,
+		strptr(_MONTHCAL_CLASS),
+		0, flags,
+		12, 30, 241, 164, dlg.wnd, 0, instance, 0)
 
 	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
-		12, 66, 75, 24, dlg.wnd, _IDOK, instance, 0)
+		12, 206, 75, 24, dlg.wnd, _IDOK, instance, 0)
 	dlg.cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-		12, 66, 75, 24, dlg.wnd, _IDCANCEL, instance, 0)
+		12, 206, 75, 24, dlg.wnd, _IDCANCEL, instance, 0)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 66, 75, 24, dlg.wnd, _IDNO, instance, 0)
+			12, 206, 75, 24, dlg.wnd, _IDNO, instance, 0)
+	}
+
+	if opts.time != nil {
+		var date _SYSTEMTIME
+		year, month, day := opts.time.Date()
+		date.year = uint16(year)
+		date.month = uint16(month)
+		date.day = uint16(day)
+		sendMessage.Call(dlg.dateCtl, _MCM_SETCURSEL, 0, uintptr(unsafe.Pointer(&date)))
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
-	setFocus.Call(dlg.editCtl)
+	setFocus.Call(dlg.dateCtl)
 	showWindow.Call(dlg.wnd, _SW_NORMAL, 0)
-	sendMessage.Call(dlg.editCtl, _EM_SETSEL, 0, intptr(-1))
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})
@@ -107,44 +113,44 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 	}
 
 	if err := messageLoop(dlg.wnd); err != nil {
-		return "", err
+		return time.Time{}, err
 	}
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", opts.ctx.Err()
+		return time.Time{}, opts.ctx.Err()
 	}
 	return dlg.out, dlg.err
 }
 
-func (dlg *entryDialog) layout(dpi dpi) {
+func (dlg *calendarDialog) layout(dpi dpi) {
 	font := dlg.font.forDPI(dpi)
 	sendMessage.Call(dlg.textCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.editCtl, _WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.dateCtl, _WM_SETFONT, font, 1)
 	sendMessage.Call(dlg.okBtn, _WM_SETFONT, font, 1)
 	sendMessage.Call(dlg.cancelBtn, _WM_SETFONT, font, 1)
 	sendMessage.Call(dlg.extraBtn, _WM_SETFONT, font, 1)
-	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(141), _SWP_NOZORDER|_SWP_NOMOVE)
+	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), _SWP_NOZORDER|_SWP_NOMOVE)
 	setWindowPos.Call(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	setWindowPos.Call(dlg.editCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), _SWP_NOZORDER)
+	setWindowPos.Call(dlg.dateCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), _SWP_NOZORDER)
 	if dlg.extraBtn == 0 {
-		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(95), dpi.scale(66), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(66), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 	} else {
-		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(12), dpi.scale(66), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		setWindowPos.Call(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(66), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(66), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		setWindowPos.Call(dlg.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		setWindowPos.Call(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		setWindowPos.Call(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 	}
 }
 
-func entryProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
-	var dlg *entryDialog
+func calendarProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
+	var dlg *calendarDialog
 	switch msg {
 	case _WM_NCCREATE:
 		saveBackRef(wnd, *lparam)
-		dlg = (*entryDialog)(*lparam)
+		dlg = (*calendarDialog)(*lparam)
 	case _WM_NCDESTROY:
 		deleteBackRef(wnd)
 	default:
-		dlg = (*entryDialog)(loadBackRef(wnd))
+		dlg = (*calendarDialog)(loadBackRef(wnd))
 	}
 
 	switch msg {
@@ -160,7 +166,9 @@ func entryProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) 
 		default:
 			return 1
 		case _IDOK, _IDYES:
-			dlg.out = getWindowString(dlg.editCtl)
+			var date _SYSTEMTIME
+			sendMessage.Call(dlg.dateCtl, _MCM_GETCURSEL, 0, uintptr(unsafe.Pointer(&date)))
+			dlg.out = time.Date(int(date.year), time.Month(date.month), int(date.day), 0, 0, 0, 0, time.UTC)
 		case _IDCANCEL:
 			dlg.err = ErrCanceled
 		case _IDNO:

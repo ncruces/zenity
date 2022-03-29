@@ -55,9 +55,7 @@ type options struct {
 	defaultItems  []string
 
 	// Calendar options
-	month time.Month
-	day   int
-	year  *int
+	time *time.Time
 
 	// File selection options
 	directory        bool

@@ -204,7 +204,7 @@ func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			hook := (*dialogHook)(loadBackRef(tid))
 			atomic.StoreUintptr(&hook.wnd, lparam.Wnd)
 			if hook.ctx != nil && hook.ctx.Err() != nil {
-				sendMessage.Call(lparam.Wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+				sendMessage.Call(lparam.Wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
 			} else if hook.init != nil {
 				hook.init(lparam.Wnd)
 			}
@@ -227,7 +227,7 @@ func (h *dialogHook) wait() {
 	select {
 	case <-h.ctx.Done():
 		if wnd := atomic.LoadUintptr(&h.wnd); wnd != 0 {
-			sendMessage.Call(wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+			sendMessage.Call(wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
 		}
 	case <-h.done:
 	}
@@ -505,6 +505,18 @@ type _WNDCLASSEX struct {
 	MenuName   *uint16
 	ClassName  *uint16
 	IconSm     uintptr
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
+type _SYSTEMTIME struct {
+	year         uint16
+	month        uint16
+	dayOfWeek    uint16
+	day          uint16
+	hour         uint16
+	minute       uint16
+	second       uint16
+	milliseconds uint16
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl

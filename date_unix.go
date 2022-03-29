@@ -15,14 +15,11 @@ func calendar(text string, opts options) (time.Time, error) {
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
 	args = appendIcon(args, opts)
-	if time.January <= opts.month && opts.month <= time.December {
-		args = append(args, "--month", strconv.Itoa(int(opts.month)))
-	}
-	if 1 <= opts.day && opts.day <= 31 {
-		args = append(args, "--day", strconv.Itoa(opts.day))
-	}
-	if opts.year != nil {
-		args = append(args, "--year", strconv.Itoa(*opts.year))
+	if opts.time != nil {
+		year, month, day := opts.time.Date()
+		args = append(args, "--month", strconv.Itoa(int(month)))
+		args = append(args, "--day", strconv.Itoa(day))
+		args = append(args, "--year", strconv.Itoa(year))
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
