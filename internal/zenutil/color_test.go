@@ -7,6 +7,36 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+func TestColorEquals(t *testing.T) {
+	if ColorEquals(nil, nil) == false {
+		t.Error("ColorEquals(nil, nil) == false")
+	}
+	if ColorEquals(nil, color.Black) == true {
+		t.Error("ColorEquals(nil, color.Black) == true")
+	}
+	if ColorEquals(color.Black, nil) == true {
+		t.Error("ColorEquals(color.Black, nil) == true")
+	}
+	if ColorEquals(color.Black, color.Black) == false {
+		t.Error("ColorEquals(color.Black, color.Black) == false")
+	}
+	if ColorEquals(color.Black, color.White) == true {
+		t.Error("ColorEquals(color.Black, color.White) == true")
+	}
+	if ColorEquals(color.Black, colornames.Red) == true {
+		t.Error("ColorEquals(color.Black, colornames.Red) == true")
+	}
+	if ColorEquals(color.Black, colornames.Green) == true {
+		t.Error("ColorEquals(color.Black, colornames.Green) == true")
+	}
+	if ColorEquals(color.Black, colornames.Blue) == true {
+		t.Error("ColorEquals(color.Black, colornames.Blue) == true")
+	}
+	if ColorEquals(color.Black, color.Transparent) == true {
+		t.Error("ColorEquals(color.Black, color.Transparent) == true")
+	}
+}
+
 func TestColor_names(t *testing.T) {
 	for _, name := range colornames.Names {
 		c1 := colornames.Map[name]
@@ -60,6 +90,7 @@ var colorTests = []struct {
 	{"rgba(128,128,128,0)", color.NRGBA{0x80, 0x80, 0x80, 0x00}},
 	{"rgba(128,128,128,1)", color.NRGBA{0x80, 0x80, 0x80, 0xff}},
 	{"rgba(128,128,128,0.0)", color.NRGBA{0x80, 0x80, 0x80, 0x00}},
+	{"rgba(128,128,128,0.5)", color.NRGBA{0x80, 0x80, 0x80, 0x80}},
 	{"rgba(128,128,128,1.0)", color.NRGBA{0x80, 0x80, 0x80, 0xff}},
 	{"not a color", nil},
 	{"", nil},
@@ -80,7 +111,7 @@ var colorTests = []struct {
 	{"rgba(128,128,128)", nil},
 }
 
-func TestColor_strings(t *testing.T) {
+func TestParseColor(t *testing.T) {
 	for _, test := range colorTests {
 		c := ParseColor(test.data)
 		if !ColorEquals(c, test.want) {

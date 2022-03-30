@@ -18,7 +18,7 @@ func Unescape(s string) string {
 	state := initial
 	for _, b := range []byte(s) {
 		switch state {
-		case initial:
+		default:
 			switch b {
 			case '\\':
 				state = escape1
