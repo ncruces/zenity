@@ -19,10 +19,10 @@ func Format(fmt string, t time.Time) string {
 
 	parser.writeFmt = func(fmt string) error {
 		switch fmt {
-		default:
-			res.WriteString(t.Format(fmt))
 		case "000", "000000", "000000000":
 			res.WriteString(t.Format("." + fmt)[1:])
+		default:
+			res.WriteString(t.Format(fmt))
 		}
 		return nil
 	}
@@ -80,14 +80,21 @@ func Layout(fmt string) (string, error) {
 
 	parser.writeLit = func(b byte) error {
 		if bytes.IndexByte([]byte("MonJan_0123456789"), b) >= 0 {
-			return errors.New("strftime: unsupported literal: " + string(b))
+			return errors.New("strftime: unsupported literal: '" + string(b) + "'")
 		}
 		res.WriteByte(b)
 		return nil
 	}
 
-	parser.writeFmt = func(s string) error {
-		res.WriteString(s)
+	parser.writeFmt = func(fmt string) error {
+		switch fmt {
+		case "000", "000000", "000000000":
+			res := res.String()
+			if len := len(res); len <= 0 || res[len-1] != '.' && res[len-1] != ',' {
+				return errors.New("strftime: unsupported specifier: fractional seconds must follow '.' or ','")
+			}
+		}
+		res.WriteString(fmt)
 		return nil
 	}
 
@@ -126,12 +133,12 @@ func UTS35(fmt string) (string, error) {
 		return nil
 	}
 
-	parser.writeFmt = func(s string) error {
+	parser.writeFmt = func(fmt string) error {
 		if literal {
 			literal = false
 			res.WriteByte(quote)
 		}
-		res.WriteString(s)
+		res.WriteString(fmt)
 		return nil
 	}
 

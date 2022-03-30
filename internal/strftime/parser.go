@@ -32,18 +32,18 @@ func (p *parser) parse() error {
 				state = nopadding
 				continue
 			}
-			if s, ok := p.specs[b]; ok {
-				err = p.writeFmt(s)
+			if fmt, ok := p.specs[b]; ok {
+				err = p.writeFmt(fmt)
 			} else {
 				err = p.fallback(b, true)
 			}
 			state = initial
 
 		case nopadding:
-			if s, ok := p.unpadded[b]; ok {
-				err = p.writeFmt(s)
-			} else if s, ok := p.specs[b]; ok {
-				err = p.writeFmt(s)
+			if fmt, ok := p.unpadded[b]; ok {
+				err = p.writeFmt(fmt)
+			} else if fmt, ok := p.specs[b]; ok {
+				err = p.writeFmt(fmt)
 			} else {
 				err = p.fallback(b, false)
 			}
