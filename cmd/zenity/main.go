@@ -522,7 +522,7 @@ func lstResult(l []string, err error) {
 
 func calResult(d time.Time, err error) {
 	errResult(err)
-	os.Stdout.WriteString(d.Format(zenutil.Strftime(zenutil.DateFormat)))
+	os.Stdout.WriteString(zenutil.Strftime(zenutil.DateFormat, d))
 	os.Stdout.WriteString(zenutil.LineBreak)
 }
 

@@ -1,11 +1,31 @@
 package zenutil
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 // Strftime is internal.
-func Strftime(fmt string) string {
+func Strftime(fmt string, t time.Time) string {
+	var res strings.Builder
+	writeLit := res.WriteByte
+	writeFmt := func(fmt string) (int, error) {
+		return res.WriteString(t.Format(fmt))
+	}
+	strftimeGo(fmt, writeLit, writeFmt)
+	return res.String()
+}
+
+// StrftimeLayout is internal.
+func StrftimeLayout(fmt string) string {
+	var res strings.Builder
+	strftimeGo(fmt, res.WriteByte, res.WriteString)
+	return res.String()
+}
+
+func strftimeGo(fmt string, writeLit func(byte) error, writeFmt func(string) (int, error)) {
 	// https://strftime.org/
-	return strftime(fmt, map[byte]string{
+	fmts := map[byte]string{
 		'B': "January",
 		'b': "Jan",
 		'h': "Jan",
@@ -41,19 +61,23 @@ func Strftime(fmt string) string {
 		'%': "%",
 		't': "\t",
 		'n': LineBreak,
-	}, map[byte]string{
+	}
+
+	unpaded := map[byte]string{
 		'm': "1",
 		'd': "2",
 		'I': "3",
 		'M': "4",
 		'S': "5",
-	})
+	}
+
+	parser(fmt, fmts, unpaded, writeLit, writeFmt)
 }
 
 // StrftimeUTS35 is internal.
 func StrftimeUTS35(fmt string) string {
 	// https://nsdateformatter.com/
-	return strftime(fmt, map[byte]string{
+	fmts := map[byte]string{
 		'B': "MMMM",
 		'b': "MMM",
 		'h': "MMM",
@@ -91,7 +115,9 @@ func StrftimeUTS35(fmt string) string {
 		'%': "%",
 		't': "\t",
 		'n': LineBreak,
-	}, map[byte]string{
+	}
+
+	unpaded := map[byte]string{
 		'm': "M",
 		'd': "d",
 		'j': "D",
@@ -99,12 +125,42 @@ func StrftimeUTS35(fmt string) string {
 		'I': "h",
 		'M': "m",
 		'S': "s",
-	})
+	}
+
+	const quote = '\''
+	var literal bool
+	var res strings.Builder
+
+	writeLit := func(b byte) error {
+		if b == quote {
+			res.WriteByte(quote)
+			return res.WriteByte(quote)
+		}
+		if !literal && ('a' <= b && b <= 'z' || 'A' <= b && b <= 'Z') {
+			literal = true
+			res.WriteByte(quote)
+		}
+		return res.WriteByte(b)
+	}
+
+	writeFmt := func(s string) (int, error) {
+		if literal {
+			literal = false
+			res.WriteByte(quote)
+		}
+		return res.WriteString(s)
+	}
+
+	parser(fmt, fmts, unpaded, writeLit, writeFmt)
+	writeFmt("")
+
+	return res.String()
 }
 
-func strftime(fmt string, formats, unpadded map[byte]string) string {
-	var res strings.Builder
-	res.Grow(len(fmt))
+func parser(
+	fmt string,
+	formats, unpadded map[byte]string,
+	writeLit func(byte) error, writeFmt func(string) (int, error)) {
 
 	const (
 		initial = iota
@@ -119,7 +175,7 @@ func strftime(fmt string, formats, unpadded map[byte]string) string {
 			if b == '%' {
 				state = special
 			} else {
-				res.WriteByte(b)
+				writeLit(b)
 			}
 
 		case special:
@@ -128,21 +184,22 @@ func strftime(fmt string, formats, unpadded map[byte]string) string {
 				continue
 			}
 			if s, ok := formats[b]; ok {
-				res.WriteString(s)
+				writeFmt(s)
 			} else {
-				res.WriteByte('%')
-				res.WriteByte(b)
+				writeLit('%')
+				writeLit(b)
 			}
 			state = initial
 
 		case padding:
 			if s, ok := unpadded[b]; ok {
-				res.WriteString(s)
+				writeFmt(s)
 			} else if s, ok := formats[b]; ok {
-				res.WriteString(s)
+				writeFmt(s)
 			} else {
-				res.WriteString("%-")
-				res.WriteByte(b)
+				writeLit('%')
+				writeLit('-')
+				writeLit(b)
 			}
 			state = initial
 		}
@@ -150,9 +207,9 @@ func strftime(fmt string, formats, unpadded map[byte]string) string {
 
 	switch state {
 	case padding:
-		res.WriteString("%-")
+		writeLit('%')
+		fallthrough
 	case special:
-		res.WriteByte('%')
+		writeLit('-')
 	}
-	return res.String()
 }
