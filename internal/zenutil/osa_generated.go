@@ -29,8 +29,10 @@ ObjC.import('stdlib')
 var date=$.NSDatePicker.alloc.init
 date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
 date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
-date.setDateValue($.NSDate.dateWithTimeIntervalSince1970({{.Date}}))
 date.setFrameSize(date.fittingSize)
+{{- if .Date}}
+date.setDateValue($.NSDate.dateWithTimeIntervalSince1970({{.Date}}))
+{{- end}}
 var alert=$.NSAlert.alloc.init
 alert.setAccessoryView(date)
 alert.setMessageText({{json .Text}})

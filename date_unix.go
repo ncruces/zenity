@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ncruces/zenity/internal/strftime"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -27,6 +28,5 @@ func calendar(text string, opts options) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	layout := zenutil.StrftimeLayout(zenutil.DateFormat)
-	return time.Parse(layout, str)
+	return strftime.Parse(zenutil.DateFormat, str)
 }

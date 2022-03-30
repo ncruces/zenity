@@ -3,16 +3,21 @@ package zenity
 import (
 	"time"
 
+	"github.com/ncruces/zenity/internal/strftime"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func calendar(text string, opts options) (time.Time, error) {
+func calendar(text string, opts options) (t time.Time, err error) {
 	var date zenutil.Date
 
 	date.OK, date.Cancel, date.Extra = getAlertButtons(opts)
-	date.Format = zenutil.StrftimeUTS35(zenutil.DateFormat)
+	date.Format, err = strftime.UTS35(zenutil.DateFormat)
+	if err != nil {
+		return
+	}
 	if opts.time != nil {
-		date.Date = opts.time.Unix()
+		unix := opts.time.Unix()
+		date.Date = &unix
 	}
 
 	if opts.title != nil {
@@ -25,8 +30,7 @@ func calendar(text string, opts options) (time.Time, error) {
 	out, err := zenutil.Run(opts.ctx, "date", date)
 	str, err := strResult(opts, out, err)
 	if err != nil {
-		return time.Time{}, err
+		return
 	}
-	layout := zenutil.StrftimeLayout(zenutil.DateFormat)
-	return time.Parse(layout, str)
+	return strftime.Parse(zenutil.DateFormat, str)
 }

@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/ncruces/zenity"
+	"github.com/ncruces/zenity/internal/strftime"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -522,7 +523,7 @@ func lstResult(l []string, err error) {
 
 func calResult(d time.Time, err error) {
 	errResult(err)
-	os.Stdout.WriteString(zenutil.Strftime(zenutil.DateFormat, d))
+	os.Stdout.WriteString(strftime.Format(zenutil.DateFormat, d))
 	os.Stdout.WriteString(zenutil.LineBreak)
 }
 

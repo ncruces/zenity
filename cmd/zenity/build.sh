@@ -18,7 +18,7 @@ go run github.com/randall77/makefat zenity zenity_macos_x64 zenity_macos_arm &&
 zip -9 zenity_macos.zip zenity
 
 zip -9 zenity_brew.zip zenity zenity.exe
-
 rm zenity zenity_macos_* zenity.exe
 
+GOOS=linux go build -tags dev
 go build -tags dev
