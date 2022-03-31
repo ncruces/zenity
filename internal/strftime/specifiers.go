@@ -19,6 +19,7 @@ func (p *parser) goSpecifiers() {
 		'Y': "2006",
 		'y': "06",
 		'p': "PM",
+		'P': "pm",
 		'Z': "MST",
 		'z': "-0700",
 		'L': "000",

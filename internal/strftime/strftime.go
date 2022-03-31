@@ -1,7 +1,6 @@
 package strftime
 
 import (
-	"bytes"
 	"errors"
 	"strconv"
 	"strings"
@@ -79,18 +78,32 @@ func Layout(fmt string) (string, error) {
 	parser.goSpecifiers()
 
 	parser.writeLit = func(b byte) error {
-		if bytes.IndexByte([]byte("MonJan_0123456789"), b) >= 0 {
-			return errors.New("strftime: unsupported literal: '" + string(b) + "'")
+		if '0' <= b && b <= '9' {
+			return errors.New("strftime: unsupported literal digit: '" + string(b) + "'")
 		}
 		res.WriteByte(b)
+		if b == 'M' || b == 'T' || b == 'm' || b == 'n' {
+			cur := res.String()
+			switch {
+			case strings.HasSuffix(cur, "Jan"):
+				return errors.New("strftime: unsupported literal: 'Jan'")
+			case strings.HasSuffix(cur, "Mon"):
+				return errors.New("strftime: unsupported literal: 'Mon'")
+			case strings.HasSuffix(cur, "MST"):
+				return errors.New("strftime: unsupported literal: 'MST'")
+			case strings.HasSuffix(cur, "PM"):
+				return errors.New("strftime: unsupported literal: 'PM'")
+			case strings.HasSuffix(cur, "pm"):
+				return errors.New("strftime: unsupported literal: 'pm'")
+			}
+		}
 		return nil
 	}
 
 	parser.writeFmt = func(fmt string) error {
 		switch fmt {
 		case "000", "000000", "000000000":
-			res := res.String()
-			if len := len(res); len <= 0 || res[len-1] != '.' && res[len-1] != ',' {
+			if cur := res.String(); !(strings.HasSuffix(cur, ".") || strings.HasSuffix(cur, ",")) {
 				return errors.New("strftime: unsupported specifier: fractional seconds must follow '.' or ','")
 			}
 		}
