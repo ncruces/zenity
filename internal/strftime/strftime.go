@@ -63,7 +63,11 @@ func Format(fmt string, t time.Time) string {
 				res.WriteString(strconv.Itoa(w))
 			}
 		case 'k':
-			res.WriteString(strconv.Itoa(t.Hour()))
+			h := t.Hour()
+			if h < 10 {
+				res.WriteByte(' ')
+			}
+			res.WriteString(strconv.Itoa(h))
 		case 'l':
 			h := t.Hour()
 			if h == 0 {
@@ -71,7 +75,12 @@ func Format(fmt string, t time.Time) string {
 			} else if h > 12 {
 				h -= 12
 			}
+			if h < 10 {
+				res.WriteByte(' ')
+			}
 			res.WriteString(strconv.Itoa(h))
+		case 's':
+			res.WriteString(strconv.FormatInt(t.Unix(), 10))
 		}
 		return nil
 	}
