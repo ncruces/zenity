@@ -324,3 +324,55 @@ func TestFormat_lestrrat(t *testing.T) {
 		}
 	}
 }
+
+func FuzzFormat(f *testing.F) {
+	for _, test := range timeTests {
+		f.Add(test.format)
+	}
+
+	f.Fuzz(func(t *testing.T, fmt string) {
+		s := Format(fmt, reference)
+		if s == "" && fmt != "" {
+			t.Errorf("Format(%q) = %q", fmt, s)
+		}
+	})
+}
+
+func FuzzParse(f *testing.F) {
+	for _, test := range timeTests {
+		f.Add(test.format, Format(test.format, reference))
+	}
+
+	f.Fuzz(func(t *testing.T, format, value string) {
+		tm, err := Parse(format, value)
+		if tm.IsZero() && err == nil {
+			t.Errorf("Parse(%q, %q) = (%v, %v)", format, value, tm, err)
+		}
+	})
+}
+
+func FuzzLayout(f *testing.F) {
+	for _, test := range timeTests {
+		f.Add(test.format)
+	}
+
+	f.Fuzz(func(t *testing.T, format string) {
+		layout, err := Layout(format)
+		if format != "" && layout == "" && err == nil {
+			t.Errorf("Layout(%q) = (%q, %v)", format, layout, err)
+		}
+	})
+}
+
+func FuzzUTS35(f *testing.F) {
+	for _, test := range timeTests {
+		f.Add(test.format)
+	}
+
+	f.Fuzz(func(t *testing.T, format string) {
+		pattern, err := UTS35(format)
+		if format != "" && pattern == "" && err == nil {
+			t.Errorf("UTS35(%q) = (%q, %v)", format, pattern, err)
+		}
+	})
+}
