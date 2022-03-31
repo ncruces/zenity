@@ -29,7 +29,11 @@ func Format(fmt string, t time.Time) string {
 	parser.fallback = func(spec byte, pad bool) error {
 		switch spec {
 		default:
-			return errors.New("strftime: unsupported specifier: %" + string(spec))
+			res.WriteByte('%')
+			if !pad {
+				res.WriteByte('-')
+			}
+			res.WriteByte(spec)
 		case 'C':
 			s := t.Format("2006")
 			res.WriteString(s[:len(s)-2])
@@ -45,6 +49,10 @@ func Format(fmt string, t time.Time) string {
 				res.WriteByte('0')
 			}
 			res.WriteString(strconv.Itoa(w))
+		case 'W':
+			res.WriteString(weekNumber(t, pad, true))
+		case 'U':
+			res.WriteString(weekNumber(t, pad, false))
 		case 'w':
 			w := int(t.Weekday())
 			res.WriteString(strconv.Itoa(w))
@@ -54,6 +62,16 @@ func Format(fmt string, t time.Time) string {
 			} else {
 				res.WriteString(strconv.Itoa(w))
 			}
+		case 'k':
+			res.WriteString(strconv.Itoa(t.Hour()))
+		case 'l':
+			h := t.Hour()
+			if h == 0 {
+				h = 12
+			} else if h > 12 {
+				h -= 12
+			}
+			res.WriteString(strconv.Itoa(h))
 		}
 		return nil
 	}

@@ -56,10 +56,15 @@ func (p *parser) parse() error {
 	}
 
 	switch state {
+	default:
+		return nil
 	case specifier:
 		return p.writeLit('%')
 	case nopadding:
+		err := p.writeLit('%')
+		if err != nil {
+			return err
+		}
 		return p.writeLit('-')
 	}
-	return nil
 }
