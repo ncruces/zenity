@@ -18,8 +18,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ncruces/go-strftime"
 	"github.com/ncruces/zenity"
-	"github.com/ncruces/zenity/internal/strftime"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
