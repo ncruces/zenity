@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -23,11 +24,9 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-const (
-	unspecified = "\x00"
-)
+const unspecified = "\x00"
 
-var tag = "v0.0.0"
+var tag = ""
 
 var (
 	// Application Options
@@ -278,7 +277,7 @@ func setupFlags() {
 func validateFlags() {
 	var n int
 	if version {
-		fmt.Printf("zenity %s %s/%s\n", tag, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("zenity %s %s/%s\n", getVersion(), runtime.GOOS, runtime.GOARCH)
 		fmt.Println("https://github.com/ncruces/zenity")
 		os.Exit(0)
 	}
@@ -538,9 +537,9 @@ func ingestPath(path string) string {
 		var args []string
 		switch {
 		case wslpath:
-			args = []string{"wsl", "wslpath", "-m"}
+			args = []string{"wsl", "wslpath", "-w"}
 		case cygpath:
-			args = []string{"cygpath", "-C", "UTF8", "-m"}
+			args = []string{"cygpath", "-C", "UTF8", "-w"}
 		}
 		if args != nil {
 			args = append(args, path)
@@ -615,4 +614,23 @@ func addFileFilter(s string) error {
 	fileFilters = append(fileFilters, filter)
 
 	return nil
+}
+
+func getVersion() string {
+	if tag != "" {
+		return tag
+	}
+
+	rev := "unknown"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, kv := range info.Settings {
+			if kv.Key == "vcs.modified" && kv.Value == "true" {
+				return "custom"
+			}
+			if kv.Key == "vcs.revision" {
+				rev = kv.Value
+			}
+		}
+	}
+	return rev
 }
