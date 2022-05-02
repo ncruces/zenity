@@ -124,7 +124,7 @@ func CancelLabel(cancel string) Option {
 	return funcOption(func(o *options) { o.cancelLabel = &cancel })
 }
 
-// ExtraButton returns an Option to add an extra button.
+// ExtraButton returns an Option to add one extra button.
 func ExtraButton(extra string) Option {
 	return funcOption(func(o *options) { o.extraButton = &extra })
 }
@@ -150,7 +150,7 @@ func Icon(icon DialogIcon) Option { return icon }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
 //
-// Dialogs dismissed by the Context return Context.Err.
+// Dialogs dismissed by ctx return ctx.Err().
 func Context(ctx context.Context) Option {
 	return funcOption(func(o *options) { o.ctx = ctx })
 }

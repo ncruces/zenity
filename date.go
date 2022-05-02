@@ -9,7 +9,7 @@ import (
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, DefaultDate.
 //
-// May return: ErrCanceled.
+// May return: ErrCanceled, ErrExtraButton.
 func Calendar(text string, options ...Option) (time.Time, error) {
 	return calendar(text, applyOptions(options))
 }

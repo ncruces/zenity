@@ -39,14 +39,14 @@ func Directory() Option {
 	return funcOption(func(o *options) { o.directory = true })
 }
 
-// ConfirmOverwrite returns an Option to confirm file selection if filename
+// ConfirmOverwrite returns an Option to confirm file selection if the file
 // already exists.
 func ConfirmOverwrite() Option {
 	return funcOption(func(o *options) { o.confirmOverwrite = true })
 }
 
-// ConfirmCreate returns an Option to confirm file selection if filename does
-// not yet exist (Windows only).
+// ConfirmCreate returns an Option to confirm file selection if the file
+// does not yet exist (Windows only).
 func ConfirmCreate() Option {
 	return funcOption(func(o *options) { o.confirmCreate = true })
 }

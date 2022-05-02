@@ -12,7 +12,7 @@ func List(text string, items []string, options ...Option) (string, error) {
 
 // ListItems displays the list dialog.
 //
-// May return: ErrCanceled, ErrExtraButton.
+// May return: ErrCanceled.
 func ListItems(text string, items ...string) (string, error) {
 	return List(text, items)
 }
@@ -29,7 +29,7 @@ func ListMultiple(text string, items []string, options ...Option) ([]string, err
 
 // ListMultipleItems displays the list dialog, allowing multiple items to be selected.
 //
-// May return: ErrCanceled, ErrExtraButton.
+// May return: ErrCanceled.
 func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }
