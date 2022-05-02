@@ -5,7 +5,7 @@ import (
 )
 
 func list(text string, items []string, opts options) (string, error) {
-	if opts.extraButton != nil {
+	if len(items) == 0 || opts.extraButton != nil {
 		return "", ErrUnsupported
 	}
 
@@ -23,7 +23,7 @@ func list(text string, items []string, opts options) (string, error) {
 }
 
 func listMultiple(text string, items []string, opts options) ([]string, error) {
-	if opts.extraButton != nil {
+	if len(items) == 0 || opts.extraButton != nil {
 		return nil, ErrUnsupported
 	}
 
