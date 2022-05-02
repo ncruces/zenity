@@ -26,8 +26,6 @@ import (
 
 const unspecified = "\x00"
 
-var tag = ""
-
 var (
 	// Application Options
 	errorDlg          bool
@@ -105,9 +103,9 @@ var (
 )
 
 func init() {
-	prevUsage := flag.Usage
+	usage := flag.Usage
 	flag.Usage = func() {
-		prevUsage()
+		usage()
 		os.Exit(-1)
 	}
 }

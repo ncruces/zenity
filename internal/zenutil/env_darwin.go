@@ -4,7 +4,7 @@ package zenutil
 var (
 	Command    bool
 	Timeout    int
-	LineBreak  = "\n"
 	Separator  = "\x00"
+	LineBreak  = "\n"
 	DateFormat = "%F"
 )

@@ -48,7 +48,7 @@ var res=alert.runModal
 switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Extra}})
 case $.NSAlertSecondButtonReturn:$.exit(1)}
 var fmt=$.NSDateFormatter.alloc.init
-fmt.dateFormat={{json .Format}}
+fmt.locale=$.NSLocale.localeWithLocaleIdentifier("en_US_POSIX");fmt.dateFormat={{json .Format}}
 fmt.stringFromDate(date.dateValue)
 {{- end}}
 {{define "dialog" -}}

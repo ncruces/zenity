@@ -1,3 +1,4 @@
+// Package zenutil is internal. DO NOT USE.
 package zenutil
 
 // These are internal.
