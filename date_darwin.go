@@ -3,7 +3,6 @@ package zenity
 import (
 	"time"
 
-	"github.com/ncruces/go-strftime"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -11,7 +10,7 @@ func calendar(text string, opts options) (t time.Time, err error) {
 	var date zenutil.Date
 
 	date.OK, date.Cancel, date.Extra = getAlertButtons(opts)
-	date.Format, err = strftime.UTS35(zenutil.DateFormat)
+	date.Format, err = zenutil.DateUTS35()
 	if err != nil {
 		return
 	}
@@ -32,5 +31,5 @@ func calendar(text string, opts options) (t time.Time, err error) {
 	if err != nil {
 		return
 	}
-	return strftime.Parse(zenutil.DateFormat, str)
+	return zenutil.DateParse(str)
 }

@@ -116,6 +116,8 @@ func main() {
 	validateFlags()
 	opts := loadFlags()
 	zenutil.Command = true
+	zenutil.DateUTS35 = func() (string, error) { return strftime.UTS35(zenutil.DateFormat) }
+	zenutil.DateParse = func(s string) (time.Time, error) { return strftime.Parse(zenutil.DateFormat, s) }
 	if unixeol {
 		zenutil.LineBreak = "\n"
 	}
