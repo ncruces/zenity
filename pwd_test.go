@@ -61,7 +61,9 @@ func TestPassword_username(t *testing.T) {
 		t.Skip("skipping:", err)
 	}
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		if err != zenity.ErrUnsupported {
+		if errors.Is(err, zenity.ErrUnsupported) {
+			t.Skip("was not unsupported:", err)
+		} else {
 			t.Error("was not unsupported:", err)
 		}
 	} else {
@@ -92,7 +94,7 @@ func TestPassword_script(t *testing.T) {
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
 			}
-			if err == zenity.ErrUnsupported {
+			if errors.Is(err, zenity.ErrUnsupported) {
 				t.Skip("was not unsupported:", err)
 			}
 			if usr != tt.usr || pwd != tt.pwd || err != tt.err {

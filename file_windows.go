@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"syscall"
@@ -199,7 +200,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		_IID_IFileOpenDialog, uintptr(unsafe.Pointer(&dialog)))
 	if int32(hr) < 0 {
 		if multi {
-			return "", nil, ErrUnsupported
+			return "", nil, fmt.Errorf("%w: multiple directory", ErrUnsupported)
 		}
 		return browseForFolder(opts)
 	}
