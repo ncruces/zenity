@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TAG=$(git tag --points-at HEAD)
-echo 'package main; const tag = "'$TAG'"' > tag.go
+echo 'package main; const tag = "'$TAG'"' | gofmt > tag.go
 
 go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 

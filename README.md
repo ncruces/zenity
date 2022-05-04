@@ -35,6 +35,10 @@ The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/):
 
     brew install ncruces/tap/zenity
 
+The `zenity` command on Windows using [Scoop](https://scoop.sh/):
+
+    scoop install https://ncruces.github.io/scoop/zenity.json
+
 The `zenity` command on macOS/Windows if you have Go:
 
     go install github.com/ncruces/zenity/cmd/zenity@latest
