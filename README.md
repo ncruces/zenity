@@ -31,11 +31,11 @@ The Go package:
 
     go get github.com/ncruces/zenity
 
-The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/):
+The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/) 🍺:
 
     brew install ncruces/tap/zenity
 
-The `zenity` command on Windows using [Scoop](https://scoop.sh/):
+The `zenity` command on Windows using [Scoop](https://scoop.sh/) 🍨:
 
     scoop install https://ncruces.github.io/scoop/zenity.json
 
