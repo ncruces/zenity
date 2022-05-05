@@ -39,7 +39,7 @@ type options struct {
 	cancelLabel   *string
 	extraButton   *string
 	icon          DialogIcon
-	iconPath      *string
+	customIcon    string
 	defaultCancel bool
 
 	// Message options
@@ -133,7 +133,10 @@ func ExtraButton(extra string) Option {
 // DialogIcon is an Option that sets the dialog icon.
 type DialogIcon int
 
-func (i DialogIcon) apply(o *options) { o.icon = i }
+func (i DialogIcon) apply(o *options) {
+	o.customIcon = ""
+	o.icon = i
+}
 
 // The stock dialog icons.
 const (
@@ -148,12 +151,15 @@ const (
 
 // Icon returns an Option to set the dialog icon.
 //
-// Deprecated: use DialogIcon directly.
+// Tip: use DialogIcon directly.
 func Icon(icon DialogIcon) Option { return icon }
 
-// Icon returns an Option to set an icon loaded from a file.
+// Icon returns an Option to set a custom dialog icon, loaded from a file.
 func CustomIcon(path string) Option {
-	return funcOption(func(o *options) { o.iconPath = &path })
+	return funcOption(func(o *options) {
+		o.icon = unspecifiedIcon
+		o.customIcon = path
+	})
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
