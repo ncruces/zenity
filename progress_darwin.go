@@ -1,12 +1,14 @@
 package zenity
 
 import (
+	"fmt"
+
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 func progress(opts options) (ProgressDialog, error) {
 	if opts.extraButton != nil {
-		return nil, ErrUnsupported
+		return nil, fmt.Errorf("%w: extra button", ErrUnsupported)
 	}
 
 	var data zenutil.Progress

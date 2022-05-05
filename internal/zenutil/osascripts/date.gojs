@@ -1,0 +1,40 @@
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+app.activate()
+
+ObjC.import('Cocoa')
+ObjC.import('stdio')
+ObjC.import('stdlib')
+
+var date = $.NSDatePicker.alloc.init
+date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
+date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
+date.setFrameSize(date.fittingSize)
+{{- if .Date}}
+  date.setDateValue($.NSDate.dateWithTimeIntervalSince1970({{.Date}}))
+{{- end}}
+
+var alert = $.NSAlert.alloc.init
+alert.setAccessoryView(date)
+alert.setMessageText({{json .Text}})
+alert.addButtonWithTitle({{json .OK}})
+alert.addButtonWithTitle({{json .Cancel}}).keyEquivalent = '\033'
+{{- if .Info}}
+	alert.setInformativeText({{json .Info}})
+{{- end}}
+{{- if .Extra}}
+	alert.addButtonWithTitle({{json .Extra}})
+{{- end}}
+
+var res = alert.runModal
+switch (res) {
+case $.NSAlertThirdButtonReturn:
+	$.puts({{json .Extra}})
+case $.NSAlertSecondButtonReturn:
+	$.exit(1)
+}
+
+var fmt = $.NSDateFormatter.alloc.init
+fmt.locale = $.NSLocale.localeWithLocaleIdentifier("en_US_POSIX");
+fmt.dateFormat = {{json .Format}}
+fmt.stringFromDate(date.dateValue)

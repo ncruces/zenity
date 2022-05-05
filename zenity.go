@@ -13,6 +13,7 @@ package zenity
 import (
 	"context"
 	"image/color"
+	"time"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
@@ -53,6 +54,9 @@ type options struct {
 	// List options
 	disallowEmpty bool
 	defaultItems  []string
+
+	// Calendar options
+	time *time.Time
 
 	// File selection options
 	directory        bool
@@ -121,19 +125,20 @@ func CancelLabel(cancel string) Option {
 	return funcOption(func(o *options) { o.cancelLabel = &cancel })
 }
 
-// ExtraButton returns an Option to add an extra button.
+// ExtraButton returns an Option to add one extra button.
 func ExtraButton(extra string) Option {
 	return funcOption(func(o *options) { o.extraButton = &extra })
 }
 
-// DialogIcon is the enumeration for dialog icons.
+// DialogIcon is an Option that sets the dialog icon.
 type DialogIcon int
 
 func (i DialogIcon) apply(o *options) { o.icon = i }
 
 // The stock dialog icons.
 const (
-	ErrorIcon DialogIcon = iota + 1
+	unspecifiedIcon DialogIcon = iota
+	ErrorIcon
 	WarningIcon
 	InfoIcon
 	QuestionIcon
@@ -142,6 +147,8 @@ const (
 )
 
 // Icon returns an Option to set the dialog icon.
+//
+// Deprecated: use DialogIcon directly.
 func Icon(icon DialogIcon) Option { return icon }
 
 // Icon returns an Option to set an icon loaded from a file.
@@ -151,7 +158,7 @@ func CustomIcon(path string) Option {
 
 // Context returns an Option to set a Context that can dismiss the dialog.
 //
-// Dialogs dismissed by the Context return Context.Err.
+// Dialogs dismissed by ctx return ctx.Err().
 func Context(ctx context.Context) Option {
 	return funcOption(func(o *options) { o.ctx = ctx })
 }

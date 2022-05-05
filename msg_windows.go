@@ -16,29 +16,40 @@ func message(kind messageKind, text string, opts options) error {
 
 	switch {
 	case kind == questionKind && opts.extraButton != nil:
-		flags |= 0x3 // MB_YESNOCANCEL
+		flags |= _MB_YESNOCANCEL
 	case kind == questionKind:
-		flags |= 0x1 // MB_OKCANCEL
+		flags |= _MB_OKCANCEL
 	case opts.extraButton != nil:
-		flags |= 0x4 // MB_YESNO
+		flags |= _MB_YESNO
 	}
 
 	switch opts.icon {
 	case ErrorIcon:
-		flags |= 0x10 // MB_ICONERROR
+		flags |= _MB_ICONERROR
 	case QuestionIcon:
-		flags |= 0x20 // MB_ICONQUESTION
+		flags |= _MB_ICONQUESTION
 	case WarningIcon:
-		flags |= 0x30 // MB_ICONWARNING
+		flags |= _MB_ICONWARNING
 	case InfoIcon:
-		flags |= 0x40 // MB_ICONINFORMATION
+		flags |= _MB_ICONINFORMATION
+	case unspecifiedIcon:
+		switch kind {
+		case errorKind:
+			flags |= _MB_ICONERROR
+		case questionKind:
+			flags |= _MB_ICONQUESTION
+		case warningKind:
+			flags |= _MB_ICONWARNING
+		case infoKind:
+			flags |= _MB_ICONINFORMATION
+		}
 	}
 
 	if kind == questionKind && opts.defaultCancel {
 		if opts.extraButton == nil {
-			flags |= 0x100 // MB_DEFBUTTON2
+			flags |= _MB_DEFBUTTON2
 		} else {
-			flags |= 0x200 // MB_DEFBUTTON3
+			flags |= _MB_DEFBUTTON3
 		}
 	}
 
@@ -63,11 +74,11 @@ func message(kind messageKind, text string, opts options) error {
 		return opts.ctx.Err()
 	}
 	switch s {
-	case 1, 6: // IDOK, IDYES
+	case _IDOK, _IDYES:
 		return nil
-	case 2: // IDCANCEL
+	case _IDCANCEL:
 		return ErrCanceled
-	case 7: // IDNO
+	case _IDNO:
 		return ErrExtraButton
 	default:
 		return err
@@ -89,11 +100,11 @@ func hookMessageLabelsCallback(wnd uintptr, lparam *options) uintptr {
 		ctl, _, _ := getDlgCtrlID.Call(wnd)
 		var text *string
 		switch ctl {
-		case 1, 6: // IDOK, IDYES
+		case _IDOK, _IDYES:
 			text = lparam.okLabel
-		case 2: // IDCANCEL
+		case _IDCANCEL:
 			text = lparam.cancelLabel
-		case 7: // IDNO
+		case _IDNO:
 			text = lparam.extraButton
 		}
 		if text != nil {

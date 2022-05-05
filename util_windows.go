@@ -191,23 +191,32 @@ func newDialogHook(ctx context.Context, initDialog func(wnd uintptr)) (*dialogHo
 		go hook.wait()
 	}
 
-	saveDialogHook(&hook)
+	saveBackRef(tid, unsafe.Pointer(&hook))
 	return &hook, nil
 }
 
-func initDialogHook(wnd uintptr) {
-	tid, _, _ := getCurrentThreadId.Call()
-	hook := loadDialogHook(tid)
-	atomic.StoreUintptr(&hook.wnd, wnd)
-	if hook.ctx != nil && hook.ctx.Err() != nil {
-		sendMessage.Call(wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
-	} else if hook.init != nil {
-		hook.init(wnd)
+func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+	if lparam.Message == 0x0110 { // WM_INITDIALOG
+		var name [8]uint16
+		getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
+		if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
+			tid, _, _ := getCurrentThreadId.Call()
+			hook := (*dialogHook)(loadBackRef(tid))
+			atomic.StoreUintptr(&hook.wnd, lparam.Wnd)
+			if hook.ctx != nil && hook.ctx.Err() != nil {
+				sendMessage.Call(lparam.Wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+			} else if hook.init != nil {
+				hook.init(lparam.Wnd)
+			}
+		}
 	}
+	next, _, _ := callNextHookEx.Call(
+		0, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
+	return next
 }
 
 func (h *dialogHook) unhook() {
-	deleteDialogHook(h.tid)
+	deleteBackRef(h.tid)
 	if h.done != nil {
 		close(h.done)
 	}
@@ -218,49 +227,10 @@ func (h *dialogHook) wait() {
 	select {
 	case <-h.ctx.Done():
 		if wnd := atomic.LoadUintptr(&h.wnd); wnd != 0 {
-			sendMessage.Call(wnd, 0x0112 /* WM_SYSCOMMAND */, 0xf060 /* SC_CLOSE */, 0)
+			sendMessage.Call(wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
 		}
 	case <-h.done:
 	}
-}
-
-func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
-	if lparam.Message == 0x0110 { // WM_INITDIALOG
-		var name [8]uint16
-		getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-		if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
-			initDialogHook(lparam.Wnd)
-		}
-	}
-	next, _, _ := callNextHookEx.Call(
-		0, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
-	return next
-}
-
-var dialogHooks struct {
-	sync.Mutex
-	m map[uintptr]*dialogHook
-}
-
-func saveDialogHook(h *dialogHook) {
-	dialogHooks.Lock()
-	defer dialogHooks.Unlock()
-	if dialogHooks.m == nil {
-		dialogHooks.m = map[uintptr]*dialogHook{}
-	}
-	dialogHooks.m[h.tid] = h
-}
-
-func loadDialogHook(tid uintptr) *dialogHook {
-	dialogHooks.Lock()
-	defer dialogHooks.Unlock()
-	return dialogHooks.m[tid]
-}
-
-func deleteDialogHook(tid uintptr) {
-	dialogHooks.Lock()
-	defer dialogHooks.Unlock()
-	delete(dialogHooks.m, tid)
 }
 
 func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelFunc, err error) {
@@ -271,6 +241,32 @@ func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelF
 		}
 	}
 	return hookDialog(ctx, init)
+}
+
+var backRefs struct {
+	sync.Mutex
+	m map[uintptr]unsafe.Pointer
+}
+
+func saveBackRef(id uintptr, ptr unsafe.Pointer) {
+	backRefs.Lock()
+	defer backRefs.Unlock()
+	if backRefs.m == nil {
+		backRefs.m = map[uintptr]unsafe.Pointer{}
+	}
+	backRefs.m[id] = ptr
+}
+
+func loadBackRef(id uintptr) unsafe.Pointer {
+	backRefs.Lock()
+	defer backRefs.Unlock()
+	return backRefs.m[id]
+}
+
+func deleteBackRef(id uintptr) {
+	backRefs.Lock()
+	defer backRefs.Unlock()
+	delete(backRefs.m, id)
 }
 
 type dpi uintptr
@@ -291,7 +287,7 @@ func getDPI(wnd uintptr) dpi {
 	return dpi(res)
 }
 
-func (d dpi) Scale(dim uintptr) uintptr {
+func (d dpi) scale(dim uintptr) uintptr {
 	if d == 0 {
 		return dim
 	}
@@ -311,16 +307,16 @@ func getFont() font {
 	return font{logical: metrics.MessageFont}
 }
 
-func (f *font) ForDPI(dpi dpi) uintptr {
-	if h := -int32(dpi.Scale(12)); f.handle == 0 || f.logical.Height != h {
-		f.Delete()
+func (f *font) forDPI(dpi dpi) uintptr {
+	if h := -int32(dpi.scale(12)); f.handle == 0 || f.logical.Height != h {
+		f.delete()
 		f.logical.Height = h
 		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.logical)))
 	}
 	return f.handle
 }
 
-func (f *font) Delete() {
+func (f *font) delete() {
 	if f.handle != 0 {
 		deleteObject.Call(f.handle)
 		f.handle = 0
@@ -509,6 +505,18 @@ type _WNDCLASSEX struct {
 	MenuName   *uint16
 	ClassName  *uint16
 	IconSm     uintptr
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
+type _SYSTEMTIME struct {
+	year         uint16
+	month        uint16
+	dayOfWeek    uint16
+	day          uint16
+	hour         uint16
+	minute       uint16
+	second       uint16
+	milliseconds uint16
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl

@@ -6,29 +6,29 @@ ObjC.import('stdlib')
 ObjC.import('readline')
 
 {{- if .Total}}
-    Progress.totalUnitCount = {{.Total}}
+  Progress.totalUnitCount = {{.Total}}
 {{- end}}
 {{- if .Description}}
-    Progress.description = {{json .Description}}
+  Progress.description = {{json .Description}}
 {{- end}}
 
 while (true) {
-    var s
-    try {
-        s = $.readline('')
-    } catch (e) {
-        if (e.errorNumber === -128) $.exit(1)
-        break
-    }
+  var s
+  try {
+    s = $.readline('')
+  } catch (e) {
+    if (e.errorNumber === -128) $.exit(1)
+    break
+  }
 
-    if (s.indexOf('#') === 0) {
-        Progress.additionalDescription = s.slice(1)
-        continue
-    }
+  if (s.indexOf('#') === 0) {
+    Progress.additionalDescription = s.slice(1)
+    continue
+  }
 
-    var i = parseInt(s)
-    if (i >= 0 && Progress.totalUnitCount > 0) {
-        Progress.completedUnitCount = i
-        continue
-    }
+  var i = parseInt(s)
+  if (i >= 0 && Progress.totalUnitCount > 0) {
+    Progress.completedUnitCount = i
+    continue
+  }
 }

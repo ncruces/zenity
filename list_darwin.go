@@ -1,12 +1,17 @@
 package zenity
 
 import (
+	"fmt"
+
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 func list(text string, items []string, opts options) (string, error) {
+	if len(items) == 0 {
+		return "", fmt.Errorf("%w: empty items list", ErrUnsupported)
+	}
 	if opts.extraButton != nil {
-		return "", ErrUnsupported
+		return "", fmt.Errorf("%w: extra button", ErrUnsupported)
 	}
 
 	var data zenutil.List
@@ -23,8 +28,11 @@ func list(text string, items []string, opts options) (string, error) {
 }
 
 func listMultiple(text string, items []string, opts options) ([]string, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("%w: empty items list", ErrUnsupported)
+	}
 	if opts.extraButton != nil {
-		return nil, ErrUnsupported
+		return nil, fmt.Errorf("%w: extra button", ErrUnsupported)
 	}
 
 	var data zenutil.List

@@ -27,7 +27,7 @@ func ParseColor(s string) color.Color {
 		}
 	}
 
-	if len(s) >= 10 {
+	if len(s) >= 10 && "rgb" == s[:3] {
 		c := color.NRGBA{A: 0xff}
 		if _, err := fmt.Sscanf(s, "rgb(%d,%d,%d)", &c.R, &c.G, &c.B); err == nil {
 			return c

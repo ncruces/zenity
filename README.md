@@ -17,6 +17,7 @@ Implemented dialogs:
 * [password](https://github.com/ncruces/zenity/wiki/Password-dialog)
 * [file selection](https://github.com/ncruces/zenity/wiki/File-selection-dialog)
 * [color selection](https://github.com/ncruces/zenity/wiki/Color-selection-dialog)
+* [calendar](https://github.com/ncruces/zenity/wiki/Calendar-dialog)
 * [progress](https://github.com/ncruces/zenity/wiki/Progress-dialog)
 * [notification](https://github.com/ncruces/zenity/wiki/Notification)
 
@@ -33,6 +34,14 @@ The Go package:
 The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/):
 
     brew install ncruces/tap/zenity
+
+The `zenity` command on Windows using [Scoop](https://scoop.sh/):
+
+    scoop install https://ncruces.github.io/scoop/zenity.json
+
+The `zenity` command on macOS/Windows if you have Go:
+
+    go install github.com/ncruces/zenity/cmd/zenity@latest
 
 Or download the [latest release](https://github.com/ncruces/zenity/releases/latest).
 

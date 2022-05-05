@@ -5,6 +5,8 @@ import "image/color"
 // SelectColor displays the color selection dialog.
 //
 // Valid options: Title, Color, ShowPalette.
+//
+// May return: ErrCanceled.
 func SelectColor(options ...Option) (color.Color, error) {
 	return selectColor(applyOptions(options))
 }

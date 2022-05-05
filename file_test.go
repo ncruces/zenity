@@ -187,7 +187,7 @@ func TestSelectFileMutiple_script(t *testing.T) {
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
 		}
-		if err == zenity.ErrUnsupported {
+		if errors.Is(err, zenity.ErrUnsupported) {
 			t.Skip("was not unsupported:", err)
 		}
 		if lst == nil || err != nil {

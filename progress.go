@@ -4,6 +4,8 @@ package zenity
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, MaxValue, Pulsate, NoCancel, TimeRemaining.
+//
+// May return: ErrUnsupported.
 func Progress(options ...Option) (ProgressDialog, error) {
 	return progress(applyOptions(options))
 }
@@ -25,7 +27,7 @@ type ProgressDialog interface {
 	// Close closes the dialog.
 	Close() error
 
-	// Done returns a channel that's closed when the dialog is closed.
+	// Done returns a channel that is closed when the dialog is closed.
 	Done() <-chan struct{}
 }
 

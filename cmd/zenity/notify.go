@@ -1,4 +1,4 @@
-// +build windows darwin dev
+//go:build windows || darwin || dev
 
 package main
 
@@ -14,11 +14,14 @@ import (
 
 func notify(opts ...zenity.Option) error {
 	if !listen {
+		if text == unspecified {
+			return nil
+		}
 		return zenity.Notify(text, opts...)
 	}
 
 	zenutil.Command = false
-	icon := zenity.InfoIcon
+	ico := zenity.NoIcon
 	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
 		line := scanner.Text()
 		var cmd, msg string
@@ -32,20 +35,20 @@ func notify(opts ...zenity.Option) error {
 		case "icon":
 			switch msg {
 			case "error", "dialog-error":
-				icon = zenity.ErrorIcon
+				ico = zenity.ErrorIcon
 			case "info", "dialog-information":
-				icon = zenity.InfoIcon
+				ico = zenity.InfoIcon
 			case "question", "dialog-question":
-				icon = zenity.QuestionIcon
+				ico = zenity.QuestionIcon
 			case "important", "warning", "dialog-warning":
-				icon = zenity.WarningIcon
+				ico = zenity.WarningIcon
 			case "dialog-password":
-				icon = zenity.PasswordIcon
+				ico = zenity.PasswordIcon
 			default:
-				icon = zenity.NoIcon
+				ico = zenity.NoIcon
 			}
 		case "message", "tooltip":
-			opts := []zenity.Option{icon}
+			opts := []zenity.Option{ico}
 			if n := strings.IndexByte(msg, '\n'); n >= 0 {
 				opts = append(opts, zenity.Title(msg[:n]))
 				msg = msg[n+1:]

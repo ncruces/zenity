@@ -19,6 +19,12 @@ func init() {
 	}
 }
 
+const (
+	_CC_RGBINIT         = 0x00000001
+	_CC_FULLOPEN        = 0x00000002
+	_CC_PREVENTFULLOPEN = 0x00000004
+)
+
 func selectColor(opts options) (color.Color, error) {
 	// load custom colors
 	colorsMutex.Lock()
@@ -30,14 +36,14 @@ func selectColor(opts options) (color.Color, error) {
 	args.CustColors = &customColors
 
 	if opts.color != nil {
-		args.Flags |= 0x1 // CC_RGBINIT
+		args.Flags |= _CC_RGBINIT
 		n := color.NRGBAModel.Convert(opts.color).(color.NRGBA)
 		args.RgbResult = uint32(n.R) | uint32(n.G)<<8 | uint32(n.B)<<16
 	}
 	if opts.showPalette {
-		args.Flags |= 0x4 // CC_PREVENTFULLOPEN
+		args.Flags |= _CC_PREVENTFULLOPEN
 	} else {
-		args.Flags |= 0x2 // CC_FULLOPEN
+		args.Flags |= _CC_FULLOPEN
 	}
 
 	defer setup()()

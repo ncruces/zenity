@@ -1,4 +1,4 @@
-// +build windows darwin dev
+//go:build windows || darwin || dev
 
 package main
 
@@ -14,19 +14,17 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/ncruces/go-strftime"
 	"github.com/ncruces/zenity"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-const (
-	unspecified = "\x00"
-)
-
-var tag = "v0.0.0"
+const unspecified = "\x00"
 
 var (
 	// Application Options
@@ -36,6 +34,7 @@ var (
 	questionDlg       bool
 	entryDlg          bool
 	listDlg           bool
+	calendarDlg       bool
 	passwordDlg       bool
 	fileSelectionDlg  bool
 	colorSelectionDlg bool
@@ -65,6 +64,11 @@ var (
 	// List options
 	columns    int
 	allowEmpty bool
+
+	// Calendar options
+	year  uint
+	month uint
+	day   uint
 
 	// File selection options
 	save             bool
@@ -99,9 +103,9 @@ var (
 )
 
 func init() {
-	prevUsage := flag.Usage
+	usage := flag.Usage
 	flag.Usage = func() {
-		prevUsage()
+		usage()
 		os.Exit(-1)
 	}
 }
@@ -112,6 +116,8 @@ func main() {
 	validateFlags()
 	opts := loadFlags()
 	zenutil.Command = true
+	zenutil.DateUTS35 = func() (string, error) { return strftime.UTS35(zenutil.DateFormat) }
+	zenutil.DateParse = func(s string) (time.Time, error) { return strftime.Parse(zenutil.DateFormat, s) }
 	if unixeol {
 		zenutil.LineBreak = "\n"
 	}
@@ -144,6 +150,9 @@ func main() {
 		} else {
 			strResult(zenity.List(text, flag.Args(), opts...))
 		}
+
+	case calendarDlg:
+		calResult(zenity.Calendar(text, opts...))
 
 	case passwordDlg:
 		_, pw, err := zenity.Password(opts...)
@@ -181,6 +190,7 @@ func setupFlags() {
 	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
 	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
 	flag.BoolVar(&listDlg, "list", false, "Display list dialog")
+	flag.BoolVar(&calendarDlg, "calendar", false, "Display calendar dialog")
 	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
 	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
 	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
@@ -191,9 +201,9 @@ func setupFlags() {
 	flag.StringVar(&title, "title", "", "Set the dialog `title`")
 	flag.UintVar(&width, "width", 0, "Set the `width`")
 	flag.UintVar(&height, "height", 0, "Set the `height`")
-	flag.StringVar(&okLabel, "ok-label", "", "Set the label of the OK button")
-	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the label of the Cancel button")
-	flag.StringVar(&extraButton, "extra-button", "", "Add an extra button")
+	flag.StringVar(&okLabel, "ok-label", "", "Set the `label` of the OK button")
+	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the `label` of the Cancel button")
+	flag.Func("extra-button", "Add an extra `button`", setExtraButton)
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
@@ -210,9 +220,15 @@ func setupFlags() {
 	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
 
 	// List options
-	flag.Func("column", "Set the column header", addColumn)
+	flag.Func("column", "Set the column `header`", addColumn)
 	flag.Bool("hide-header", true, "Hide the column headers")
 	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
+
+	// Calendar options
+	flag.UintVar(&year, "year", 0, "Set the calendar `year`")
+	flag.UintVar(&month, "month", 0, "Set the calendar `month`")
+	flag.UintVar(&day, "day", 0, "Set the calendar `day`")
+	flag.StringVar(&zenutil.DateFormat, "date-format", "%m/%d/%Y", "Set the `format` for the returned date")
 
 	// File selection options
 	flag.BoolVar(&save, "save", false, "Activate save mode")
@@ -221,7 +237,7 @@ func setupFlags() {
 	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
 	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
 	flag.StringVar(&filename, "filename", "", "Set the `filename`")
-	flag.Func("file-filter", "Set a filename filter (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
+	flag.Func("file-filter", "Set a filename `filter` (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
 
 	// Color selection options
 	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
@@ -261,7 +277,7 @@ func setupFlags() {
 func validateFlags() {
 	var n int
 	if version {
-		fmt.Printf("zenity %s %s/%s\n", tag, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("zenity %s %s/%s\n", getVersion(), runtime.GOOS, runtime.GOARCH)
 		fmt.Println("https://github.com/ncruces/zenity")
 		os.Exit(0)
 	}
@@ -281,6 +297,9 @@ func validateFlags() {
 		n++
 	}
 	if listDlg {
+		n++
+	}
+	if calendarDlg {
 		n++
 	}
 	if passwordDlg {
@@ -316,22 +335,18 @@ func loadFlags() []zenity.Option {
 	switch {
 	case errorDlg:
 		setDefault(&title, "Error")
-		setDefault(&icon, "dialog-error")
 		setDefault(&text, "An error has occurred.")
 		setDefault(&okLabel, "OK")
 	case infoDlg:
 		setDefault(&title, "Information")
-		setDefault(&icon, "dialog-information")
 		setDefault(&text, "All updates are complete.")
 		setDefault(&okLabel, "OK")
 	case warningDlg:
 		setDefault(&title, "Warning")
-		setDefault(&icon, "dialog-warning")
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "OK")
 	case questionDlg:
 		setDefault(&title, "Question")
-		setDefault(&icon, "dialog-question")
 		setDefault(&text, "Are you sure you want to proceed?")
 		setDefault(&okLabel, "Yes")
 		setDefault(&cancelLabel, "No")
@@ -345,20 +360,20 @@ func loadFlags() []zenity.Option {
 		setDefault(&text, "Select items from the list below:")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
+	case calendarDlg:
+		setDefault(&title, "Calendar selection")
+		setDefault(&text, "Select a date from below:")
+		setDefault(&okLabel, "OK")
+		setDefault(&cancelLabel, "Cancel")
 	case passwordDlg:
 		setDefault(&title, "Type your password")
-		setDefault(&icon, "dialog-password")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
 	case progressDlg:
 		setDefault(&title, "Progress")
-		setDefault(&text, "Running...")
+		setDefault(&text, "Running…")
 		setDefault(&okLabel, "OK")
 		setDefault(&cancelLabel, "Cancel")
-	case notification:
-		setDefault(&icon, "dialog-information")
-	default:
-		setDefault(&text, "")
 	}
 
 	// General options
@@ -390,10 +405,12 @@ func loadFlags() []zenity.Option {
 		ico = zenity.WarningIcon
 	case "dialog-password":
 		ico = zenity.PasswordIcon
-	case "":
+	default:
 		ico = zenity.NoIcon
 	}
-	opts = append(opts, ico)
+	if icon != unspecified {
+		opts = append(opts, ico)
+	}
 
 	// Message options
 
@@ -419,6 +436,18 @@ func loadFlags() []zenity.Option {
 	if !allowEmpty {
 		opts = append(opts, zenity.DisallowEmpty())
 	}
+
+	y, m, d := time.Now().Date()
+	if month != 0 {
+		m = time.Month(month)
+	}
+	if day != 0 {
+		d = int(day)
+	}
+	if year != 0 {
+		y = int(year)
+	}
+	opts = append(opts, zenity.DefaultDate(y, m, d))
 
 	// File selection options
 
@@ -491,6 +520,12 @@ func lstResult(l []string, err error) {
 	os.Stdout.WriteString(zenutil.LineBreak)
 }
 
+func calResult(d time.Time, err error) {
+	errResult(err)
+	os.Stdout.WriteString(strftime.Format(zenutil.DateFormat, d))
+	os.Stdout.WriteString(zenutil.LineBreak)
+}
+
 func colResult(c color.Color, err error) {
 	errResult(err)
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
@@ -502,9 +537,9 @@ func ingestPath(path string) string {
 		var args []string
 		switch {
 		case wslpath:
-			args = []string{"wsl", "wslpath", "-m"}
+			args = []string{"wsl", "wslpath", "-w"}
 		case cygpath:
-			args = []string{"cygpath", "-C", "UTF8", "-m"}
+			args = []string{"cygpath", "-C", "UTF8", "-w"}
 		}
 		if args != nil {
 			args = append(args, path)
@@ -551,12 +586,20 @@ func egestPaths(paths []string, err error) ([]string, error) {
 	return paths, err
 }
 
+func setExtraButton(s string) error {
+	if extraButton != unspecified {
+		return errors.New("multiple extra buttons not supported")
+	}
+	extraButton = s
+	return nil
+}
+
 func addColumn(s string) error {
 	columns++
-	if columns <= 1 {
-		return nil
+	if columns > 1 {
+		return errors.New("multiple columns not supported")
 	}
-	return errors.New("multiple columns not supported")
+	return nil
 }
 
 func addFileFilter(s string) error {
@@ -571,4 +614,23 @@ func addFileFilter(s string) error {
 	fileFilters = append(fileFilters, filter)
 
 	return nil
+}
+
+func getVersion() string {
+	if tag != "" {
+		return tag
+	}
+
+	rev := "unknown"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, kv := range info.Settings {
+			if kv.Key == "vcs.modified" && kv.Value == "true" {
+				return "custom"
+			}
+			if kv.Key == "vcs.revision" {
+				rev = kv.Value
+			}
+		}
+	}
+	return rev
 }

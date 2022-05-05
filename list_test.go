@@ -48,7 +48,7 @@ func TestList_timeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
 
-	_, err := zenity.List("", nil, zenity.Context(ctx))
+	_, err := zenity.List("", []string{""}, zenity.Context(ctx))
 	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
@@ -62,7 +62,7 @@ func TestList_cancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := zenity.List("", nil, zenity.Context(ctx))
+	_, err := zenity.List("", []string{""}, zenity.Context(ctx))
 	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}

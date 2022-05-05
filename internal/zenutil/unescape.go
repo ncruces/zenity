@@ -1,9 +1,11 @@
 package zenutil
 
+import "strings"
+
 // Unescape is internal.
 func Unescape(s string) string {
 	// Apply rules described in:
-	// https://developer.gnome.org/glib/stable/glib-String-Utility-Functions.html#g-strescape
+	// https://docs.gtk.org/glib/func.strescape.html
 
 	const (
 		initial = iota
@@ -12,16 +14,16 @@ func Unescape(s string) string {
 		escape3
 	)
 	var oct byte
-	var res []byte
+	var res strings.Builder
 	state := initial
 	for _, b := range []byte(s) {
 		switch state {
-		case initial:
+		default:
 			switch b {
 			case '\\':
 				state = escape1
 			default:
-				res = append(res, b)
+				res.WriteByte(b)
 				state = initial
 			}
 
@@ -31,25 +33,25 @@ func Unescape(s string) string {
 				oct = b - '0'
 				state = escape2
 			case 'b':
-				res = append(res, '\b')
+				res.WriteByte('\b')
 				state = initial
 			case 'f':
-				res = append(res, '\f')
+				res.WriteByte('\f')
 				state = initial
 			case 'n':
-				res = append(res, '\n')
+				res.WriteByte('\n')
 				state = initial
 			case 'r':
-				res = append(res, '\r')
+				res.WriteByte('\r')
 				state = initial
 			case 't':
-				res = append(res, '\t')
+				res.WriteByte('\t')
 				state = initial
 			case 'v':
-				res = append(res, '\v')
+				res.WriteByte('\v')
 				state = initial
 			default:
-				res = append(res, b)
+				res.WriteByte(b)
 				state = initial
 			}
 
@@ -59,10 +61,11 @@ func Unescape(s string) string {
 				oct = oct<<3 | (b - '0')
 				state = escape3
 			case '\\':
-				res = append(res, oct)
+				res.WriteByte(oct)
 				state = escape1
 			default:
-				res = append(res, oct, b)
+				res.WriteByte(oct)
+				res.WriteByte(b)
 				state = initial
 			}
 
@@ -70,20 +73,21 @@ func Unescape(s string) string {
 			switch b {
 			case '0', '1', '2', '3', '4', '5', '6', '7':
 				oct = oct<<3 | (b - '0')
-				res = append(res, oct)
+				res.WriteByte(oct)
 				state = initial
 			case '\\':
-				res = append(res, oct)
+				res.WriteByte(oct)
 				state = escape1
 			default:
-				res = append(res, oct, b)
+				res.WriteByte(oct)
+				res.WriteByte(b)
 				state = initial
 			}
 		}
 	}
 	if state == escape2 || state == escape3 {
-		res = append(res, oct)
+		res.WriteByte(oct)
 	}
 
-	return string(res)
+	return res.String()
 }

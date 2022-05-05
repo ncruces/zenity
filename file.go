@@ -9,6 +9,8 @@ import (
 // SelectFile displays the file selection dialog.
 //
 // Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
+//
+// May return: ErrCanceled.
 func SelectFile(options ...Option) (string, error) {
 	return selectFile(applyOptions(options))
 }
@@ -16,6 +18,8 @@ func SelectFile(options ...Option) (string, error) {
 // SelectFileMutiple displays the multiple file selection dialog.
 //
 // Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
+//
+// May return: ErrCanceled, ErrUnsupported.
 func SelectFileMutiple(options ...Option) ([]string, error) {
 	return selectFileMutiple(applyOptions(options))
 }
@@ -24,6 +28,8 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 //
 // Valid options: Title, Filename, ConfirmOverwrite, ConfirmCreate, ShowHidden,
 // FileFilter(s).
+//
+// May return: ErrCanceled.
 func SelectFileSave(options ...Option) (string, error) {
 	return selectFileSave(applyOptions(options))
 }
@@ -33,14 +39,14 @@ func Directory() Option {
 	return funcOption(func(o *options) { o.directory = true })
 }
 
-// ConfirmOverwrite returns an Option to confirm file selection if filename
+// ConfirmOverwrite returns an Option to confirm file selection if the file
 // already exists.
 func ConfirmOverwrite() Option {
 	return funcOption(func(o *options) { o.confirmOverwrite = true })
 }
 
-// ConfirmCreate returns an Option to confirm file selection if filename does
-// not yet exist (Windows only).
+// ConfirmCreate returns an Option to confirm file selection if the file
+// does not yet exist (Windows only).
 func ConfirmCreate() Option {
 	return funcOption(func(o *options) { o.confirmCreate = true })
 }
@@ -65,8 +71,8 @@ func Filename(filename string) Option {
 // and only supports filtering by extension
 // (or "uniform type identifiers").
 //
-// Patterns may use the GTK syntax on all platforms:
-// https://developer.gnome.org/pygtk/stable/class-gtkfilefilter.html#method-gtkfilefilter--add-pattern
+// Patterns may use the fnmatch syntax on all platforms:
+// https://docs.python.org/3/library/fnmatch.html
 type FileFilter struct {
 	Name     string   // display string that describes the filter (optional)
 	Patterns []string // filter patterns for the display string

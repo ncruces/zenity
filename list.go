@@ -4,11 +4,15 @@ package zenity
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, DefaultItems, DisallowEmpty.
+//
+// May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func List(text string, items []string, options ...Option) (string, error) {
 	return list(text, items, applyOptions(options))
 }
 
 // ListItems displays the list dialog.
+//
+// May return: ErrCanceled, ErrUnsupported.
 func ListItems(text string, items ...string) (string, error) {
 	return List(text, items)
 }
@@ -17,11 +21,15 @@ func ListItems(text string, items ...string) (string, error) {
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, DefaultItems, DisallowEmpty.
+//
+// May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func ListMultiple(text string, items []string, options ...Option) ([]string, error) {
 	return listMultiple(text, items, applyOptions(options))
 }
 
 // ListMultipleItems displays the list dialog, allowing multiple items to be selected.
+//
+// May return: ErrCanceled, ErrUnsupported.
 func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }

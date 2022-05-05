@@ -4,6 +4,8 @@ package zenity
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
 // Icon, NoWrap, Ellipsize, DefaultCancel.
+//
+// May return: ErrCanceled, ErrExtraButton.
 func Question(text string, options ...Option) error {
 	return message(questionKind, text, applyOptions(options))
 }
@@ -12,6 +14,8 @@ func Question(text string, options ...Option) error {
 //
 // Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
+//
+// May return: ErrCanceled, ErrExtraButton.
 func Info(text string, options ...Option) error {
 	return message(infoKind, text, applyOptions(options))
 }
@@ -20,6 +24,8 @@ func Info(text string, options ...Option) error {
 //
 // Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
+//
+// May return: ErrCanceled, ErrExtraButton.
 func Warning(text string, options ...Option) error {
 	return message(warningKind, text, applyOptions(options))
 }
@@ -28,6 +34,8 @@ func Warning(text string, options ...Option) error {
 //
 // Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
 // NoWrap, Ellipsize.
+//
+// May return: ErrCanceled, ErrExtraButton.
 func Error(text string, options ...Option) error {
 	return message(errorKind, text, applyOptions(options))
 }
