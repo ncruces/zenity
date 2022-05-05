@@ -55,13 +55,13 @@ fmt.stringFromDate(date.dateValue)
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
-ObjC.import("stdlib")
-ObjC.import("stdio")
-var opt={{json .Options}}
+ObjC.import('stdio')
+ObjC.import('stdlib')
+var opts={{json .Options}}
 {{- if .IconPath}}
-opt["withIcon"]=Path("{{.IconPath}}")
+opts.withIcon=Path({{json .IconPath}})
 {{- end}}
-var res=app.{{.Operation}}({{json .Text}},opt)
+var res=app.{{.Operation}}({{json .Text}},opts)
 if(res.gaveUp){$.exit(5)}
 if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
 $.exit(1)}
