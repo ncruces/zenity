@@ -20,21 +20,21 @@ alert.setMessageText({{json .Text}})
 alert.addButtonWithTitle({{json .OK}})
 alert.addButtonWithTitle({{json .Cancel}}).keyEquivalent = '\033'
 {{- if .Info}}
-	alert.setInformativeText({{json .Info}})
+  alert.setInformativeText({{json .Info}})
 {{- end}}
 {{- if .Extra}}
-	alert.addButtonWithTitle({{json .Extra}})
+  alert.addButtonWithTitle({{json .Extra}})
 {{- end}}
 
 var res = alert.runModal
 switch (res) {
 case $.NSAlertThirdButtonReturn:
-	$.puts({{json .Extra}})
+  $.puts({{json .Extra}})
 case $.NSAlertSecondButtonReturn:
-	$.exit(1)
+  $.exit(1)
 }
 
 var fmt = $.NSDateFormatter.alloc.init
-fmt.locale = $.NSLocale.localeWithLocaleIdentifier("en_US_POSIX");
+fmt.locale = $.NSLocale.localeWithLocaleIdentifier("en_US_POSIX")
 fmt.dateFormat = {{json .Format}}
 fmt.stringFromDate(date.dateValue)

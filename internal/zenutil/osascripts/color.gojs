@@ -2,5 +2,15 @@ var app = Application.currentApplication()
 app.includeStandardAdditions = true
 app.activate()
 
-var res = app.chooseColor({defaultColor: {{json .}}})
+ObjC.import('stdio')
+ObjC.import('stdlib')
+
+try {
+  var res = app.chooseColor({defaultColor: {{json .}}})
+} catch (e) {
+  if (e.errorNumber === -128) $.exit(1)
+  $.dprintf(2, e)
+  $.exit(-1)
+}
+
 {'rgb(' + res.map(x => Math.round(x * 255)) + ')'}

@@ -7,15 +7,22 @@ ObjC.import('stdlib')
 
 var opts = {{json .Options}}
 {{- if .IconPath}}
-	opts.withIcon = Path({{json .IconPath}})
+  opts.withIcon = Path({{json .IconPath}})
 {{- end}}
 
-var res = app.{{.Operation}}({{json .Text}}, opts)
+try {
+  var res = app.{{.Operation}}({{json .Text}}, opts)
+} catch (e) {
+  if (e.errorNumber === -128) $.exit(1)
+  $.dprintf(2, e)
+  $.exit(-1)
+}
+
 if (res.gaveUp) {
-	$.exit(5)
+  $.exit(5)
 }
 if (res.buttonReturned === {{json .Extra}}) {
-	$.puts(res.buttonReturned)
-	$.exit(1)
+  $.puts(res.buttonReturned)
+  $.exit(1)
 }
 res.textReturned

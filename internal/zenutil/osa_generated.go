@@ -16,7 +16,11 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
-var res=app.chooseColor({defaultColor:{{json .}}})
+ObjC.import('stdio')
+ObjC.import('stdlib')
+try{var res=app.chooseColor({defaultColor:{{json .}}})}catch(e){if(e.errorNumber===-128)$.exit(1)
+$.dprintf(2,e)
+$.exit(-1)}
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
 {{- end}}
 {{define "date" -}}
@@ -48,7 +52,8 @@ var res=alert.runModal
 switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Extra}})
 case $.NSAlertSecondButtonReturn:$.exit(1)}
 var fmt=$.NSDateFormatter.alloc.init
-fmt.locale=$.NSLocale.localeWithLocaleIdentifier("en_US_POSIX");fmt.dateFormat={{json .Format}}
+fmt.locale=$.NSLocale.localeWithLocaleIdentifier("en_US_POSIX")
+fmt.dateFormat={{json .Format}}
 fmt.stringFromDate(date.dateValue)
 {{- end}}
 {{define "dialog" -}}
@@ -61,7 +66,9 @@ var opts={{json .Options}}
 {{- if .IconPath}}
 opts.withIcon=Path({{json .IconPath}})
 {{- end}}
-var res=app.{{.Operation}}({{json .Text}},opts)
+try{var res=app.{{.Operation}}({{json .Text}},opts)}catch(e){if(e.errorNumber===-128)$.exit(1)
+$.dprintf(2,e)
+$.exit(-1)}
 if(res.gaveUp){$.exit(5)}
 if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
 $.exit(1)}
@@ -71,13 +78,21 @@ res.textReturned
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
 app.activate()
-var res=app.{{.Operation}}({{json .Options}})
+ObjC.import('stdio')
+ObjC.import('stdlib')
+try{var res=app.{{.Operation}}({{json .Options}})}catch(e){if(e.errorNumber===-128)$.exit(1)
+$.dprintf(2,e)
+$.exit(-1)}
 if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
 {{define "list" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
-var res=app.chooseFromList({{json .Items}},{{json .Options}})
+ObjC.import('stdio')
+ObjC.import('stdlib')
+try{var res=app.chooseFromList({{json .Items}},{{json .Options}})}catch(e){$.dprintf(2,e)
+$.exit(-1)}
+if(res===false)$.exit(1)
 if(res.length!==0)res.join({{json .Separator}})
 {{- end}}
 {{define "notify" -}}
@@ -97,12 +112,10 @@ Progress.totalUnitCount={{.Total}}
 {{- if .Description}}
 Progress.description={{json .Description}}
 {{- end}}
-while(true){var s
-try{s=$.readline('')}catch(e){if(e.errorNumber===-128)$.exit(1)
+while(true){try{var s=$.readline('')}catch(e){if(e.errorNumber===-128)$.exit(1)
 break}
 if(s.indexOf('#')===0){Progress.additionalDescription=s.slice(1)
 continue}
 var i=parseInt(s)
-if(i>=0&&Progress.totalUnitCount>0){Progress.completedUnitCount=i
-continue}}
+if(i>=0&&Progress.totalUnitCount>0){Progress.completedUnitCount=i}}
 {{- end}}`))

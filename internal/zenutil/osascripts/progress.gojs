@@ -13,9 +13,8 @@ ObjC.import('readline')
 {{- end}}
 
 while (true) {
-  var s
   try {
-    s = $.readline('')
+    var s = $.readline('')
   } catch (e) {
     if (e.errorNumber === -128) $.exit(1)
     break
@@ -29,6 +28,5 @@ while (true) {
   var i = parseInt(s)
   if (i >= 0 && Progress.totalUnitCount > 0) {
     Progress.completedUnitCount = i
-    continue
   }
 }

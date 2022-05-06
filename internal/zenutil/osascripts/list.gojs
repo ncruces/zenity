@@ -1,5 +1,15 @@
 var app = Application.currentApplication()
 app.includeStandardAdditions = true
 
-var res = app.chooseFromList({{json .Items}}, {{json .Options}})
+ObjC.import('stdio')
+ObjC.import('stdlib')
+
+try {
+  var res = app.chooseFromList({{json .Items}}, {{json .Options}})
+} catch (e) {
+  $.dprintf(2, e)
+  $.exit(-1)
+}
+
+if (res === false) $.exit(1)
 if (res.length !== 0) res.join({{json .Separator}})
