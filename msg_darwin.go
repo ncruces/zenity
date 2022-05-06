@@ -1,6 +1,8 @@
 package zenity
 
 import (
+	"os"
+
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -21,6 +23,10 @@ func message(kind messageKind, text string, opts options) error {
 		data.Operation = "displayDialog"
 		data.Options.Title = opts.title
 		if opts.customIcon != "" {
+			_, err := os.Stat(opts.customIcon)
+			if err != nil {
+				return err
+			}
 			data.IconPath = opts.customIcon
 		} else {
 			data.Options.Icon = opts.icon.String()

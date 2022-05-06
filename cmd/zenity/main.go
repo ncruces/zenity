@@ -405,10 +405,12 @@ func loadFlags() []zenity.Option {
 		ico = zenity.WarningIcon
 	case "dialog-password":
 		ico = zenity.PasswordIcon
-	default:
+	case unspecified:
 		ico = zenity.NoIcon
+	default:
+		opts = append(opts, zenity.CustomIcon(icon))
 	}
-	if icon != unspecified {
+	if ico != 0 {
 		opts = append(opts, ico)
 	}
 
