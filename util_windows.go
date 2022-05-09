@@ -52,7 +52,6 @@ var (
 	isDialogMessage              = user32.NewProc("IsDialogMessageW")
 	dispatchMessage              = user32.NewProc("DispatchMessageW")
 	translateMessage             = user32.NewProc("TranslateMessage")
-	getClassName                 = user32.NewProc("GetClassNameW")
 	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
 	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
@@ -174,7 +173,7 @@ type dialogHook struct {
 
 func newDialogHook(ctx context.Context, initDialog func(wnd uintptr)) (*dialogHook, error) {
 	tid, _, _ := getCurrentThreadId.Call()
-	hk, _, err := setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
+	hk, _, err := setWindowsHookEx.Call(5, // WH_CBT
 		syscall.NewCallback(dialogHookProc), 0, tid)
 	if hk == 0 {
 		return nil, err
@@ -195,23 +194,19 @@ func newDialogHook(ctx context.Context, initDialog func(wnd uintptr)) (*dialogHo
 	return &hook, nil
 }
 
-func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
-	if lparam.Message == 0x0110 { // WM_INITDIALOG
-		var name [8]uint16
-		getClassName.Call(lparam.Wnd, uintptr(unsafe.Pointer(&name)), uintptr(len(name)))
-		if syscall.UTF16ToString(name[:]) == "#32770" { // The class for a dialog box
-			tid, _, _ := getCurrentThreadId.Call()
-			hook := (*dialogHook)(loadBackRef(tid))
-			atomic.StoreUintptr(&hook.wnd, lparam.Wnd)
-			if hook.ctx != nil && hook.ctx.Err() != nil {
-				sendMessage.Call(lparam.Wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
-			} else if hook.init != nil {
-				hook.init(lparam.Wnd)
-			}
+func dialogHookProc(code int32, wparam, lparam uintptr) uintptr {
+	if code == 5 { // HCBT_ACTIVATE
+		tid, _, _ := getCurrentThreadId.Call()
+		hook := (*dialogHook)(loadBackRef(tid))
+		atomic.StoreUintptr(&hook.wnd, wparam)
+		if hook.ctx != nil && hook.ctx.Err() != nil {
+			sendMessage.Call(wparam, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+		} else if hook.init != nil {
+			hook.init(wparam)
 		}
 	}
 	next, _, _ := callNextHookEx.Call(
-		0, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
+		0, uintptr(code), wparam, lparam)
 	return next
 }
 
@@ -420,15 +415,6 @@ type _ACTCTX struct {
 type _INITCOMMONCONTROLSEX struct {
 	Size uint32
 	ICC  uint32
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
-type _CWPRETSTRUCT struct {
-	Result  uintptr
-	LParam  uintptr
-	WParam  uintptr
-	Message uint32
-	Wnd     uintptr
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw

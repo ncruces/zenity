@@ -39,6 +39,7 @@ type options struct {
 	cancelLabel   *string
 	extraButton   *string
 	icon          DialogIcon
+	iconData      []byte
 	customIcon    string
 	defaultCancel bool
 
