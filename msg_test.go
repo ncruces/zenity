@@ -40,6 +40,13 @@ func ExampleQuestion() {
 	// Output:
 }
 
+func ExampleCustomIcon() {
+	zenity.Info("All updates are complete.",
+		zenity.Title("Information"),
+		zenity.CustomIcon("./testdata/icon.png"))
+	// Output:
+}
+
 var msgFuncs = []struct {
 	name string
 	fn   func(string, ...zenity.Option) error
