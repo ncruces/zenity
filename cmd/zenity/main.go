@@ -410,7 +410,7 @@ func loadFlags() []zenity.Option {
 	case "":
 		ico = zenity.NoIcon
 	default:
-		opts = append(opts, zenity.CustomIcon(icon))
+		opts = append(opts, zenity.CustomIcon(ingestPath(icon)))
 	}
 	if ico != 0 {
 		opts = append(opts, ico)

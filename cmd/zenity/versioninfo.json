@@ -1,17 +1,5 @@
 {
 	"FixedFileInfo": {
-		"FileVersion": {
-			"Major": 0,
-			"Minor": 0,
-			"Patch": 0,
-			"Build": 0
-		},
-		"ProductVersion": {
-			"Major": 0,
-			"Minor": 0,
-			"Patch": 0,
-			"Build": 0
-		},
 		"FileFlagsMask": "3f",
 		"FileFlags ": "00",
 		"FileOS": "040004",
@@ -19,18 +7,10 @@
 		"FileSubType": "00"
 	},
 	"StringFileInfo": {
-		"Comments": "zenity",
-		"CompanyName": "Nuno Cruces",
-		"FileDescription": "",
-		"FileVersion": "0.0.0.0",
-		"InternalName": "zenity",
-    "LegalCopyright": "© 2022 Nuno Cruces",
-		"LegalTrademarks": "",
-		"OriginalFilename": "zenity.exe",
-		"PrivateBuild": "",
 		"ProductName": "zenity",
-		"ProductVersion": "0.0.0",
-		"SpecialBuild": ""
+		"CompanyName": "Nuno Cruces",
+    "LegalCopyright": "© 2022 Nuno Cruces",
+		"OriginalFilename": "zenity.exe"
 	},
 	"VarFileInfo": {
 		"Translation": {

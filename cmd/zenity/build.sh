@@ -1,15 +1,16 @@
 #!/bin/bash
 
 TAG=$(git tag --points-at HEAD)
-echo 'package main; const tag = "'$TAG'"' | gofmt > tag.go
+echo 'package main; const tag = "'$TAG'"' > tag.go
 
-go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+printf '#!/bin/sh\nexec zenity.exe --unixeol --cygpath "$@"' > zenity
+go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo "-product-version=$TAG"
 
 GOOS=windows GOARCH=386   CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath &&
-zip -9 zenity_win32.zip zenity.exe
+zip -9 zenity_win32.zip zenity zenity.exe
 
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath &&
-zip -9 zenity_win64.zip zenity.exe
+zip -9 zenity_win64.zip zenity zenity.exe
 
 rm resource.syso
 
