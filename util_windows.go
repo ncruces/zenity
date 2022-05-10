@@ -248,6 +248,8 @@ func saveBackRef(id uintptr, ptr unsafe.Pointer) {
 	defer backRefs.Unlock()
 	if backRefs.m == nil {
 		backRefs.m = map[uintptr]unsafe.Pointer{}
+	} else if _, ok := backRefs.m[id]; ok {
+		panic("saveBackRef")
 	}
 	backRefs.m[id] = ptr
 }

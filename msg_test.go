@@ -43,7 +43,7 @@ func ExampleQuestion() {
 func ExampleCustomIcon() {
 	zenity.Info("All updates are complete.",
 		zenity.Title("Information"),
-		zenity.CustomIcon("./testdata/icon.png"))
+		zenity.CustomIcon("testdata/icon.png"))
 	// Output:
 }
 
