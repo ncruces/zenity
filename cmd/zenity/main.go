@@ -61,6 +61,9 @@ var (
 	entryText string
 	hideText  bool
 
+	// Password options
+	username bool
+
 	// List options
 	columns    int
 	allowEmpty bool
@@ -218,6 +221,9 @@ func setupFlags() {
 	// Entry options
 	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
 	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
+
+	// Password options
+	flag.BoolVar(&username, "username", false, "Display the username option")
 
 	// List options
 	flag.Func("column", "Set the column `header`", addColumn)
@@ -433,6 +439,12 @@ func loadFlags() []zenity.Option {
 	opts = append(opts, zenity.EntryText(entryText))
 	if hideText {
 		opts = append(opts, zenity.HideText())
+	}
+
+	// Password options
+
+	if username {
+		opts = append(opts, zenity.Username())
 	}
 
 	// List options

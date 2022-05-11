@@ -2,12 +2,7 @@
 
 package zenity
 
-import (
-	"os/exec"
-	"strings"
-
-	"github.com/ncruces/zenity/internal/zenutil"
-)
+import "github.com/ncruces/zenity/internal/zenutil"
 
 func password(opts options) (string, string, error) {
 	args := []string{"--password"}
@@ -18,14 +13,5 @@ func password(opts options) (string, string, error) {
 	}
 
 	out, err := zenutil.Run(opts.ctx, args)
-	str, err := strResult(opts, out, err)
-	if opts.username {
-		if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 255 {
-			return "", "", ErrUnsupported
-		}
-		if split := strings.SplitN(str, "|", 2); err == nil && len(split) == 2 {
-			return split[0], split[1], nil
-		}
-	}
-	return "", str, err
+	return pwdResult("|", opts, out, err)
 }

@@ -1,8 +1,6 @@
 package zenity
 
-import (
-	"time"
-)
+import "time"
 
 // Calendar displays the calendar dialog.
 //

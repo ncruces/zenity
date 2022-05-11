@@ -52,7 +52,7 @@ var res=alert.runModal
 switch(res){case $.NSAlertThirdButtonReturn:$.puts({{json .Extra}})
 case $.NSAlertSecondButtonReturn:$.exit(1)}
 var fmt=$.NSDateFormatter.alloc.init
-fmt.locale=$.NSLocale.localeWithLocaleIdentifier("en_US_POSIX")
+fmt.locale=$.NSLocale.localeWithLocaleIdentifier('en_US_POSIX')
 fmt.dateFormat={{json .Format}}
 fmt.stringFromDate(date.dateValue)
 {{- end}}
@@ -70,7 +70,7 @@ try{var res=app.{{.Operation}}({{json .Text}},opts)}catch(e){if(e.errorNumber===
 $.dprintf(2,e)
 $.exit(-1)}
 if(res.gaveUp){$.exit(5)}
-if(res.buttonReturned==={{json .Extra}}){$.puts(res.buttonReturned)
+if(res.buttonReturned==={{json .Extra}}){$.puts({{json .Extra}})
 $.exit(1)}
 res.textReturned
 {{- end}}
@@ -118,4 +118,31 @@ if(s.indexOf('#')===0){Progress.additionalDescription=s.slice(1)
 continue}
 var i=parseInt(s)
 if(i>=0&&Progress.totalUnitCount>0){Progress.completedUnitCount=i}}
+{{- end}}
+{{define "pwd" -}}
+var app=Application.currentApplication()
+app.includeStandardAdditions=true
+app.activate()
+ObjC.import('stdio')
+ObjC.import('stdlib')
+var opts={{json .Options}}
+{{- if .IconPath}}
+opts.withIcon=Path({{json .IconPath}})
+{{- end}}
+function dialog(text){try{var res=app.displayDialog(text,opts)}catch(e){if(e.errorNumber===-128)$.exit(1)
+$.dprintf(2,e)
+$.exit(-1)}
+if(res.gaveUp){$.exit(5)}
+if(res.buttonReturned==={{json .Extra}}){$.puts({{json .Extra}})
+$.exit(1)}
+return res.textReturned}
+var start=Date.now()
+opts.defaultAnswer=''
+var username=dialog('Username:')
+{{- if .Options.Timeout}}
+opts.givingUpAfter-=(Date.now()-start)/1000|0
+{{- end}}
+opts.hiddenAnswer=true
+var password=dialog('Password:')
+username+{{json .Separator}}+password
 {{- end}}`))

@@ -82,3 +82,17 @@ func lstResult(opts options, out []byte, err error) ([]string, error) {
 	}
 	return strings.Split(str, zenutil.Separator), nil
 }
+
+func pwdResult(sep string, opts options, out []byte, err error) (string, string, error) {
+	str, err := strResult(opts, out, err)
+	if opts.username {
+		if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 255 {
+			return "", "", ErrUnsupported
+		}
+
+		if split := strings.SplitN(str, sep, 2); err == nil && len(split) == 2 {
+			return split[0], split[1], nil
+		}
+	}
+	return "", str, err
+}

@@ -35,6 +35,6 @@ case $.NSAlertSecondButtonReturn:
 }
 
 var fmt = $.NSDateFormatter.alloc.init
-fmt.locale = $.NSLocale.localeWithLocaleIdentifier("en_US_POSIX")
+fmt.locale = $.NSLocale.localeWithLocaleIdentifier('en_US_POSIX')
 fmt.dateFormat = {{json .Format}}
 fmt.stringFromDate(date.dateValue)

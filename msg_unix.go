@@ -2,9 +2,7 @@
 
 package zenity
 
-import (
-	"github.com/ncruces/zenity/internal/zenutil"
-)
+import "github.com/ncruces/zenity/internal/zenutil"
 
 func message(kind messageKind, text string, opts options) error {
 	args := []string{"--text", text, "--no-markup"}

@@ -22,7 +22,7 @@ if (res.gaveUp) {
   $.exit(5)
 }
 if (res.buttonReturned === {{json .Extra}}) {
-  $.puts(res.buttonReturned)
+  $.puts({{json .Extra}})
   $.exit(1)
 }
 res.textReturned

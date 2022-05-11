@@ -147,6 +147,24 @@ type DialogOptions struct {
 	Timeout int      `json:"givingUpAfter,omitempty"`
 }
 
+// Password is internal.
+type Password struct {
+	Separator string
+	Extra     *string
+	Options   PasswordOptions
+	IconPath  string
+}
+
+// PasswordOptions is internal.
+type PasswordOptions struct {
+	Title   *string  `json:"withTitle,omitempty"`
+	Icon    string   `json:"withIcon,omitempty"`
+	Buttons []string `json:"buttons,omitempty"`
+	Cancel  int      `json:"cancelButton,omitempty"`
+	Default int      `json:"defaultButton,omitempty"`
+	Timeout int      `json:"givingUpAfter,omitempty"`
+}
+
 // DialogButtons is internal.
 type DialogButtons struct {
 	Buttons []string
@@ -157,6 +175,17 @@ type DialogButtons struct {
 
 // SetButtons is internal.
 func (d *Dialog) SetButtons(btns DialogButtons) {
+	d.Options.Buttons = btns.Buttons
+	d.Options.Default = btns.Default
+	d.Options.Cancel = btns.Cancel
+	if btns.Extra > 0 {
+		name := btns.Buttons[btns.Extra-1]
+		d.Extra = &name
+	}
+}
+
+// SetButtons is internal.
+func (d *Password) SetButtons(btns DialogButtons) {
 	d.Options.Buttons = btns.Buttons
 	d.Options.Default = btns.Default
 	d.Options.Cancel = btns.Cancel

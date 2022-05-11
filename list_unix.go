@@ -2,9 +2,7 @@
 
 package zenity
 
-import (
-	"github.com/ncruces/zenity/internal/zenutil"
-)
+import "github.com/ncruces/zenity/internal/zenutil"
 
 func list(text string, items []string, opts options) (string, error) {
 	args := []string{"--list", "--column=", "--hide-header", "--text", text}
