@@ -1,7 +1,3 @@
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
-app.activate()
-
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')

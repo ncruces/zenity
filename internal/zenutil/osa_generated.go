@@ -24,9 +24,6 @@ $.exit(-1)}
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
 {{- end}}
 {{define "date" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')
@@ -88,6 +85,7 @@ if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{define "list" -}}
 var app=Application.currentApplication()
 app.includeStandardAdditions=true
+app.activate()
 ObjC.import('stdio')
 ObjC.import('stdlib')
 try{var res=app.chooseFromList({{json .Items}},{{json .Options}})}catch(e){$.dprintf(2,e)
