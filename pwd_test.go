@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
@@ -60,16 +59,8 @@ func TestPassword_username(t *testing.T) {
 	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}
-	if runtime.GOOS == "windows" {
-		if errors.Is(err, zenity.ErrUnsupported) {
-			t.Skip("was not unsupported:", err)
-		} else {
-			t.Error("was not unsupported:", err)
-		}
-	} else {
-		if !errors.Is(err, context.Canceled) {
-			t.Error("was not canceled:", err)
-		}
+	if !errors.Is(err, context.Canceled) {
+		t.Error("was not canceled:", err)
 	}
 }
 
@@ -84,7 +75,7 @@ func TestPassword_script(t *testing.T) {
 	}{
 		{name: "Cancel", call: "cancel", err: zenity.ErrCanceled},
 		{name: "Password", call: "enter pwd", pwd: "pwd"},
-		{name: "User", call: "enter usr and pwd (if supported)", usr: "usr", pwd: "pwd",
+		{name: "User", call: "enter usr and pwd", usr: "usr", pwd: "pwd",
 			opts: []zenity.Option{zenity.Username()}},
 	}
 	for _, tt := range tests {
@@ -93,9 +84,6 @@ func TestPassword_script(t *testing.T) {
 			usr, pwd, err := zenity.Password(tt.opts...)
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
-			}
-			if errors.Is(err, zenity.ErrUnsupported) {
-				t.Skip("was not unsupported:", err)
 			}
 			if usr != tt.usr || pwd != tt.pwd || err != tt.err {
 				t.Errorf("Password() = %q, %q, %v; want %q, %q, %v", usr, pwd, err, tt.usr, tt.pwd, tt.err)

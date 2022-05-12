@@ -158,8 +158,7 @@ func main() {
 		calResult(zenity.Calendar(text, opts...))
 
 	case passwordDlg:
-		_, pw, err := zenity.Password(opts...)
-		strResult(pw, err)
+		pwdResult(zenity.Password(opts...))
 
 	case fileSelectionDlg:
 		switch {
@@ -533,7 +532,9 @@ func strResult(s string, err error) {
 func lstResult(l []string, err error) {
 	errResult(err)
 	os.Stdout.WriteString(strings.Join(l, zenutil.Separator))
-	os.Stdout.WriteString(zenutil.LineBreak)
+	if len(l) > 0 {
+		os.Stdout.WriteString(zenutil.LineBreak)
+	}
 }
 
 func calResult(d time.Time, err error) {
@@ -545,6 +546,16 @@ func calResult(d time.Time, err error) {
 func colResult(c color.Color, err error) {
 	errResult(err)
 	os.Stdout.WriteString(zenutil.UnparseColor(c))
+	os.Stdout.WriteString(zenutil.LineBreak)
+}
+
+func pwdResult(u, p string, err error) {
+	errResult(err)
+	if username {
+		os.Stdout.WriteString(u)
+		os.Stdout.WriteString(zenutil.Separator)
+	}
+	os.Stdout.WriteString(p)
 	os.Stdout.WriteString(zenutil.LineBreak)
 }
 

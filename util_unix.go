@@ -86,13 +86,16 @@ func lstResult(opts options, out []byte, err error) ([]string, error) {
 func pwdResult(sep string, opts options, out []byte, err error) (string, string, error) {
 	str, err := strResult(opts, out, err)
 	if opts.username {
-		if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 255 {
-			return "", "", ErrUnsupported
-		}
-
-		if split := strings.SplitN(str, sep, 2); err == nil && len(split) == 2 {
-			return split[0], split[1], nil
-		}
+		usr, pwd, _ := cut(str, sep)
+		return usr, pwd, err
 	}
 	return "", str, err
+}
+
+// Replace with strings.Cut after 1.18.
+func cut(s, sep string) (before, after string, found bool) {
+	if i := strings.Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+	return s, "", false
 }

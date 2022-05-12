@@ -4,7 +4,7 @@ package zenity
 //
 // Valid options: Title, OKLabel, CancelLabel, ExtraButton, Icon, Username.
 //
-// May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
+// May return: ErrCanceled, ErrExtraButton.
 func Password(options ...Option) (usr string, pwd string, err error) {
 	return password(applyOptions(options))
 }
