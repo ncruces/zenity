@@ -25,3 +25,5 @@ rm zenity zenity_macos_* zenity.exe
 GOOS=linux go build -tags dev
 go build -tags dev
 git restore tag.go
+
+shasum -a256 *.zip
