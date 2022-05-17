@@ -401,27 +401,23 @@ func loadFlags() []zenity.Option {
 		opts = append(opts, zenity.DefaultCancel())
 	}
 
-	var ico zenity.DialogIcon
 	switch icon {
-	case unspecified:
-		ico = 0
 	case "error", "dialog-error":
-		ico = zenity.ErrorIcon
+		opts = append(opts, zenity.ErrorIcon)
 	case "info", "dialog-information":
-		ico = zenity.InfoIcon
+		opts = append(opts, zenity.InfoIcon)
 	case "question", "dialog-question":
-		ico = zenity.QuestionIcon
+		opts = append(opts, zenity.QuestionIcon)
 	case "important", "warning", "dialog-warning":
-		ico = zenity.WarningIcon
+		opts = append(opts, zenity.WarningIcon)
 	case "dialog-password":
-		ico = zenity.PasswordIcon
+		opts = append(opts, zenity.PasswordIcon)
 	case "":
-		ico = zenity.NoIcon
+		opts = append(opts, zenity.NoIcon)
+	case unspecified:
+		//
 	default:
-		opts = append(opts, zenity.CustomIcon(ingestPath(icon)))
-	}
-	if ico != 0 {
-		opts = append(opts, ico)
+		opts = append(opts, zenity.Icon(ingestPath(icon)))
 	}
 
 	// Message options

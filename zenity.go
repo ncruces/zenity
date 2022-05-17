@@ -18,6 +18,9 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
+// Remove after 1.18.
+type any = interface{}
+
 func stringPtr(s string) *string { return &s }
 
 // ErrCanceled is returned when the cancel button is pressed,
@@ -38,9 +41,8 @@ type options struct {
 	okLabel       *string
 	cancelLabel   *string
 	extraButton   *string
-	icon          DialogIcon
-	customIcon    string
 	defaultCancel bool
+	icon          any
 
 	// Message options
 	noWrap    bool
@@ -139,14 +141,12 @@ func DefaultCancel() Option {
 type DialogIcon int
 
 func (i DialogIcon) apply(o *options) {
-	o.customIcon = ""
 	o.icon = i
 }
 
 // The stock dialog icons.
 const (
-	unspecifiedIcon DialogIcon = iota
-	ErrorIcon
+	ErrorIcon DialogIcon = iota
 	WarningIcon
 	InfoIcon
 	QuestionIcon
@@ -156,15 +156,23 @@ const (
 
 // Icon returns an Option to set the dialog icon.
 //
-// Tip: use DialogIcon directly.
-func Icon(icon DialogIcon) Option { return icon }
+// Icon accepts a DialogIcon, or a string.
+// The string can be a GTK icon name (Unix), or a path (Windows and macOS).
+func Icon(icon any) Option {
+	switch icon.(type) {
+	case string:
+	case DialogIcon:
+	default:
+		panic("interface conversion: expected string or DialogIcon")
+	}
+	return funcOption(func(o *options) { o.icon = icon })
+}
 
 // CustomIcon returns an Option to set a custom dialog icon, loaded from a file.
+//
+// Deprecated: use Icon instead.
 func CustomIcon(path string) Option {
-	return funcOption(func(o *options) {
-		o.icon = unspecifiedIcon
-		o.customIcon = path
-	})
+	return Icon(path)
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.

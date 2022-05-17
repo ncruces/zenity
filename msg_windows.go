@@ -37,7 +37,7 @@ func message(kind messageKind, text string, opts options) error {
 		flags |= _MB_ICONWARNING
 	case InfoIcon:
 		flags |= _MB_ICONINFORMATION
-	case unspecifiedIcon:
+	case nil:
 		switch kind {
 		case errorKind:
 			flags |= _MB_ICONERROR
@@ -60,7 +60,7 @@ func message(kind messageKind, text string, opts options) error {
 
 	defer setup()()
 
-	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || opts.customIcon != "" {
+	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || opts.icon != nil {
 		unhook, err := hookMessageDialog(kind, opts)
 		if err != nil {
 			return err
@@ -114,13 +114,13 @@ func hookMessageDialogCallback(wnd uintptr, lparam *options) uintptr {
 		setWindowText.Call(wnd, strptr(*text))
 	}
 
-	if ctl == 20 /*IDC_STATIC_OK*/ && lparam.customIcon != "" {
+	if i, ok := lparam.icon.(string); ok && ctl == 20 /*IDC_STATIC_OK*/ {
 		var icon uintptr
-		data, _ := os.ReadFile(lparam.customIcon)
+		data, _ := os.ReadFile(i)
 		switch {
 		case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
 			icon, _, _ = loadImage.Call(0,
-				strptr(lparam.customIcon),
+				strptr(i),
 				1, /*IMAGE_ICON*/
 				0, 0,
 				0x00008050 /*LR_LOADFROMFILE|LR_DEFAULTSIZE|LR_SHARED*/)

@@ -13,7 +13,7 @@ func message(kind messageKind, text string, opts options) error {
 
 	// dialog is more flexible, alert prettier
 	var dialog bool
-	if opts.icon != 0 || opts.customIcon != "" { // use if we want to show a specific icon
+	if opts.icon != nil { // use if we want to show a specific icon
 		dialog = true
 	} else if kind == questionKind && opts.cancelLabel == nil { // use for questions with default buttons
 		dialog = true
@@ -22,14 +22,15 @@ func message(kind messageKind, text string, opts options) error {
 	if dialog {
 		data.Operation = "displayDialog"
 		data.Options.Title = opts.title
-		if opts.customIcon != "" {
-			_, err := os.Stat(opts.customIcon)
+		switch i := opts.icon.(type) {
+		case string:
+			_, err := os.Stat(i)
 			if err != nil {
 				return err
 			}
-			data.IconPath = opts.customIcon
-		} else {
-			data.Options.Icon = opts.icon.String()
+			data.IconPath = i
+		case DialogIcon:
+			data.Options.Icon = i.String()
 		}
 	} else {
 		data.Operation = "displayAlert"

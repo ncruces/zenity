@@ -40,10 +40,10 @@ func ExampleQuestion() {
 	// Output:
 }
 
-func ExampleCustomIcon() {
+func ExampleIcon_custom() {
 	zenity.Info("All updates are complete.",
 		zenity.Title("Information"),
-		zenity.CustomIcon("testdata/icon.png"))
+		zenity.Icon("testdata/icon.png"))
 	// Output:
 }
 
