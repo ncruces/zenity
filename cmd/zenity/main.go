@@ -397,6 +397,9 @@ func loadFlags() []zenity.Option {
 	if extraButton != unspecified {
 		opts = append(opts, zenity.ExtraButton(extraButton))
 	}
+	if defaultCancel {
+		opts = append(opts, zenity.DefaultCancel())
+	}
 
 	var ico zenity.DialogIcon
 	switch icon {
@@ -428,9 +431,6 @@ func loadFlags() []zenity.Option {
 	}
 	if ellipsize {
 		opts = append(opts, zenity.Ellipsize())
-	}
-	if defaultCancel {
-		opts = append(opts, zenity.DefaultCancel())
 	}
 
 	// Entry options

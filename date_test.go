@@ -55,9 +55,9 @@ func TestCalendar_script(t *testing.T) {
 		err  error
 	}{
 		{name: "Cancel", call: "cancel", err: zenity.ErrCanceled},
-		{name: "Black", call: "choose today", want: time.Now()},
-		{name: "Rebecca", call: "press OK", want: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local),
-			opts: []zenity.Option{zenity.DefaultDate(2000, 1, 1)}},
+		{name: "Today", call: "choose today", want: time.Now()},
+		{name: "Default", call: "press OK", want: time.Date(2006, 1, 1, 0, 0, 0, 0, time.Local),
+			opts: []zenity.Option{zenity.DefaultDate(2006, 1, 1)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

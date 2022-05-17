@@ -58,8 +58,3 @@ func NoWrap() Option {
 func Ellipsize() Option {
 	return funcOption(func(o *options) { o.ellipsize = true })
 }
-
-// DefaultCancel returns an Option to give the Cancel button focus by default.
-func DefaultCancel() Option {
-	return funcOption(func(o *options) { o.defaultCancel = true })
-}

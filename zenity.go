@@ -130,6 +130,11 @@ func ExtraButton(extra string) Option {
 	return funcOption(func(o *options) { o.extraButton = &extra })
 }
 
+// DefaultCancel returns an Option to give the Cancel button focus by default.
+func DefaultCancel() Option {
+	return funcOption(func(o *options) { o.defaultCancel = true })
+}
+
 // DialogIcon is an Option that sets the dialog icon.
 type DialogIcon int
 
@@ -154,7 +159,7 @@ const (
 // Tip: use DialogIcon directly.
 func Icon(icon DialogIcon) Option { return icon }
 
-// Icon returns an Option to set a custom dialog icon, loaded from a file.
+// CustomIcon returns an Option to set a custom dialog icon, loaded from a file.
 func CustomIcon(path string) Option {
 	return funcOption(func(o *options) {
 		o.icon = unspecifiedIcon

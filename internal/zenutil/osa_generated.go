@@ -33,6 +33,8 @@ date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
 date.setFrameSize(date.fittingSize)
 {{- if .Date}}
 date.setDateValue($.NSDate.dateWithTimeIntervalSince1970({{.Date}}))
+{{- else}}
+date.setDateValue($.NSDate.date)
 {{- end}}
 var alert=$.NSAlert.alloc.init
 alert.setAccessoryView(date)

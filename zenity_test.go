@@ -5,9 +5,11 @@ import (
 	"image/color"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func Test_applyOptions(t *testing.T) {
+	date := time.Date(2006, 1, 1, 0, 0, 0, 0, time.Local)
 	tests := []struct {
 		name string
 		args Option
@@ -20,8 +22,8 @@ func Test_applyOptions(t *testing.T) {
 		{name: "OKLabel", args: OKLabel("OK"), want: options{okLabel: stringPtr("OK")}},
 		{name: "CancelLabel", args: CancelLabel("Cancel"), want: options{cancelLabel: stringPtr("Cancel")}},
 		{name: "ExtraButton", args: ExtraButton("Extra"), want: options{extraButton: stringPtr("Extra")}},
-		{name: "Icon", args: Icon(ErrorIcon), want: options{icon: ErrorIcon}},
 		{name: "DefaultCancel", args: DefaultCancel(), want: options{defaultCancel: true}},
+		{name: "Icon", args: Icon(ErrorIcon), want: options{icon: ErrorIcon}},
 
 		// Message options
 		{name: "NoWrap", args: NoWrap(), want: options{noWrap: true}},
@@ -36,6 +38,9 @@ func Test_applyOptions(t *testing.T) {
 		{name: "DisallowEmpty", args: DisallowEmpty(), want: options{disallowEmpty: true}},
 		{name: "DefaultItems", args: DefaultItems("a", "b"), want: options{defaultItems: []string{"a", "b"}}},
 
+		// Calendar options
+		{name: "DefaultDate", args: DefaultDate(2006, time.January, 1), want: options{time: &date}},
+
 		// File selection options
 		{name: "Directory", args: Directory(), want: options{directory: true}},
 		{name: "ConfirmOverwrite", args: ConfirmOverwrite(), want: options{confirmOverwrite: true}},
@@ -49,15 +54,15 @@ func Test_applyOptions(t *testing.T) {
 			fileFilters: FileFilters{{"Go files", []string{"*.go"}}},
 		}},
 
+		// Color selection options
+		{name: "Color", args: Color(color.Black), want: options{color: color.Black}},
+		{name: "ShowPalette", args: ShowPalette(), want: options{showPalette: true}},
+
 		// Progress indication options
 		{name: "MaxValue", args: MaxValue(100), want: options{maxValue: 100}},
 		{name: "Pulsate", args: Pulsate(), want: options{maxValue: -1}},
 		{name: "NoCancel", args: NoCancel(), want: options{noCancel: true}},
 		{name: "TimeRemaining", args: TimeRemaining(), want: options{timeRemaining: true}},
-
-		// Color selection options
-		{name: "Color", args: Color(color.Black), want: options{color: color.Black}},
-		{name: "ShowPalette", args: ShowPalette(), want: options{showPalette: true}},
 
 		// Context for timeout
 		{name: "Context", args: Context(context.TODO()), want: options{ctx: context.TODO()}},
