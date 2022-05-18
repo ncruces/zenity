@@ -15,10 +15,13 @@ import (
 func ExampleCalendar() {
 	zenity.Calendar("Select a date from below:",
 		zenity.DefaultDate(2006, time.January, 1))
-	// Output:
 }
 
 func TestCalendar_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
@@ -47,6 +50,10 @@ func TestCalendar_cancel(t *testing.T) {
 }
 
 func TestCalendar_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	tests := []struct {
 		name string
 		call string

@@ -9,7 +9,7 @@ func list(text string, items []string, opts options) (string, error) {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	args = append(args, items...)
 
 	out, err := zenutil.Run(opts.ctx, args)
@@ -21,7 +21,7 @@ func listMultiple(text string, items []string, opts options) ([]string, error) {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	args = append(args, items...)
 
 	out, err := zenutil.Run(opts.ctx, args)

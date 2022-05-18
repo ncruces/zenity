@@ -23,6 +23,8 @@ func Test_applyOptions(t *testing.T) {
 		{name: "CancelLabel", args: CancelLabel("Cancel"), want: options{cancelLabel: stringPtr("Cancel")}},
 		{name: "ExtraButton", args: ExtraButton("Extra"), want: options{extraButton: stringPtr("Extra")}},
 		{name: "DefaultCancel", args: DefaultCancel(), want: options{defaultCancel: true}},
+		{name: "WindowIcon", args: WindowIcon(ErrorIcon), want: options{windowIcon: ErrorIcon}},
+		{name: "WindowIcon", args: WindowIcon("error"), want: options{windowIcon: "error"}},
 		{name: "Icon", args: Icon(ErrorIcon), want: options{icon: ErrorIcon}},
 		{name: "Icon", args: Icon("error"), want: options{icon: "error"}},
 

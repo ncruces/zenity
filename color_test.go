@@ -26,6 +26,10 @@ func ExampleSelectColor_palette() {
 }
 
 func TestSelectColor_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
@@ -54,6 +58,10 @@ func TestSelectColor_cancel(t *testing.T) {
 }
 
 func TestSelectColor_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	tests := []struct {
 		name string
 		call string

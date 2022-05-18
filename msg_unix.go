@@ -19,7 +19,7 @@ func message(kind messageKind, text string, opts options) error {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	if opts.noWrap {
 		args = append(args, "--no-wrap")
 	}

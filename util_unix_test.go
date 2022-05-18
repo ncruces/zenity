@@ -56,23 +56,24 @@ func Test_appendWidthHeight(t *testing.T) {
 	}
 }
 
-func Test_appendIcon(t *testing.T) {
+func Test_appendWindowIcon(t *testing.T) {
 	tests := []struct {
 		name string
 		opts options
 		want []string
 	}{
-		{name: "NoIcon", opts: options{icon: NoIcon}, want: nil},
-		{name: "Info", opts: options{icon: InfoIcon}, want: []string{"--window-icon=info"}},
-		{name: "Error", opts: options{icon: ErrorIcon}, want: []string{"--window-icon=error"}},
-		{name: "Warning", opts: options{icon: WarningIcon}, want: []string{"--window-icon=warning"}},
-		{name: "Question", opts: options{icon: QuestionIcon}, want: []string{"--window-icon=question"}},
-		{name: "Password", opts: options{icon: PasswordIcon}, want: nil},
+		{name: "NoIcon", opts: options{windowIcon: NoIcon}, want: nil},
+		{name: "Info", opts: options{windowIcon: InfoIcon}, want: []string{"--window-icon=info"}},
+		{name: "Error", opts: options{windowIcon: ErrorIcon}, want: []string{"--window-icon=error"}},
+		{name: "Warning", opts: options{windowIcon: WarningIcon}, want: []string{"--window-icon=warning"}},
+		{name: "Question", opts: options{windowIcon: QuestionIcon}, want: []string{"--window-icon=question"}},
+		{name: "Password", opts: options{windowIcon: PasswordIcon}, want: nil},
+		{name: "File", opts: options{windowIcon: "png"}, want: []string{"--window-icon", "png"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := appendIcon(nil, tt.opts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("appendIcon() = %v; want %v", got, tt.want)
+			if got := appendWindowIcon(nil, tt.opts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("appendWindowIcon() = %v; want %v", got, tt.want)
 			}
 		})
 	}

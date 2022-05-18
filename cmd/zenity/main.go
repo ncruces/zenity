@@ -50,6 +50,7 @@ var (
 	extraButton   string
 	text          string
 	icon          string
+	windowIcon    string
 	multiple      bool
 	defaultCancel bool
 
@@ -207,7 +208,7 @@ func setupFlags() {
 	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the `label` of the Cancel button")
 	flag.Func("extra-button", "Add an extra `button`", setExtraButton)
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
-	flag.StringVar(&icon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
+	flag.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
@@ -277,6 +278,7 @@ func setupFlags() {
 	extraButton = unspecified
 	text = unspecified
 	icon = unspecified
+	windowIcon = unspecified
 }
 
 func validateFlags() {

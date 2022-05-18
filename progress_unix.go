@@ -9,7 +9,7 @@ func progress(opts options) (ProgressDialog, error) {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	if opts.maxValue == 0 {
 		opts.maxValue = 100
 	}

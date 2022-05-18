@@ -39,8 +39,6 @@ func ExampleProgress() {
 
 	dlg.Complete()
 	time.Sleep(time.Second)
-
-	// Output:
 }
 
 func ExampleProgress_pulsate() {
@@ -66,8 +64,6 @@ func ExampleProgress_pulsate() {
 
 	dlg.Complete()
 	time.Sleep(time.Second)
-
-	// Output:
 }
 
 func TestProgress_cancel(t *testing.T) {
@@ -102,4 +98,13 @@ func TestProgress_cancelAfter(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}
+}
+
+func TestProgress_examples(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	ExampleProgress()
+	ExampleProgress_pulsate()
 }

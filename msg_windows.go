@@ -37,7 +37,9 @@ func message(kind messageKind, text string, opts options) error {
 		flags |= _MB_ICONWARNING
 	case InfoIcon:
 		flags |= _MB_ICONINFORMATION
-	case nil:
+	case NoIcon:
+		//
+	default:
 		switch kind {
 		case errorKind:
 			flags |= _MB_ICONERROR

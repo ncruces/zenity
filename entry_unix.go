@@ -11,7 +11,7 @@ func entry(text string, opts options) (string, error) {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	if opts.entryText != "" {
 		args = append(args, "--entry-text", opts.entryText)
 	}

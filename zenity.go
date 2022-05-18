@@ -43,6 +43,7 @@ type options struct {
 	extraButton   *string
 	defaultCancel bool
 	icon          any
+	windowIcon    any
 
 	// Message options
 	noWrap    bool
@@ -166,6 +167,19 @@ func Icon(icon any) Option {
 		panic("interface conversion: expected string or DialogIcon")
 	}
 	return funcOption(func(o *options) { o.icon = icon })
+}
+
+// WindowIcon returns an Option to set the dialog icon (macOS and Unix only).
+//
+// WindowIcon accepts a DialogIcon, or a string path.
+func WindowIcon(icon any) Option {
+	switch icon.(type) {
+	case string:
+	case DialogIcon:
+	default:
+		panic("interface conversion: expected string or DialogIcon")
+	}
+	return funcOption(func(o *options) { o.windowIcon = icon })
 }
 
 // CustomIcon returns an Option to set a custom dialog icon, loaded from a file.

@@ -14,7 +14,7 @@ func calendar(text string, opts options) (time.Time, error) {
 	args = appendTitle(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
-	args = appendIcon(args, opts)
+	args = appendWindowIcon(args, opts)
 	if opts.time != nil {
 		year, month, day := opts.time.Date()
 		args = append(args, "--month", strconv.Itoa(int(month)))

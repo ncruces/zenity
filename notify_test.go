@@ -13,7 +13,6 @@ func ExampleNotify() {
 	zenity.Notify("There are system updates necessary!",
 		zenity.Title("Warning"),
 		zenity.InfoIcon)
-	// Output:
 }
 
 func TestNotify_cancel(t *testing.T) {
@@ -28,4 +27,12 @@ func TestNotify_cancel(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Error("was not canceled:", err)
 	}
+}
+
+func TestNotify_examples(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	ExampleNotify()
 }

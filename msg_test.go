@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -16,35 +17,24 @@ func ExampleError() {
 	zenity.Error("An error has occurred.",
 		zenity.Title("Error"),
 		zenity.ErrorIcon)
-	// Output:
 }
 
 func ExampleInfo() {
 	zenity.Info("All updates are complete.",
 		zenity.Title("Information"),
 		zenity.InfoIcon)
-	// Output:
 }
 
 func ExampleWarning() {
 	zenity.Warning("Are you sure you want to proceed?",
 		zenity.Title("Warning"),
 		zenity.WarningIcon)
-	// Output:
 }
 
 func ExampleQuestion() {
 	zenity.Question("Are you sure you want to proceed?",
 		zenity.Title("Question"),
 		zenity.QuestionIcon)
-	// Output:
-}
-
-func ExampleIcon_custom() {
-	zenity.Info("All updates are complete.",
-		zenity.Title("Information"),
-		zenity.Icon("testdata/icon.png"))
-	// Output:
 }
 
 var msgFuncs = []struct {
@@ -58,6 +48,10 @@ var msgFuncs = []struct {
 }
 
 func TestMessage_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	for _, tt := range msgFuncs {
 		t.Run(tt.name, func(t *testing.T) {
 			defer goleak.VerifyNone(t)
@@ -94,6 +88,10 @@ func TestMessage_cancel(t *testing.T) {
 }
 
 func TestMessage_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	for _, tt := range msgFuncs {
 		t.Run(tt.name+"OK", func(t *testing.T) {
 			err := tt.fn("Please, press OK.", zenity.OKLabel("OK"))
@@ -134,9 +132,44 @@ func TestMessage_script(t *testing.T) {
 				t.Skip("skipping:", err)
 			}
 			if err != tt.err {
-				t.Errorf("Questtion() = %v; want %v", err, tt.err)
+				t.Errorf("Question() = %v; want %v", err, tt.err)
 			}
 		})
+	}
+}
+
+func TestMessage_icon(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	err := zenity.Question("Does this dialog have an error icon?",
+		zenity.OKLabel("Yes"),
+		zenity.CancelLabel("No"),
+		zenity.ErrorIcon)
+	if skip, err := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
+	if err != nil {
+		t.Errorf("Question() = %v; want nil", err)
+	}
+}
+
+func TestMessage_customIcon(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	err := zenity.Question("Does this dialog have a custom icon?",
+		zenity.Title(""),
+		zenity.OKLabel("Yes"),
+		zenity.CancelLabel("No"),
+		zenity.Icon("testdata/icon.png"))
+	if skip, err := skip(err); skip {
+		t.Skip("skipping:", err)
+	}
+	if err != nil && (runtime.GOOS == "windows" || runtime.GOOS == "darwin") {
+		t.Errorf("Question() = %v; want nil", err)
 	}
 }
 

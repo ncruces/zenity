@@ -44,6 +44,10 @@ func ExampleListMultipleItems() {
 }
 
 func TestList_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
@@ -72,6 +76,10 @@ func TestList_cancel(t *testing.T) {
 }
 
 func TestList_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	items := []string{"apples", "oranges", "bananas", "strawberries"}
 	tests := []struct {
 		name string
@@ -96,6 +104,10 @@ func TestList_script(t *testing.T) {
 }
 
 func TestListMultiple_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	items := []string{"apples", "oranges", "bananas", "strawberries"}
 	tests := []struct {
 		name string

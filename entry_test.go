@@ -18,6 +18,10 @@ func ExampleEntry() {
 }
 
 func TestEntry_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	defer goleak.VerifyNone(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second/5)
 	defer cancel()
@@ -46,6 +50,10 @@ func TestEntry_cancel(t *testing.T) {
 }
 
 func TestEntry_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	tests := []struct {
 		name string
 		call string

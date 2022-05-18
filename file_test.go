@@ -79,6 +79,10 @@ var fileFuncs = []struct {
 }
 
 func TestSelectFile_timeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	for _, tt := range fileFuncs {
 		t.Run(tt.name, func(t *testing.T) {
 			defer goleak.VerifyNone(t)
@@ -115,6 +119,9 @@ func TestSelectFile_cancel(t *testing.T) {
 }
 
 func TestSelectFile_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
 		str, err := zenity.SelectFile()
@@ -156,6 +163,9 @@ func TestSelectFile_script(t *testing.T) {
 }
 
 func TestSelectFileMutiple_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
 		lst, err := zenity.SelectFileMutiple()
@@ -204,6 +214,9 @@ func TestSelectFileMutiple_script(t *testing.T) {
 }
 
 func TestSelectFileSave_script(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file save dialog, cancel."))
 		str, err := zenity.SelectFileSave()
