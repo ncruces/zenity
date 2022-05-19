@@ -1,19 +1,14 @@
 package zenity
 
 import (
-	"bytes"
 	"context"
-	"os"
 	"syscall"
 	"unsafe"
 )
 
 var (
-	messageBox             = user32.NewProc("MessageBoxW")
-	getDlgCtrlID           = user32.NewProc("GetDlgCtrlID")
-	loadImage              = user32.NewProc("LoadImageW")
-	destroyIcon            = user32.NewProc("DestroyIcon")
-	createIconFromResource = user32.NewProc("CreateIconFromResource")
+	getDlgCtrlID = user32.NewProc("GetDlgCtrlID")
+	messageBox   = user32.NewProc("MessageBoxW")
 )
 
 func message(kind messageKind, text string, opts options) error {
@@ -94,6 +89,13 @@ func message(kind messageKind, text string, opts options) error {
 
 func hookMessageDialog(kind messageKind, opts options) (unhook context.CancelFunc, err error) {
 	return hookDialog(opts.ctx, func(wnd uintptr) {
+		if opts.windowIcon != nil {
+			icon := getIcon(opts.windowIcon)
+			if icon.handle != 0 {
+				defer icon.delete()
+				sendMessage.Call(wnd, 0x0080 /*WM_SETICON*/, 0, icon.handle)
+			}
+		}
 		enumChildWindows.Call(wnd,
 			syscall.NewCallback(hookMessageDialogCallback),
 			uintptr(unsafe.Pointer(&opts)))
@@ -116,26 +118,11 @@ func hookMessageDialogCallback(wnd uintptr, lparam *options) uintptr {
 		setWindowText.Call(wnd, strptr(*text))
 	}
 
-	if i, ok := lparam.icon.(string); ok && ctl == 20 /*IDC_STATIC_OK*/ {
-		var icon uintptr
-		data, _ := os.ReadFile(i)
-		switch {
-		case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
-			icon, _, _ = loadImage.Call(0,
-				strptr(i),
-				1, /*IMAGE_ICON*/
-				0, 0,
-				0x00008050 /*LR_LOADFROMFILE|LR_DEFAULTSIZE|LR_SHARED*/)
-		case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-			icon, _, _ = createIconFromResource.Call(
-				uintptr(unsafe.Pointer(&data[0])),
-				uintptr(len(data)),
-				1, 0x00030000)
-			defer destroyIcon.Call(icon)
-		}
-
-		if icon != 0 {
-			sendMessage.Call(wnd, 0x0170 /*STM_SETICON*/, icon, 0)
+	if ctl == 20 /*IDC_STATIC_OK*/ {
+		icon := getIcon(lparam.icon)
+		if icon.handle != 0 {
+			defer icon.delete()
+			sendMessage.Call(wnd, 0x0170 /*STM_SETICON*/, icon.handle, 0)
 		}
 	}
 	return 1

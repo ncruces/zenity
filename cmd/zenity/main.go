@@ -422,6 +422,23 @@ func loadFlags() []zenity.Option {
 		opts = append(opts, zenity.Icon(ingestPath(icon)))
 	}
 
+	switch windowIcon {
+	case "error", "dialog-error":
+		opts = append(opts, zenity.WindowIcon(zenity.ErrorIcon))
+	case "info", "dialog-information":
+		opts = append(opts, zenity.WindowIcon(zenity.InfoIcon))
+	case "question", "dialog-question":
+		opts = append(opts, zenity.WindowIcon(zenity.QuestionIcon))
+	case "important", "warning", "dialog-warning":
+		opts = append(opts, zenity.WindowIcon(zenity.WarningIcon))
+	case "dialog-password":
+		opts = append(opts, zenity.WindowIcon(zenity.PasswordIcon))
+	case "", unspecified:
+		//
+	default:
+		opts = append(opts, zenity.WindowIcon(ingestPath(windowIcon)))
+	}
+
 	// Message options
 
 	if noWrap {

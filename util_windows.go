@@ -1,6 +1,7 @@
 package zenity
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -26,59 +27,63 @@ var (
 	user32   = windows.NewLazySystemDLL("user32.dll")
 	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
 
-	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
+	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 
+	createFontIndirect = gdi32.NewProc("CreateFontIndirectW")
 	deleteObject       = gdi32.NewProc("DeleteObject")
 	getDeviceCaps      = gdi32.NewProc("GetDeviceCaps")
-	createFontIndirect = gdi32.NewProc("CreateFontIndirectW")
 
-	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
-	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
-	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
-	getSystemDirectory = kernel32.NewProc("GetSystemDirectoryW")
-	createActCtx       = kernel32.NewProc("CreateActCtxW")
 	activateActCtx     = kernel32.NewProc("ActivateActCtx")
+	createActCtx       = kernel32.NewProc("CreateActCtxW")
 	deactivateActCtx   = kernel32.NewProc("DeactivateActCtx")
+	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
+	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
+	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
+	getSystemDirectory = kernel32.NewProc("GetSystemDirectoryW")
 
-	coInitializeEx   = ole32.NewProc("CoInitializeEx")
-	coUninitialize   = ole32.NewProc("CoUninitialize")
 	coCreateInstance = ole32.NewProc("CoCreateInstance")
+	coInitializeEx   = ole32.NewProc("CoInitializeEx")
 	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
+	coUninitialize   = ole32.NewProc("CoUninitialize")
 
-	getMessage                   = user32.NewProc("GetMessageW")
-	sendMessage                  = user32.NewProc("SendMessageW")
-	postQuitMessage              = user32.NewProc("PostQuitMessage")
-	isDialogMessage              = user32.NewProc("IsDialogMessageW")
-	dispatchMessage              = user32.NewProc("DispatchMessageW")
-	translateMessage             = user32.NewProc("TranslateMessage")
-	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
-	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
-	enumWindows                  = user32.NewProc("EnumWindows")
+	createIconFromResource       = user32.NewProc("CreateIconFromResource")
+	createWindowEx               = user32.NewProc("CreateWindowExW")
+	defWindowProc                = user32.NewProc("DefWindowProcW")
+	destroyIcon                  = user32.NewProc("DestroyIcon")
+	destroyWindow                = user32.NewProc("DestroyWindow")
+	dispatchMessage              = user32.NewProc("DispatchMessageW")
+	enableWindow                 = user32.NewProc("EnableWindow")
 	enumChildWindows             = user32.NewProc("EnumChildWindows")
-	setWindowText                = user32.NewProc("SetWindowTextW")
+	enumWindows                  = user32.NewProc("EnumWindows")
+	getDpiForWindow              = user32.NewProc("GetDpiForWindow")
+	getMessage                   = user32.NewProc("GetMessageW")
+	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
+	getWindowDC                  = user32.NewProc("GetWindowDC")
+	getWindowRect                = user32.NewProc("GetWindowRect")
 	getWindowText                = user32.NewProc("GetWindowTextW")
 	getWindowTextLength          = user32.NewProc("GetWindowTextLengthW")
-	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
 	getWindowThreadProcessId     = user32.NewProc("GetWindowThreadProcessId")
-	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
-	getDpiForWindow              = user32.NewProc("GetDpiForWindow")
-	releaseDC                    = user32.NewProc("ReleaseDC")
-	getWindowDC                  = user32.NewProc("GetWindowDC")
-	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
-	setWindowPos                 = user32.NewProc("SetWindowPos")
-	getWindowRect                = user32.NewProc("GetWindowRect")
-	setWindowLong                = user32.NewProc("SetWindowLongW")
-	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
-	unregisterClass              = user32.NewProc("UnregisterClassW")
+	isDialogMessage              = user32.NewProc("IsDialogMessageW")
+	loadIcon                     = user32.NewProc("LoadIconW")
+	loadImage                    = user32.NewProc("LoadImageW")
+	postQuitMessage              = user32.NewProc("PostQuitMessage")
 	registerClassEx              = user32.NewProc("RegisterClassExW")
-	destroyWindow                = user32.NewProc("DestroyWindow")
-	createWindowEx               = user32.NewProc("CreateWindowExW")
-	showWindow                   = user32.NewProc("ShowWindow")
-	enableWindow                 = user32.NewProc("EnableWindow")
+	releaseDC                    = user32.NewProc("ReleaseDC")
+	sendMessage                  = user32.NewProc("SendMessageW")
 	setFocus                     = user32.NewProc("SetFocus")
-	defWindowProc                = user32.NewProc("DefWindowProcW")
+	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
+	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
+	setWindowLong                = user32.NewProc("SetWindowLongW")
+	setWindowPos                 = user32.NewProc("SetWindowPos")
+	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
+	setWindowText                = user32.NewProc("SetWindowTextW")
+	showWindow                   = user32.NewProc("ShowWindow")
+	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
+	translateMessage             = user32.NewProc("TranslateMessage")
+	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
+	unregisterClass              = user32.NewProc("UnregisterClassW")
 )
 
 func intptr(i int64) uintptr {
@@ -317,6 +322,63 @@ func (f *font) delete() {
 	if f.handle != 0 {
 		deleteObject.Call(f.handle)
 		f.handle = 0
+	}
+}
+
+type icon struct {
+	handle  uintptr
+	destroy bool
+}
+
+func getIcon(i any) icon {
+	var res icon
+	var resource uintptr
+	switch i {
+	case ErrorIcon:
+		resource = 32513 // IDI_ERROR
+	case QuestionIcon:
+		resource = 32514 // IDI_QUESTION
+	case WarningIcon:
+		resource = 32515 // IDI_WARNING
+	case InfoIcon:
+		resource = 32516 // IDI_INFORMATION
+	}
+	if resource != 0 {
+		res.handle, _, _ = loadIcon.Call(0, resource)
+		return res
+	}
+
+	path, ok := i.(string)
+	if !ok {
+		return res
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return res
+	}
+
+	switch {
+	case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
+		res.handle, _, _ = loadImage.Call(0,
+			strptr(path),
+			1, /*IMAGE_ICON*/
+			0, 0,
+			0x00008050 /*LR_LOADFROMFILE|LR_DEFAULTSIZE|LR_SHARED*/)
+	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
+		res.handle, _, _ = createIconFromResource.Call(
+			uintptr(unsafe.Pointer(&data[0])),
+			uintptr(len(data)),
+			1, 0x00030000)
+		res.destroy = true
+	}
+	return res
+}
+
+func (i *icon) delete() {
+	if i.handle != 0 {
+		destroyIcon.Call(i.handle)
+		i.handle = 0
 	}
 }
 
