@@ -62,7 +62,7 @@ func selectFile(opts options) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func selectFileMutiple(opts options) ([]string, error) {
+func selectFileMultiple(opts options) ([]string, error) {
 	if opts.directory {
 		_, res, err := pickFolders(opts, true)
 		return res, err

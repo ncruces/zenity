@@ -168,7 +168,7 @@ func main() {
 		case save:
 			strResult(egestPath(zenity.SelectFileSave(opts...)))
 		case multiple:
-			lstResult(egestPaths(zenity.SelectFileMutiple(opts...)))
+			lstResult(egestPaths(zenity.SelectFileMultiple(opts...)))
 		}
 
 	case colorSelectionDlg:

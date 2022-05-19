@@ -19,7 +19,7 @@ func selectFile(opts options) (string, error) {
 	return strResult(opts, out, err)
 }
 
-func selectFileMutiple(opts options) ([]string, error) {
+func selectFileMultiple(opts options) ([]string, error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden

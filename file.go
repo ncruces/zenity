@@ -15,13 +15,18 @@ func SelectFile(options ...Option) (string, error) {
 	return selectFile(applyOptions(options))
 }
 
-// SelectFileMutiple displays the multiple file selection dialog.
+// SelectFileMultiple displays the multiple file selection dialog.
 //
 // Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
 //
 // May return: ErrCanceled, ErrUnsupported.
+func SelectFileMultiple(options ...Option) ([]string, error) {
+	return selectFileMultiple(applyOptions(options))
+}
+
+// Deprecated: use SelectFileMultiple.
 func SelectFileMutiple(options ...Option) ([]string, error) {
-	return selectFileMutiple(applyOptions(options))
+	return SelectFileMultiple(options...)
 }
 
 // SelectFileSave displays the save file selection dialog.

@@ -17,7 +17,7 @@ func selectFile(opts options) (string, error) {
 	return strResult(opts, out, err)
 }
 
-func selectFileMutiple(opts options) ([]string, error) {
+func selectFileMultiple(opts options) ([]string, error) {
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
 	args = appendTitle(args, opts)
 	args = appendFileArgs(args, opts)
