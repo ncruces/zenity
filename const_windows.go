@@ -58,6 +58,7 @@ const (
 	_WM_DESTROY     = 0x0002
 	_WM_CLOSE       = 0x0010
 	_WM_SETFONT     = 0x0030
+	_WM_SETICON     = 0x0080
 	_WM_NCCREATE    = 0x0081
 	_WM_NCDESTROY   = 0x0082
 	_WM_COMMAND     = 0x0111
@@ -74,6 +75,7 @@ const (
 	_PBM_SETPOS     = _WM_USER + 2
 	_PBM_SETRANGE32 = _WM_USER + 6
 	_PBM_SETMARQUEE = _WM_USER + 10
+	_STM_SETICON    = 0x0170
 
 	_GWL_STYLE = -16
 

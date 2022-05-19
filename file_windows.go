@@ -13,8 +13,26 @@ var (
 	getOpenFileName             = comdlg32.NewProc("GetOpenFileNameW")
 	getSaveFileName             = comdlg32.NewProc("GetSaveFileNameW")
 	shBrowseForFolder           = shell32.NewProc("SHBrowseForFolderW")
-	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
 	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
+	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
+)
+
+const (
+	_OFN_OVERWRITEPROMPT  = 0x00000002
+	_OFN_NOCHANGEDIR      = 0x00000008
+	_OFN_ALLOWMULTISELECT = 0x00000200
+	_OFN_PATHMUSTEXIST    = 0x00000800
+	_OFN_FILEMUSTEXIST    = 0x00001000
+	_OFN_CREATEPROMPT     = 0x00002000
+	_OFN_NOREADONLYRETURN = 0x00008000
+	_OFN_EXPLORER         = 0x00080000
+	_OFN_FORCESHOWHIDDEN  = 0x10000000
+
+	_FOS_NOCHANGEDIR      = 0x00000008
+	_FOS_PICKFOLDERS      = 0x00000020
+	_FOS_FORCEFILESYSTEM  = 0x00000040
+	_FOS_ALLOWMULTISELECT = 0x00000200
+	_FOS_FORCESHOWHIDDEN  = 0x10000000
 )
 
 func selectFile(opts options) (string, error) {
@@ -25,13 +43,13 @@ func selectFile(opts options) (string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x81008 // OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_EXPLORER
+	args.Flags = _OFN_NOCHANGEDIR | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
-		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
+		args.Flags |= _OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -45,7 +63,7 @@ func selectFile(opts options) (string, error) {
 	defer setup()()
 
 	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, nil)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", err
 		}
@@ -70,13 +88,13 @@ func selectFileMultiple(opts options) ([]string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x81208 // OFN_NOCHANGEDIR|OFN_ALLOWMULTISELECT|OFN_FILEMUSTEXIST|OFN_EXPLORER
+	args.Flags = _OFN_NOCHANGEDIR | _OFN_ALLOWMULTISELECT | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
-		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
+		args.Flags |= _OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -90,7 +108,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 	defer setup()()
 
 	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, nil)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -140,19 +158,19 @@ func selectFileSave(opts options) (string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Flags = 0x88808 // OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|OFN_NOREADONLYRETURN|OFN_EXPLORER
+	args.Flags = _OFN_NOCHANGEDIR | _OFN_PATHMUSTEXIST | _OFN_NOREADONLYRETURN | _OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.confirmOverwrite {
-		args.Flags |= 0x2 // OFN_OVERWRITEPROMPT
+		args.Flags |= _OFN_OVERWRITEPROMPT
 	}
 	if opts.confirmCreate {
-		args.Flags |= 0x2000 // OFN_CREATEPROMPT
+		args.Flags |= _OFN_CREATEPROMPT
 	}
 	if opts.showHidden {
-		args.Flags |= 0x10000000 // OFN_FORCESHOWHIDDEN
+		args.Flags |= _OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -166,7 +184,7 @@ func selectFileSave(opts options) (string, error) {
 	defer setup()()
 
 	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, nil)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", err
 		}
@@ -211,13 +229,14 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
 	}
+	flgs |= _FOS_NOCHANGEDIR | _FOS_PICKFOLDERS | _FOS_FORCEFILESYSTEM
 	if multi {
-		flgs |= 0x200 // FOS_ALLOWMULTISELECT
+		flgs |= _FOS_ALLOWMULTISELECT
 	}
 	if opts.showHidden {
-		flgs |= 0x10000000 // FOS_FORCESHOWHIDDEN
+		flgs |= _FOS_FORCESHOWHIDDEN
 	}
-	hr, _, _ = dialog.Call(dialog.SetOptions, uintptr(flgs|0x68)) // FOS_NOCHANGEDIR|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM
+	hr, _, _ = dialog.Call(dialog.SetOptions, uintptr(flgs))
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
 	}
@@ -242,7 +261,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 
 	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, nil)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", nil, err
 		}
@@ -320,7 +339,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	}
 
 	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, nil)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", nil, err
 		}

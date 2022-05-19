@@ -49,7 +49,7 @@ func selectColor(opts options) (color.Color, error) {
 	defer setup()()
 
 	if opts.ctx != nil || opts.title != nil {
-		unhook, err := hookDialogTitle(opts.ctx, opts.title)
+		unhook, err := hookDialog(opts.ctx, opts.windowIcon, opts.title, nil)
 		if err != nil {
 			return nil, err
 		}

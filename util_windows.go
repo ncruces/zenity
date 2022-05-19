@@ -156,11 +156,11 @@ func commDlgError() error {
 	}
 }
 
-func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook context.CancelFunc, err error) {
+func hookDialog(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (unhook context.CancelFunc, err error) {
 	if ctx != nil && ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	hook, err := newDialogHook(ctx, initDialog)
+	hook, err := newDialogHook(ctx, icon, title, init)
 	if err != nil {
 		return nil, err
 	}
@@ -168,15 +168,17 @@ func hookDialog(ctx context.Context, initDialog func(wnd uintptr)) (unhook conte
 }
 
 type dialogHook struct {
-	ctx  context.Context
-	tid  uintptr
-	wnd  uintptr
-	hook uintptr
-	done chan struct{}
-	init func(wnd uintptr)
+	ctx   context.Context
+	tid   uintptr
+	wnd   uintptr
+	hook  uintptr
+	done  chan struct{}
+	icon  any
+	title *string
+	init  func(wnd uintptr)
 }
 
-func newDialogHook(ctx context.Context, initDialog func(wnd uintptr)) (*dialogHook, error) {
+func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (*dialogHook, error) {
 	tid, _, _ := getCurrentThreadId.Call()
 	hk, _, err := setWindowsHookEx.Call(5, // WH_CBT
 		syscall.NewCallback(dialogHookProc), 0, tid)
@@ -185,10 +187,12 @@ func newDialogHook(ctx context.Context, initDialog func(wnd uintptr)) (*dialogHo
 	}
 
 	hook := dialogHook{
-		ctx:  ctx,
-		tid:  tid,
-		hook: hk,
-		init: initDialog,
+		ctx:   ctx,
+		tid:   tid,
+		hook:  hk,
+		icon:  icon,
+		title: title,
+		init:  init,
 	}
 	if ctx != nil {
 		hook.done = make(chan struct{})
@@ -206,8 +210,20 @@ func dialogHookProc(code int32, wparam, lparam uintptr) uintptr {
 		atomic.StoreUintptr(&hook.wnd, wparam)
 		if hook.ctx != nil && hook.ctx.Err() != nil {
 			sendMessage.Call(wparam, _WM_SYSCOMMAND, _SC_CLOSE, 0)
-		} else if hook.init != nil {
-			hook.init(wparam)
+		} else {
+			if hook.icon != nil {
+				icon := getIcon(hook.icon)
+				if icon.handle != 0 {
+					defer icon.delete()
+					sendMessage.Call(wparam, _WM_SETICON, 0, icon.handle)
+				}
+			}
+			if hook.title != nil {
+				setWindowText.Call(wparam, strptr(*hook.title))
+			}
+			if hook.init != nil {
+				hook.init(wparam)
+			}
 		}
 	}
 	next, _, _ := callNextHookEx.Call(
@@ -231,16 +247,6 @@ func (h *dialogHook) wait() {
 		}
 	case <-h.done:
 	}
-}
-
-func hookDialogTitle(ctx context.Context, title *string) (unhook context.CancelFunc, err error) {
-	var init func(wnd uintptr)
-	if title != nil {
-		init = func(wnd uintptr) {
-			setWindowText.Call(wnd, strptr(*title))
-		}
-	}
-	return hookDialog(ctx, init)
 }
 
 var backRefs struct {
