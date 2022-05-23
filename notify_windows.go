@@ -42,6 +42,16 @@ func notify(text string, opts options) error {
 		args.InfoFlags |= 0x2 // NIIF_WARNING
 	case ErrorIcon:
 		args.InfoFlags |= 0x3 // NIIF_ERROR
+	case NoIcon:
+		//
+	default:
+		icon := getIcon(opts.icon)
+		if icon.handle != 0 {
+			defer icon.delete()
+			args.Icon = icon.handle
+			args.Flags |= 0x00000002 // NIF_ICON
+			args.InfoFlags |= 0x4    // NIIF_USER
+		}
 	}
 
 	runtime.LockOSThread()

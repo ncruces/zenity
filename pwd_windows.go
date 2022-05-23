@@ -47,6 +47,8 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
+	icon := getIcon(opts.windowIcon)
+	defer icon.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", "", opts.ctx.Err()
@@ -57,7 +59,7 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 		return "", "", err
 	}
 
-	cls, err := registerClass(instance, syscall.NewCallback(passwordProc))
+	cls, err := registerClass(instance, icon.handle, syscall.NewCallback(passwordProc))
 	if cls == 0 {
 		return "", "", err
 	}

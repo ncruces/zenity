@@ -111,16 +111,14 @@ func (d *progressDialog) Close() error {
 }
 
 func (dlg *progressDialog) setup(opts options) error {
-	done := false
-	defer func() {
-		if !done {
-			dlg.init.Done()
-		}
-	}()
+	var once sync.Once
+	defer once.Do(dlg.init.Done)
 
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
+	icon := getIcon(opts.windowIcon)
+	defer icon.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
@@ -131,7 +129,7 @@ func (dlg *progressDialog) setup(opts options) error {
 		return err
 	}
 
-	cls, err := registerClass(instance, syscall.NewCallback(progressProc))
+	cls, err := registerClass(instance, icon.handle, syscall.NewCallback(progressProc))
 	if cls == 0 {
 		return err
 	}
@@ -182,8 +180,7 @@ func (dlg *progressDialog) setup(opts options) error {
 	} else {
 		sendMessage.Call(dlg.progCtl, _PBM_SETRANGE32, 0, uintptr(opts.maxValue))
 	}
-	dlg.init.Done()
-	done = true
+	once.Do(dlg.init.Done)
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})

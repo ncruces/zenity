@@ -180,7 +180,7 @@ type dialogHook struct {
 
 func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (*dialogHook, error) {
 	tid, _, _ := getCurrentThreadId.Call()
-	hk, _, err := setWindowsHookEx.Call(5, // WH_CBT
+	hk, _, err := setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(dialogHookProc), 0, tid)
 	if hk == 0 {
 		return nil, err
@@ -203,31 +203,31 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd u
 	return &hook, nil
 }
 
-func dialogHookProc(code int32, wparam, lparam uintptr) uintptr {
-	if code == 5 { // HCBT_ACTIVATE
+func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+	if lparam.Message == 0x0110 { // WM_INITDIALOG
 		tid, _, _ := getCurrentThreadId.Call()
 		hook := (*dialogHook)(loadBackRef(tid))
-		atomic.StoreUintptr(&hook.wnd, wparam)
+		atomic.StoreUintptr(&hook.wnd, lparam.Wnd)
 		if hook.ctx != nil && hook.ctx.Err() != nil {
-			sendMessage.Call(wparam, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+			sendMessage.Call(lparam.Wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
 		} else {
 			if hook.icon != nil {
 				icon := getIcon(hook.icon)
 				if icon.handle != 0 {
 					defer icon.delete()
-					sendMessage.Call(wparam, _WM_SETICON, 0, icon.handle)
+					sendMessage.Call(lparam.Wnd, _WM_SETICON, 0, icon.handle)
 				}
 			}
 			if hook.title != nil {
-				setWindowText.Call(wparam, strptr(*hook.title))
+				setWindowText.Call(lparam.Wnd, strptr(*hook.title))
 			}
 			if hook.init != nil {
-				hook.init(wparam)
+				hook.init(lparam.Wnd)
 			}
 		}
 	}
 	next, _, _ := callNextHookEx.Call(
-		0, uintptr(code), wparam, lparam)
+		0, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
 	return next
 }
 
@@ -408,12 +408,13 @@ func getWindowString(wnd uintptr) string {
 	return syscall.UTF16ToString(buf)
 }
 
-func registerClass(instance, proc uintptr) (uintptr, error) {
+func registerClass(instance, icon, proc uintptr) (uintptr, error) {
 	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
 
 	var wcx _WNDCLASSEX
 	wcx.Size = uint32(unsafe.Sizeof(wcx))
 	wcx.WndProc = proc
+	wcx.Icon = icon
 	wcx.Instance = instance
 	wcx.Background = 5 // COLOR_WINDOW
 	wcx.ClassName = syscall.StringToUTF16Ptr(name)
@@ -485,6 +486,15 @@ type _ACTCTX struct {
 type _INITCOMMONCONTROLSEX struct {
 	Size uint32
 	ICC  uint32
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
+type _CWPRETSTRUCT struct {
+	Result  uintptr
+	LParam  uintptr
+	WParam  uintptr
+	Message uint32
+	Wnd     uintptr
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw

@@ -54,6 +54,8 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
+	icon := getIcon(opts.windowIcon)
+	defer icon.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
@@ -64,7 +66,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		return nil, err
 	}
 
-	cls, err := registerClass(instance, syscall.NewCallback(listProc))
+	cls, err := registerClass(instance, icon.handle, syscall.NewCallback(listProc))
 	if cls == 0 {
 		return nil, err
 	}

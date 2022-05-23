@@ -38,6 +38,8 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	defer setup()()
 	dlg.font = getFont()
 	defer dlg.font.delete()
+	icon := getIcon(opts.windowIcon)
+	defer icon.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return time.Time{}, opts.ctx.Err()
@@ -48,7 +50,7 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	cls, err := registerClass(instance, syscall.NewCallback(calendarProc))
+	cls, err := registerClass(instance, icon.handle, syscall.NewCallback(calendarProc))
 	if cls == 0 {
 		return time.Time{}, err
 	}
