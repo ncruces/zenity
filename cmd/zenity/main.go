@@ -403,6 +403,10 @@ func loadFlags() []zenity.Option {
 		opts = append(opts, zenity.DefaultCancel())
 	}
 
+	if notification {
+		icon = windowIcon
+	}
+
 	switch icon {
 	case "error", "dialog-error":
 		opts = append(opts, zenity.ErrorIcon)

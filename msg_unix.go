@@ -43,6 +43,9 @@ func message(kind messageKind, text string, opts options) error {
 	case NoIcon:
 		args = append(args, "--icon-name=")
 	}
+	if i, ok := opts.icon.(string); ok {
+		args = append(args, "--icon-name", i)
+	}
 
 	out, err := zenutil.Run(opts.ctx, args)
 	_, err = strResult(opts, out, err)

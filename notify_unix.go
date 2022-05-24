@@ -19,7 +19,10 @@ func notify(text string, opts options) error {
 	case PasswordIcon:
 		args = append(args, "--window-icon=dialog-password")
 	case NoIcon:
-		args = append(args, "--window-icon=dialog")
+		args = append(args, "--window-icon=")
+	}
+	if i, ok := opts.icon.(string); ok {
+		args = append(args, "--window-icon", i)
 	}
 
 	_, err := zenutil.Run(opts.ctx, args)

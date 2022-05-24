@@ -42,8 +42,6 @@ func notify(text string, opts options) error {
 		args.InfoFlags |= 0x2 // NIIF_WARNING
 	case ErrorIcon:
 		args.InfoFlags |= 0x3 // NIIF_ERROR
-	case NoIcon:
-		//
 	default:
 		icon := getIcon(opts.icon)
 		if icon.handle != 0 {

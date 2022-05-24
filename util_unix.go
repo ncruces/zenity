@@ -42,9 +42,6 @@ func appendWidthHeight(args []string, opts options) []string {
 }
 
 func appendWindowIcon(args []string, opts options) []string {
-	if i, ok := opts.windowIcon.(string); ok {
-		args = append(args, "--window-icon", i)
-	}
 	switch opts.windowIcon {
 	case ErrorIcon:
 		args = append(args, "--window-icon=error")
@@ -54,6 +51,9 @@ func appendWindowIcon(args []string, opts options) []string {
 		args = append(args, "--window-icon=info")
 	case QuestionIcon:
 		args = append(args, "--window-icon=question")
+	}
+	if i, ok := opts.windowIcon.(string); ok {
+		args = append(args, "--window-icon", i)
 	}
 	return args
 }
