@@ -13,20 +13,31 @@ var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func
 	return string(b), err
 }}).Parse(`
 {{define "color" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
 ObjC.import('stdio')
 ObjC.import('stdlib')
-try{var res=app.chooseColor({defaultColor:{{json .}}})}catch(e){if(e.errorNumber===-128)$.exit(1)
+{{template "common" .}}
+try{var res=app.chooseColor({defaultColor:{{json .Color}}})}catch(e){if(e.errorNumber===-128)$.exit(1)
 $.dprintf(2,e)
 $.exit(-1)}
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
+{{- end}}
+{{define "common" -}}
+{var app=Application.currentApplication()
+app.includeStandardAdditions=true
+{{- if .WindowIcon}}
+ObjC.import('Cocoa')
+let nsapp=$.NSApplication.sharedApplication
+let nsimg=$.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
+nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
+nsapp.setApplicationIconImage(nsimg)
+{{- end}}
+app.activate()}
 {{- end}}
 {{define "date" -}}
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')
+{{template "common" .}}
 var date=$.NSDatePicker.alloc.init
 date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
 date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
@@ -56,11 +67,9 @@ fmt.dateFormat={{json .Format}}
 fmt.stringFromDate(date.dateValue)
 {{- end}}
 {{define "dialog" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
 ObjC.import('stdio')
 ObjC.import('stdlib')
+{{template "common" .}}
 var opts={{json .Options}}
 {{- if .IconPath}}
 opts.withIcon=Path({{json .IconPath}})
@@ -74,9 +83,7 @@ $.exit(1)}
 res.textReturned
 {{- end}}
 {{define "file" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
+{{template "common" .}}
 ObjC.import('stdio')
 ObjC.import('stdlib')
 try{var res=app.{{.Operation}}({{json .Options}})}catch(e){if(e.errorNumber===-128)$.exit(1)
@@ -85,9 +92,7 @@ $.exit(-1)}
 if(Array.isArray(res)){res.join({{json .Separator}})}else{res.toString()}
 {{- end}}
 {{define "list" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
+{{template "common" .}}
 ObjC.import('stdio')
 ObjC.import('stdlib')
 try{var res=app.chooseFromList({{json .Items}},{{json .Options}})}catch(e){$.dprintf(2,e)
@@ -101,9 +106,7 @@ app.includeStandardAdditions=true
 void app.displayNotification({{json .Text}},{{json .Options}})
 {{- end}}
 {{define "progress" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
+{{template "common" .}}
 ObjC.import('stdlib')
 ObjC.import('readline')
 {{- if .Total}}
@@ -120,9 +123,7 @@ var i=parseInt(s)
 if(i>=0&&Progress.totalUnitCount>0){Progress.completedUnitCount=i}}
 {{- end}}
 {{define "pwd" -}}
-var app=Application.currentApplication()
-app.includeStandardAdditions=true
-app.activate()
+{{template "common" .}}
 ObjC.import('stdio')
 ObjC.import('stdlib')
 var opts={{json .Options}}

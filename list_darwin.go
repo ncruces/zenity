@@ -22,6 +22,9 @@ func list(text string, items []string, opts options) (string, error) {
 	data.Options.Cancel = opts.cancelLabel
 	data.Options.Default = opts.defaultItems
 	data.Options.Empty = !opts.disallowEmpty
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 
 	out, err := zenutil.Run(opts.ctx, "list", data)
 	return strResult(opts, out, err)

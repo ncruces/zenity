@@ -18,6 +18,9 @@ func password(opts options) (string, string, error) {
 	data.Separator = zenutil.Separator
 	data.Options.Title = opts.title
 	data.Options.Timeout = zenutil.Timeout
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 	switch i := opts.icon.(type) {
 	case string:
 		_, err := os.Stat(i)

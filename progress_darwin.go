@@ -19,6 +19,9 @@ func progress(opts options) (ProgressDialog, error) {
 	if opts.maxValue >= 0 {
 		data.Total = &opts.maxValue
 	}
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 
 	return zenutil.RunProgress(opts.ctx, opts.maxValue, data)
 }

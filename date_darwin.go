@@ -7,26 +7,29 @@ import (
 )
 
 func calendar(text string, opts options) (t time.Time, err error) {
-	var date zenutil.Date
+	var data zenutil.Date
 
-	date.OK, date.Cancel, date.Extra = getAlertButtons(opts)
-	date.Format, err = zenutil.DateUTS35()
+	data.OK, data.Cancel, data.Extra = getAlertButtons(opts)
+	data.Format, err = zenutil.DateUTS35()
 	if err != nil {
 		return
 	}
 	if opts.time != nil {
 		unix := opts.time.Unix()
-		date.Date = &unix
+		data.Date = &unix
 	}
 
 	if opts.title != nil {
-		date.Text = *opts.title
-		date.Info = text
+		data.Text = *opts.title
+		data.Info = text
 	} else {
-		date.Text = text
+		data.Text = text
+	}
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
 	}
 
-	out, err := zenutil.Run(opts.ctx, "date", date)
+	out, err := zenutil.Run(opts.ctx, "date", data)
 	str, err := strResult(opts, out, err)
 	if err != nil {
 		return

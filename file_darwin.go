@@ -7,6 +7,9 @@ func selectFile(opts options) (string, error) {
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
 	data.Options.Location, _ = splitDirAndName(opts.filename)
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 
 	if opts.directory {
 		data.Operation = "chooseFolder"
@@ -26,6 +29,9 @@ func selectFileMultiple(opts options) ([]string, error) {
 	data.Options.Location, _ = splitDirAndName(opts.filename)
 	data.Options.Multiple = true
 	data.Separator = zenutil.Separator
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 
 	if opts.directory {
 		data.Operation = "chooseFolder"
@@ -43,6 +49,9 @@ func selectFileSave(opts options) (string, error) {
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
 	data.Options.Location, data.Options.Name = splitDirAndName(opts.filename)
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
 
 	if opts.directory {
 		data.Operation = "chooseFolder"

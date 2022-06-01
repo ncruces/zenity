@@ -7,6 +7,11 @@ import (
 )
 
 func selectColor(opts options) (color.Color, error) {
+	var data zenutil.Color
+	if i, ok := opts.windowIcon.(string); ok {
+		data.WindowIcon = i
+	}
+
 	var col color.Color
 	if opts.color != nil {
 		col = opts.color
@@ -14,12 +19,13 @@ func selectColor(opts options) (color.Color, error) {
 		col = color.White
 	}
 	r, g, b, _ := col.RGBA()
-
-	out, err := zenutil.Run(opts.ctx, "color", []float32{
+	data.Color = [3]float32{
 		float32(r) / 0xffff,
 		float32(g) / 0xffff,
 		float32(b) / 0xffff,
-	})
+	}
+
+	out, err := zenutil.Run(opts.ctx, "color", data)
 	str, err := strResult(opts, out, err)
 	if err != nil {
 		return nil, err

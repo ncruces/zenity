@@ -1,9 +1,6 @@
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
-app.activate()
-
 ObjC.import('stdio')
 ObjC.import('stdlib')
+{{template "common" .}}
 
 var opts = {{json .Options}}
 {{- if .IconPath}}

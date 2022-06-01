@@ -1,6 +1,7 @@
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')
+{{template "common" .}}
 
 var date = $.NSDatePicker.alloc.init
 date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)

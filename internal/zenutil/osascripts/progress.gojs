@@ -1,7 +1,4 @@
-var app = Application.currentApplication()
-app.includeStandardAdditions = true
-app.activate()
-
+{{template "common" .}}
 ObjC.import('stdlib')
 ObjC.import('readline')
 

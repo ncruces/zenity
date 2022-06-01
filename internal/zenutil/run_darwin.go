@@ -123,6 +123,10 @@ func RunProgress(ctx context.Context, max int, data Progress) (dlg *progressDial
 	return dlg, nil
 }
 
+type common struct {
+	WindowIcon string
+}
+
 // Dialog is internal.
 type Dialog struct {
 	Operation string
@@ -130,6 +134,7 @@ type Dialog struct {
 	Extra     *string
 	Options   DialogOptions
 	IconPath  string
+	common
 }
 
 // DialogOptions is internal.
@@ -152,6 +157,7 @@ type Password struct {
 	Extra     *string
 	Options   PasswordOptions
 	IconPath  string
+	common
 }
 
 // PasswordOptions is internal.
@@ -199,6 +205,7 @@ type List struct {
 	Items     []string
 	Separator string
 	Options   ListOptions
+	common
 }
 
 // ListOptions is internal.
@@ -217,6 +224,7 @@ type File struct {
 	Operation string
 	Separator string
 	Options   FileOptions
+	common
 }
 
 // FileOptions is internal.
@@ -241,10 +249,10 @@ type NotifyOptions struct {
 	Subtitle string  `json:"subtitle,omitempty"`
 }
 
-// Progress is internal.
-type Progress struct {
-	Description *string
-	Total       *int
+// Color is internal.
+type Color struct {
+	Color [3]float32
+	common
 }
 
 // Date is internal.
@@ -256,4 +264,12 @@ type Date struct {
 	OK     string
 	Cancel string
 	Extra  *string
+	common
+}
+
+// Progress is internal.
+type Progress struct {
+	Description *string
+	Total       *int
+	common
 }
