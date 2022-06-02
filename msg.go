@@ -3,7 +3,7 @@ package zenity
 // Question displays the question dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, NoWrap, Ellipsize, DefaultCancel.
+// Icon, WindowIcon, Attach, Modal, NoWrap, Ellipsize, DefaultCancel.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Question(text string, options ...Option) error {
@@ -12,8 +12,8 @@ func Question(text string, options ...Option) error {
 
 // Info displays the info dialog.
 //
-// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
-// NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, OKLabel, ExtraButton,
+// Icon, WindowIcon, Attach, Modal, NoWrap, Ellipsize.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Info(text string, options ...Option) error {
@@ -22,8 +22,8 @@ func Info(text string, options ...Option) error {
 
 // Warning displays the warning dialog.
 //
-// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
-// NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, OKLabel, ExtraButton,
+// Icon, WindowIcon, Attach, Modal, NoWrap, Ellipsize.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Warning(text string, options ...Option) error {
@@ -32,8 +32,8 @@ func Warning(text string, options ...Option) error {
 
 // Error displays the error dialog.
 //
-// Valid options: Title, Width, Height, OKLabel, ExtraButton, Icon,
-// NoWrap, Ellipsize.
+// Valid options: Title, Width, Height, OKLabel, ExtraButton,
+// Icon, WindowIcon, Attach, Modal, NoWrap, Ellipsize.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Error(text string, options ...Option) error {

@@ -3,7 +3,7 @@ package zenity
 // Progress displays the progress indication dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, MaxValue, Pulsate, NoCancel, TimeRemaining.
+// Icon, WindowIcon, Attach, Modal, MaxValue, Pulsate, NoCancel, TimeRemaining.
 //
 // May return: ErrUnsupported.
 func Progress(options ...Option) (ProgressDialog, error) {

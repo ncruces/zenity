@@ -16,7 +16,7 @@ func message(kind messageKind, text string, opts options) error {
 	case errorKind:
 		args = append(args, "--error")
 	}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
 	args = appendWindowIcon(args, opts)

@@ -6,7 +6,7 @@ import "github.com/ncruces/zenity/internal/zenutil"
 
 func notify(text string, opts options) error {
 	args := []string{"--notification", "--text", text}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	switch opts.icon {
 	case ErrorIcon:
 		args = append(args, "--window-icon=dialog-error")

@@ -3,7 +3,7 @@ package zenity
 // Entry displays the text entry dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, EntryText, HideText.
+// WindowIcon, Attach, Modal, EntryText, HideText.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Entry(text string, options ...Option) (string, error) {

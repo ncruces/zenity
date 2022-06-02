@@ -27,6 +27,9 @@ func Test_applyOptions(t *testing.T) {
 		{name: "WindowIcon", args: WindowIcon("error"), want: options{windowIcon: "error"}},
 		{name: "Icon", args: Icon(ErrorIcon), want: options{icon: ErrorIcon}},
 		{name: "Icon", args: Icon("error"), want: options{icon: "error"}},
+		{name: "Attach", args: Attach(12345), want: options{attach: 12345}},
+		{name: "Attach", args: Attach("Terminal"), want: options{attach: "Terminal"}},
+		{name: "Modal", args: Modal(), want: options{modal: true}},
 
 		// Message options
 		{name: "NoWrap", args: NoWrap(), want: options{noWrap: true}},

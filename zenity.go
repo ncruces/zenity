@@ -44,6 +44,8 @@ type options struct {
 	defaultCancel bool
 	icon          any
 	windowIcon    any
+	attach        any
+	modal         bool
 
 	// Message options
 	noWrap    bool
@@ -169,7 +171,7 @@ func Icon(icon any) Option {
 	return funcOption(func(o *options) { o.icon = icon })
 }
 
-// WindowIcon returns an Option to set the dialog icon (macOS and Unix only).
+// WindowIcon returns an Option to set the window icon.
 //
 // WindowIcon accepts a DialogIcon, or a string path.
 func WindowIcon(icon any) Option {
@@ -182,11 +184,21 @@ func WindowIcon(icon any) Option {
 	return funcOption(func(o *options) { o.windowIcon = icon })
 }
 
-// CustomIcon returns an Option to set a custom dialog icon, loaded from a file.
+// CustomIcon returns an Option to set a custom dialog icon.
 //
 // Deprecated: use Icon instead.
 func CustomIcon(path string) Option {
 	return Icon(path)
+}
+
+// Attach returns an Option to set the parent window to attach to.
+func Attach(id any) Option {
+	return funcOption(func(o *options) { o.attach = id })
+}
+
+// Modal returns an Option to set the modal hint.
+func Modal() Option {
+	return funcOption(func(o *options) { o.modal = true })
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.

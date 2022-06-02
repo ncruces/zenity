@@ -11,9 +11,13 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func Test_appendTitle(t *testing.T) {
-	got := appendTitle(nil, options{title: stringPtr("Title")})
-	want := []string{"--title", "Title"}
+func Test_appendGeneral(t *testing.T) {
+	got := appendGeneral(nil, options{
+		title:  stringPtr("Title"),
+		attach: 12345,
+		modal:  true,
+	})
+	want := []string{"--title", "Title", "--attach", "12345", "--modal"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("appendTitle() = %v; want %v", got, want)
 	}

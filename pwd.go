@@ -2,7 +2,8 @@ package zenity
 
 // Password displays the password dialog.
 //
-// Valid options: Title, OKLabel, CancelLabel, ExtraButton, Icon, Username.
+// Valid options: Title, OKLabel, CancelLabel, ExtraButton,
+// WindowIcon, Attach, Modal, Username.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Password(options ...Option) (usr string, pwd string, err error) {

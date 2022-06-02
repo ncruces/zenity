@@ -5,7 +5,7 @@ import "time"
 // Calendar displays the calendar dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, DefaultDate.
+// WindowIcon, Attach, Modal, DefaultDate.
 //
 // May return: ErrCanceled, ErrExtraButton.
 func Calendar(text string, options ...Option) (time.Time, error) {

@@ -6,7 +6,7 @@ import "github.com/ncruces/zenity/internal/zenutil"
 
 func progress(opts options) (ProgressDialog, error) {
 	args := []string{"--progress"}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
 	args = appendWindowIcon(args, opts)

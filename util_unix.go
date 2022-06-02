@@ -4,6 +4,7 @@ package zenity
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -11,9 +12,15 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func appendTitle(args []string, opts options) []string {
+func appendGeneral(args []string, opts options) []string {
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
+	}
+	if opts.attach != nil {
+		args = append(args, "--attach", fmt.Sprint(opts.attach))
+	}
+	if opts.modal {
+		args = append(args, "--modal")
 	}
 	return args
 }

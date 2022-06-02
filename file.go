@@ -8,7 +8,8 @@ import (
 
 // SelectFile displays the file selection dialog.
 //
-// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
+// Valid options: Title, WindowIcon, Attach, Modal, Directory, Filename,
+// ShowHidden, FileFilter(s).
 //
 // May return: ErrCanceled.
 func SelectFile(options ...Option) (string, error) {
@@ -17,7 +18,8 @@ func SelectFile(options ...Option) (string, error) {
 
 // SelectFileMultiple displays the multiple file selection dialog.
 //
-// Valid options: Title, Directory, Filename, ShowHidden, FileFilter(s).
+// Valid options: Title, WindowIcon, Attach, Modal, Directory, Filename,
+// ShowHidden, FileFilter(s).
 //
 // May return: ErrCanceled, ErrUnsupported.
 func SelectFileMultiple(options ...Option) ([]string, error) {
@@ -31,8 +33,8 @@ func SelectFileMutiple(options ...Option) ([]string, error) {
 
 // SelectFileSave displays the save file selection dialog.
 //
-// Valid options: Title, Filename, ConfirmOverwrite, ConfirmCreate, ShowHidden,
-// FileFilter(s).
+// Valid options: Title, WindowIcon, Attach, Modal, Filename,
+// ConfirmOverwrite, ConfirmCreate, ShowHidden, FileFilter(s).
 //
 // May return: ErrCanceled.
 func SelectFileSave(options ...Option) (string, error) {

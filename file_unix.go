@@ -10,7 +10,7 @@ import (
 
 func selectFile(opts options) (string, error) {
 	args := []string{"--file-selection"}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendFileArgs(args, opts)
 
 	out, err := zenutil.Run(opts.ctx, args)
@@ -19,7 +19,7 @@ func selectFile(opts options) (string, error) {
 
 func selectFileMultiple(opts options) ([]string, error) {
 	args := []string{"--file-selection", "--multiple", "--separator", zenutil.Separator}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendFileArgs(args, opts)
 
 	out, err := zenutil.Run(opts.ctx, args)
@@ -28,7 +28,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 
 func selectFileSave(opts options) (string, error) {
 	args := []string{"--file-selection", "--save"}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendFileArgs(args, opts)
 
 	out, err := zenutil.Run(opts.ctx, args)

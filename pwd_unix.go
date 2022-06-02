@@ -6,7 +6,7 @@ import "github.com/ncruces/zenity/internal/zenutil"
 
 func password(opts options) (string, string, error) {
 	args := []string{"--password"}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	if opts.username {
 		args = append(args, "--username")

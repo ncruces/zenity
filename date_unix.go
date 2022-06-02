@@ -11,7 +11,7 @@ import (
 
 func calendar(text string, opts options) (time.Time, error) {
 	args := []string{"--calendar", "--text", text, "--date-format", zenutil.DateFormat}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
 	args = appendWindowIcon(args, opts)

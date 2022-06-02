@@ -3,7 +3,7 @@ package zenity
 // List displays the list dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, DefaultItems, DisallowEmpty.
+// WindowIcon, Attach, Modal, DefaultItems, DisallowEmpty.
 //
 // May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func List(text string, items []string, options ...Option) (string, error) {
@@ -20,7 +20,7 @@ func ListItems(text string, items ...string) (string, error) {
 // ListMultiple displays the list dialog, allowing multiple items to be selected.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// Icon, DefaultItems, DisallowEmpty.
+// WindowIcon, Attach, Modal, DefaultItems, DisallowEmpty.
 //
 // May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func ListMultiple(text string, items []string, options ...Option) ([]string, error) {

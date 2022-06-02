@@ -8,7 +8,7 @@ import (
 
 func entry(text string, opts options) (string, error) {
 	args := []string{"--entry", "--text", text}
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
 	args = appendWindowIcon(args, opts)

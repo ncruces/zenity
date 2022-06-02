@@ -11,7 +11,7 @@ import (
 func selectColor(opts options) (color.Color, error) {
 	args := []string{"--color-selection"}
 
-	args = appendTitle(args, opts)
+	args = appendGeneral(args, opts)
 	if opts.color != nil {
 		args = append(args, "--color", zenutil.UnparseColor(opts.color))
 	}
