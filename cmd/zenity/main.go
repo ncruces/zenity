@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -51,6 +52,7 @@ var (
 	text          string
 	icon          string
 	windowIcon    string
+	attach        string
 	multiple      bool
 	defaultCancel bool
 
@@ -209,6 +211,8 @@ func setupFlags() {
 	flag.Func("extra-button", "Add an extra `button`", setExtraButton)
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
+	flag.StringVar(&attach, "attach", "", "Set the parent `window` to attach to")
+	flag.Bool("modal", true, "Set the modal hint")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
@@ -441,6 +445,14 @@ func loadFlags() []zenity.Option {
 		//
 	default:
 		opts = append(opts, zenity.WindowIcon(ingestPath(windowIcon)))
+	}
+
+	if attach != "" {
+		if i, err := strconv.ParseUint(attach, 0, 64); err != nil {
+			opts = append(opts, zenity.Attach(attach))
+		} else {
+			opts = append(opts, zenity.Attach(i))
+		}
 	}
 
 	// Message options

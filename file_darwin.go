@@ -7,7 +7,9 @@ func selectFile(opts options) (string, error) {
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
 	data.Options.Location, _ = splitDirAndName(opts.filename)
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 
@@ -29,7 +31,9 @@ func selectFileMultiple(opts options) ([]string, error) {
 	data.Options.Location, _ = splitDirAndName(opts.filename)
 	data.Options.Multiple = true
 	data.Separator = zenutil.Separator
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 
@@ -49,7 +53,9 @@ func selectFileSave(opts options) (string, error) {
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
 	data.Options.Location, data.Options.Name = splitDirAndName(opts.filename)
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

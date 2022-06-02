@@ -1,14 +1,16 @@
-{
+{{- if .Application}}
+  var app = Application({{json .Application}})
+{{- else}}
   var app = Application.currentApplication()
-  app.includeStandardAdditions = true
+{{- end}}
 
-  {{- if .WindowIcon}}
-    ObjC.import('Cocoa')
-    let nsapp = $.NSApplication.sharedApplication
-    let nsimg = $.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
-    nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
-    nsapp.setApplicationIconImage(nsimg)
-  {{- end}}
+{{- if .WindowIcon}}{
+  ObjC.import('Cocoa')
+  let nsapp = $.NSApplication.sharedApplication
+  let nsimg = $.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
+  nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
+  nsapp.setApplicationIconImage(nsimg)
+}{{- end}}
 
-  app.activate()
-}
+app.includeStandardAdditions = true
+app.activate()

@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
+var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v any) (string, error) {
 	b, err := json.Marshal(v)
 	return string(b), err
 }}).Parse(`
@@ -22,16 +22,18 @@ $.exit(-1)}
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
 {{- end}}
 {{define "common" -}}
-{var app=Application.currentApplication()
-app.includeStandardAdditions=true
-{{- if .WindowIcon}}
-ObjC.import('Cocoa')
+{{- if .Application}}
+var app=Application({{json .Application}})
+{{- else}}
+var app=Application.currentApplication()
+{{- end}}
+{{- if .WindowIcon}}{ObjC.import('Cocoa')
 let nsapp=$.NSApplication.sharedApplication
 let nsimg=$.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
 nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
-nsapp.setApplicationIconImage(nsimg)
-{{- end}}
-app.activate()}
+nsapp.setApplicationIconImage(nsimg)}{{- end}}
+app.includeStandardAdditions=true
+app.activate()
 {{- end}}
 {{define "date" -}}
 ObjC.import('Cocoa')

@@ -22,7 +22,9 @@ func list(text string, items []string, opts options) (string, error) {
 	data.Options.Cancel = opts.cancelLabel
 	data.Options.Default = opts.defaultItems
 	data.Options.Empty = !opts.disallowEmpty
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

@@ -8,7 +8,9 @@ import (
 
 func selectColor(opts options) (color.Color, error) {
 	var data zenutil.Color
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

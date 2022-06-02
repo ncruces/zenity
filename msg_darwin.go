@@ -10,7 +10,9 @@ func message(kind messageKind, text string, opts options) error {
 	var data zenutil.Dialog
 	data.Text = text
 	data.Options.Timeout = zenutil.Timeout
-	if i, ok := opts.windowIcon.(string); ok {
+	if opts.attach != nil {
+		data.Application = opts.attach
+	} else if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

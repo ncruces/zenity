@@ -10,7 +10,7 @@ import (
 )
 
 // Run is internal.
-func Run(ctx context.Context, script string, data interface{}) ([]byte, error) {
+func Run(ctx context.Context, script string, data any) ([]byte, error) {
 	var buf bytes.Buffer
 	err := scripts.ExecuteTemplate(&buf, script, data)
 	if err != nil {
@@ -124,7 +124,8 @@ func RunProgress(ctx context.Context, max int, data Progress) (dlg *progressDial
 }
 
 type common struct {
-	WindowIcon string
+	Application any
+	WindowIcon  string
 }
 
 // Dialog is internal.

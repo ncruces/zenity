@@ -111,7 +111,7 @@ import (
 	"text/template"
 )
 
-var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v interface{}) (string, error) {
+var scripts = template.Must(template.New("").Funcs(template.FuncMap{"json": func(v any) (string, error) {
 	b, err := json.Marshal(v)
 	return string(b), err
 }}).Parse(` + "`{{.}}`))\n"))
