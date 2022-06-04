@@ -13,6 +13,8 @@ package zenity
 import (
 	"context"
 	"image/color"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/ncruces/zenity/internal/zenutil"
@@ -163,8 +165,7 @@ const (
 // The string can be a GTK icon name (Unix), or a path (Windows and macOS).
 func Icon(icon any) Option {
 	switch icon.(type) {
-	case string:
-	case DialogIcon:
+	case DialogIcon, string:
 	default:
 		panic("interface conversion: expected string or DialogIcon")
 	}
@@ -176,8 +177,7 @@ func Icon(icon any) Option {
 // WindowIcon accepts a DialogIcon, or a string path.
 func WindowIcon(icon any) Option {
 	switch icon.(type) {
-	case string:
-	case DialogIcon:
+	case DialogIcon, string:
 	default:
 		panic("interface conversion: expected string or DialogIcon")
 	}
@@ -192,7 +192,32 @@ func CustomIcon(path string) Option {
 }
 
 // Attach returns an Option to set the parent window to attach to.
+//
+// Attach accepts:
+//  - a window id (int) on Unix
+//  - a window handle (~uintptr) on Windows
+//  - an application name (string) or process id (int) on macOS
 func Attach(id any) Option {
+	switch runtime.GOOS {
+	case "windows":
+		if v := reflect.ValueOf(id); v.Kind() == reflect.Uintptr {
+			id = uintptr(v.Uint())
+		} else {
+			panic("interface conversion: expected uintptr")
+		}
+
+	case "darwin":
+		switch id.(type) {
+		case int, string:
+		default:
+			panic("interface conversion: expected int or string")
+		}
+
+	default:
+		if _, ok := id.(int); !ok {
+			panic("interface conversion: expected int")
+		}
+	}
 	return funcOption(func(o *options) { o.attach = id })
 }
 

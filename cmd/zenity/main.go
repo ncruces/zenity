@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -448,11 +447,7 @@ func loadFlags() []zenity.Option {
 	}
 
 	if attach != "" {
-		if i, err := strconv.ParseUint(attach, 0, 64); err != nil {
-			opts = append(opts, zenity.Attach(attach))
-		} else {
-			opts = append(opts, zenity.Attach(i))
-		}
+		opts = append(opts, zenity.Attach(zenutil.ParseWindowId(attach)))
 	}
 
 	// Message options
