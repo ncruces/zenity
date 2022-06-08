@@ -33,6 +33,7 @@ func selectColor(opts options) (color.Color, error) {
 
 	var args _CHOOSECOLOR
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Owner, _ = opts.attach.(uintptr)
 	args.CustColors = &customColors
 
 	if opts.color != nil {

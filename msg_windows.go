@@ -70,7 +70,8 @@ func message(kind messageKind, text string, opts options) error {
 		title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 
-	s, _, err := messageBox.Call(0, strptr(text), uintptr(unsafe.Pointer(title)), flags)
+	owner, _ := opts.attach.(uintptr)
+	s, _, err := messageBox.Call(owner, strptr(text), uintptr(unsafe.Pointer(title)), flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()

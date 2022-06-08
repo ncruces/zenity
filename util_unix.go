@@ -4,7 +4,6 @@ package zenity
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -16,8 +15,8 @@ func appendGeneral(args []string, opts options) []string {
 	if opts.title != nil {
 		args = append(args, "--title", *opts.title)
 	}
-	if opts.attach != nil {
-		args = append(args, "--attach", fmt.Sprint(opts.attach))
+	if id, ok := opts.attach.(int); ok {
+		args = append(args, "--attach", strconv.Itoa(id))
 	}
 	if opts.modal {
 		args = append(args, "--modal")

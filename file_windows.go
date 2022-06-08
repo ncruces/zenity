@@ -43,6 +43,7 @@ func selectFile(opts options) (string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Owner, _ = opts.attach.(uintptr)
 	args.Flags = _OFN_NOCHANGEDIR | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
 
 	if opts.title != nil {
@@ -88,6 +89,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Owner, _ = opts.attach.(uintptr)
 	args.Flags = _OFN_NOCHANGEDIR | _OFN_ALLOWMULTISELECT | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
 
 	if opts.title != nil {
@@ -158,6 +160,7 @@ func selectFileSave(opts options) (string, error) {
 
 	var args _OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
+	args.Owner, _ = opts.attach.(uintptr)
 	args.Flags = _OFN_NOCHANGEDIR | _OFN_PATHMUSTEXIST | _OFN_NOREADONLYRETURN | _OFN_EXPLORER
 
 	if opts.title != nil {
@@ -268,7 +271,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		defer unhook()
 	}
 
-	hr, _, _ = dialog.Call(dialog.Show, 0)
+	owner, _ := opts.attach.(uintptr)
+	hr, _, _ = dialog.Call(dialog.Show, owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
@@ -328,6 +332,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 
 func browseForFolder(opts options) (string, []string, error) {
 	var args _BROWSEINFO
+	args.Owner, _ = opts.attach.(uintptr)
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
 	if opts.title != nil {

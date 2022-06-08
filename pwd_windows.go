@@ -65,11 +65,12 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	}
 	defer unregisterClass.Call(cls, instance)
 
+	owner, _ := opts.attach.(uintptr)
 	dlg.wnd, _, _ = createWindowEx.Call(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
 		cls, strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 191, 0, 0, instance, uintptr(unsafe.Pointer(dlg)))
+		281, 191, owner, 0, instance, uintptr(unsafe.Pointer(dlg)))
 
 	dlg.uTextCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr("Username:"),

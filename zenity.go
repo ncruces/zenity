@@ -214,7 +214,9 @@ func Attach(id any) Option {
 		}
 
 	default:
-		if _, ok := id.(int); !ok {
+		switch id.(type) {
+		case int:
+		default:
 			panic("interface conversion: expected int")
 		}
 	}
