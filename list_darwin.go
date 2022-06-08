@@ -24,7 +24,8 @@ func list(text string, items []string, opts options) (string, error) {
 	data.Options.Empty = !opts.disallowEmpty
 	if opts.attach != nil {
 		data.Application = opts.attach
-	} else if i, ok := opts.windowIcon.(string); ok {
+	}
+	if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

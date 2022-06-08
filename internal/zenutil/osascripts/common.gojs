@@ -4,13 +4,13 @@
   var app = Application.currentApplication()
 {{- end}}
 
-{{- if .WindowIcon}}{
+{{if .WindowIcon}}{
   ObjC.import('Cocoa')
   let nsapp = $.NSApplication.sharedApplication
   let nsimg = $.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
   nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
   nsapp.setApplicationIconImage(nsimg)
-}{{- end}}
+}{{end}}
 
 app.includeStandardAdditions = true
 app.activate()

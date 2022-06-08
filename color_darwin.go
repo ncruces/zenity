@@ -10,7 +10,8 @@ func selectColor(opts options) (color.Color, error) {
 	var data zenutil.Color
 	if opts.attach != nil {
 		data.Application = opts.attach
-	} else if i, ok := opts.windowIcon.(string); ok {
+	}
+	if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 

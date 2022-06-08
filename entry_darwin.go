@@ -16,7 +16,8 @@ func entry(text string, opts options) (string, error) {
 	data.Options.Timeout = zenutil.Timeout
 	if opts.attach != nil {
 		data.Application = opts.attach
-	} else if i, ok := opts.windowIcon.(string); ok {
+	}
+	if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}
 	switch i := opts.icon.(type) {

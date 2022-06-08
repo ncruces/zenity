@@ -27,11 +27,11 @@ var app=Application({{json .Application}})
 {{- else}}
 var app=Application.currentApplication()
 {{- end}}
-{{- if .WindowIcon}}{ObjC.import('Cocoa')
+{{if .WindowIcon}}{ObjC.import('Cocoa')
 let nsapp=$.NSApplication.sharedApplication
 let nsimg=$.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
 nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
-nsapp.setApplicationIconImage(nsimg)}{{- end}}
+nsapp.setApplicationIconImage(nsimg)}{{end}}
 app.includeStandardAdditions=true
 app.activate()
 {{- end}}
