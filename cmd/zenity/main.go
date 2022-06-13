@@ -52,6 +52,7 @@ var (
 	icon          string
 	windowIcon    string
 	attach        string
+	modal         bool
 	multiple      bool
 	defaultCancel bool
 
@@ -211,7 +212,7 @@ func setupFlags() {
 	flag.StringVar(&text, "text", "", "Set the dialog `text`")
 	flag.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	flag.StringVar(&attach, "attach", "", "Set the parent `window` to attach to")
-	flag.Bool("modal", true, "Set the modal hint")
+	flag.BoolVar(&modal, "modal", runtime.GOOS == "darwin", "Set the modal hint")
 	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
 	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
@@ -448,6 +449,10 @@ func loadFlags() []zenity.Option {
 
 	if attach != "" {
 		opts = append(opts, zenity.Attach(zenutil.ParseWindowId(attach)))
+	} else if modal {
+		if pid := zenutil.GetParentWindowId(); pid != 0 {
+			opts = append(opts, zenity.Attach(pid))
+		}
 	}
 
 	// Message options

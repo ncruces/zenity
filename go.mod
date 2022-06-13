@@ -9,7 +9,7 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	go.uber.org/goleak v1.1.12 // test
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 )
 
 require (
