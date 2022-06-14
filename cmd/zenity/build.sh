@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
 TAG=$(git tag --points-at HEAD)
 echo 'package main; const tag = "'$TAG'"' > tag.go

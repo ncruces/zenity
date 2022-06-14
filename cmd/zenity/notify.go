@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/zenity"
+	"github.com/ncruces/zenity/internal/zencmd"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -27,7 +28,7 @@ func notify(opts ...zenity.Option) error {
 		var cmd, msg string
 		if n := strings.IndexByte(line, ':'); n >= 0 {
 			cmd = strings.TrimSpace(line[:n])
-			msg = strings.TrimSpace(zenutil.Unescape(line[n+1:]))
+			msg = strings.TrimSpace(zencmd.Unescape(line[n+1:]))
 		} else {
 			fmt.Fprint(os.Stderr, "Could not parse command from stdin")
 		}

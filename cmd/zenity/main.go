@@ -21,6 +21,7 @@ import (
 
 	"github.com/ncruces/go-strftime"
 	"github.com/ncruces/zenity"
+	"github.com/ncruces/zenity/internal/zencmd"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -58,6 +59,7 @@ var (
 
 	// Message options
 	noWrap    bool
+	noMarkup  bool
 	ellipsize bool
 
 	// Entry options
@@ -219,8 +221,8 @@ func setupFlags() {
 	// Message options
 	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
 	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
+	flag.BoolVar(&noMarkup, "no-markup", false, "Do not enable Pango markup")
 	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
-	flag.Bool("no-markup", true, "Do not enable Pango markup")
 
 	// Entry options
 	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
@@ -462,6 +464,12 @@ func loadFlags() []zenity.Option {
 	}
 	if ellipsize {
 		opts = append(opts, zenity.Ellipsize())
+	}
+	if noMarkup == false {
+		switch {
+		case errorDlg, infoDlg, warningDlg, questionDlg:
+			text = zencmd.StripMarkup(text)
+		}
 	}
 
 	// Entry options
