@@ -1,7 +1,6 @@
 package zenutil
 
 import (
-	"os"
 	"strconv"
 
 	"golang.org/x/sys/unix"
@@ -16,8 +15,7 @@ func ParseWindowId(id string) any {
 }
 
 // GetParentWindowId is internal.
-func GetParentWindowId() int {
-	pid := os.Getppid()
+func GetParentWindowId(pid int) int {
 	for {
 		kinfo, err := unix.SysctlKinfoProc("kern.proc.pid", pid)
 		if err != nil {

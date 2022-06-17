@@ -452,9 +452,12 @@ func loadFlags() []zenity.Option {
 	if attach != "" {
 		opts = append(opts, zenity.Attach(zenutil.ParseWindowId(attach)))
 	} else if modal {
-		if pid := zenutil.GetParentWindowId(); pid != 0 {
-			opts = append(opts, zenity.Attach(pid))
+		if id := zenutil.GetParentWindowId(os.Getppid()); id != 0 {
+			opts = append(opts, zenity.Attach(id))
 		}
+	}
+	if modal {
+		opts = append(opts, zenity.Modal())
 	}
 
 	// Message options

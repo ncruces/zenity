@@ -9,6 +9,6 @@ func ParseWindowId(id string) uintptr {
 }
 
 // GetParentWindowId is internal.
-func GetParentWindowId() int {
+func GetParentWindowId(pid int) int {
 	return 0
 }
