@@ -98,6 +98,8 @@ func pwdResult(sep string, opts options, out []byte, err error) (string, string,
 	return "", str, err
 }
 
+func hwnd(i uint64) uintptr { return uintptr(i) }
+
 // Replace with strings.Cut after 1.18.
 func cut(s, sep string) (before, after string, found bool) {
 	if i := strings.Index(s, sep); i >= 0 {

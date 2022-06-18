@@ -17,15 +17,10 @@ import (
 )
 
 var (
-	gdi32    = windows.NewLazySystemDLL("gdi32.dll")
 	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
 	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
 	user32   = windows.NewLazySystemDLL("user32.dll")
 	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
-
-	createFontIndirect = gdi32.NewProc("CreateFontIndirectW")
-	deleteObject       = gdi32.NewProc("DeleteObject")
-	getDeviceCaps      = gdi32.NewProc("GetDeviceCaps")
 
 	activateActCtx     = kernel32.NewProc("ActivateActCtx")
 	createActCtx       = kernel32.NewProc("CreateActCtxW")
@@ -81,6 +76,8 @@ func intptr(i int64) uintptr {
 func strptr(s string) uintptr {
 	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
 }
+
+func hwnd(i uint64) win.HWND { return win.HWND(uintptr(i)) }
 
 func setup() context.CancelFunc {
 	var wnd uintptr
@@ -264,7 +261,7 @@ func getDPI(wnd uintptr) dpi {
 	if wnd != 0 && getDpiForWindow.Find() == nil {
 		res, _, _ = getDpiForWindow.Call(wnd)
 	} else if dc, _, _ := getWindowDC.Call(wnd); dc != 0 {
-		res, _, _ = getDeviceCaps.Call(dc, 90) // LOGPIXELSY
+		res = win.GetDeviceCaps(win.Handle(dc), win.LOGPIXELSY)
 		releaseDC.Call(0, dc)
 	}
 
@@ -282,8 +279,8 @@ func (d dpi) scale(dim uintptr) uintptr {
 }
 
 type font struct {
-	handle  uintptr
-	logical _LOGFONT
+	handle  win.Handle
+	logical win.LOGFONT
 }
 
 func getFont() font {
@@ -298,14 +295,14 @@ func (f *font) forDPI(dpi dpi) uintptr {
 	if h := -int32(dpi.scale(12)); f.handle == 0 || f.logical.Height != h {
 		f.delete()
 		f.logical.Height = h
-		f.handle, _, _ = createFontIndirect.Call(uintptr(unsafe.Pointer(&f.logical)))
+		f.handle = win.CreateFontIndirect(&f.logical)
 	}
-	return f.handle
+	return uintptr(f.handle)
 }
 
 func (f *font) delete() {
 	if f.handle != 0 {
-		deleteObject.Call(f.handle)
+		win.DeleteObject(f.handle)
 		f.handle = 0
 	}
 }
@@ -470,24 +467,6 @@ type _CWPRETSTRUCT struct {
 	Wnd     uintptr
 }
 
-// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logfontw
-type _LOGFONT struct {
-	Height         int32
-	Width          int32
-	Escapement     int32
-	Orientation    int32
-	Weight         int32
-	Italic         byte
-	Underline      byte
-	StrikeOut      byte
-	CharSet        byte
-	OutPrecision   byte
-	ClipPrecision  byte
-	Quality        byte
-	PitchAndFamily byte
-	FaceName       [32]uint16
-}
-
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw
 type _NONCLIENTMETRICS struct {
 	Size            uint32
@@ -496,15 +475,15 @@ type _NONCLIENTMETRICS struct {
 	ScrollHeight    int32
 	CaptionWidth    int32
 	CaptionHeight   int32
-	CaptionFont     _LOGFONT
+	CaptionFont     win.LOGFONT
 	SmCaptionWidth  int32
 	SmCaptionHeight int32
-	SmCaptionFont   _LOGFONT
+	SmCaptionFont   win.LOGFONT
 	MenuWidth       int32
 	MenuHeight      int32
-	MenuFont        _LOGFONT
-	StatusFont      _LOGFONT
-	MessageFont     _LOGFONT
+	MenuFont        win.LOGFONT
+	StatusFont      win.LOGFONT
+	MessageFont     win.LOGFONT
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg

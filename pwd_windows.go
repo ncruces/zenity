@@ -3,6 +3,8 @@ package zenity
 import (
 	"syscall"
 	"unsafe"
+
+	"github.com/ncruces/zenity/internal/win"
 )
 
 func password(opts options) (string, string, error) {
@@ -65,12 +67,12 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	}
 	defer unregisterClass.Call(cls, instance)
 
-	owner, _ := opts.attach.(uintptr)
+	owner, _ := opts.attach.(win.HWND)
 	dlg.wnd, _, _ = createWindowEx.Call(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
 		cls, strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 191, owner, 0, instance, uintptr(unsafe.Pointer(dlg)))
+		281, 191, uintptr(owner), 0, instance, uintptr(unsafe.Pointer(dlg)))
 
 	dlg.uTextCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr("Username:"),
@@ -96,16 +98,16 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
-		12, 116, 75, 24, dlg.wnd, _IDOK, instance, 0)
+		12, 116, 75, 24, dlg.wnd, win.IDOK, instance, 0)
 	dlg.cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-		12, 116, 75, 24, dlg.wnd, _IDCANCEL, instance, 0)
+		12, 116, 75, 24, dlg.wnd, win.IDCANCEL, instance, 0)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 116, 75, 24, dlg.wnd, _IDNO, instance, 0)
+			12, 116, 75, 24, dlg.wnd, win.IDNO, instance, 0)
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
@@ -183,12 +185,12 @@ func passwordProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		switch wparam {
 		default:
 			return 1
-		case _IDOK, _IDYES:
+		case win.IDOK, win.IDYES:
 			dlg.usr = getWindowString(dlg.uEditCtl)
 			dlg.pwd = getWindowString(dlg.pEditCtl)
-		case _IDCANCEL:
+		case win.IDCANCEL:
 			dlg.err = ErrCanceled
-		case _IDNO:
+		case win.IDNO:
 			dlg.err = ErrExtraButton
 		}
 		destroyWindow.Call(wnd)

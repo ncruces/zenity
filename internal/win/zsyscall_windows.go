@@ -40,6 +40,7 @@ func errnoErr(e syscall.Errno) error {
 var (
 	modcomctl32 = windows.NewLazySystemDLL("comctl32.dll")
 	modcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
+	modgdi32    = windows.NewLazySystemDLL("gdi32.dll")
 	modole32    = windows.NewLazySystemDLL("ole32.dll")
 	modshell32  = windows.NewLazySystemDLL("shell32.dll")
 
@@ -48,6 +49,9 @@ var (
 	procCommDlgExtendedError        = modcomdlg32.NewProc("CommDlgExtendedError")
 	procGetOpenFileNameW            = modcomdlg32.NewProc("GetOpenFileNameW")
 	procGetSaveFileNameW            = modcomdlg32.NewProc("GetSaveFileNameW")
+	procCreateFontIndirectW         = modgdi32.NewProc("CreateFontIndirectW")
+	procDeleteObject                = modgdi32.NewProc("DeleteObject")
+	procGetDeviceCaps               = modgdi32.NewProc("GetDeviceCaps")
 	procCoCreateInstance            = modole32.NewProc("CoCreateInstance")
 	procCoTaskMemFree               = modole32.NewProc("CoTaskMemFree")
 	procSHBrowseForFolder           = modshell32.NewProc("SHBrowseForFolder")
@@ -83,6 +87,24 @@ func GetOpenFileName(ofn *OPENFILENAME) (ok bool) {
 func GetSaveFileName(ofn *OPENFILENAME) (ok bool) {
 	r0, _, _ := syscall.Syscall(procGetSaveFileNameW.Addr(), 1, uintptr(unsafe.Pointer(ofn)), 0, 0)
 	ok = r0 != 0
+	return
+}
+
+func CreateFontIndirect(lf *LOGFONT) (font Handle) {
+	r0, _, _ := syscall.Syscall(procCreateFontIndirectW.Addr(), 1, uintptr(unsafe.Pointer(lf)), 0, 0)
+	font = Handle(r0)
+	return
+}
+
+func DeleteObject(o Handle) (ok bool) {
+	r0, _, _ := syscall.Syscall(procDeleteObject.Addr(), 1, uintptr(o), 0, 0)
+	ok = r0 != 0
+	return
+}
+
+func GetDeviceCaps(dc Handle, index int) (cap uintptr) {
+	r0, _, _ := syscall.Syscall(procGetDeviceCaps.Addr(), 2, uintptr(dc), uintptr(index), 0)
+	cap = uintptr(r0)
 	return
 }
 

@@ -46,7 +46,7 @@ func notify(text string, opts options) error {
 		icon := getIcon(opts.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
-			args.Icon = icon.handle
+			args.Icon = win.Handle(icon.handle)
 			args.Flags |= 0x00000002 // NIF_ICON
 			args.InfoFlags |= 0x4    // NIIF_USER
 		}
@@ -90,13 +90,13 @@ func wtsMessage(text string, opts options) error {
 
 	switch opts.icon {
 	case ErrorIcon:
-		flags |= _MB_ICONERROR
+		flags |= win.MB_ICONERROR
 	case QuestionIcon:
-		flags |= _MB_ICONQUESTION
+		flags |= win.MB_ICONQUESTION
 	case WarningIcon:
-		flags |= _MB_ICONWARNING
+		flags |= win.MB_ICONWARNING
 	case InfoIcon:
-		flags |= _MB_ICONINFORMATION
+		flags |= win.MB_ICONINFORMATION
 	}
 
 	title := opts.title

@@ -27,7 +27,7 @@ func selectColor(opts options) (color.Color, error) {
 
 	var args win.CHOOSECOLOR
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Owner, _ = opts.attach.(uintptr)
+	args.Owner, _ = opts.attach.(win.HWND)
 	args.CustColors = &customColors
 
 	if opts.color != nil {

@@ -17,8 +17,8 @@ const (
 // https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-choosecolorw-r1
 type CHOOSECOLOR struct {
 	StructSize   uint32
-	Owner        uintptr
-	Instance     uintptr
+	Owner        HWND
+	Instance     HWND
 	RgbResult    uint32
 	CustColors   *[16]uint32
 	Flags        uint32
@@ -42,8 +42,8 @@ const (
 // https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamew
 type OPENFILENAME struct {
 	StructSize      uint32
-	Owner           uintptr
-	Instance        uintptr
+	Owner           HWND
+	Instance        Handle
 	Filter          *uint16
 	CustomFilter    *uint16
 	MaxCustomFilter uint32

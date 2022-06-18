@@ -1,11 +1,15 @@
 package zenutil
 
-import "strconv"
+import (
+	"strconv"
+
+	"golang.org/x/sys/windows"
+)
 
 // ParseWindowId is internal.
-func ParseWindowId(id string) uintptr {
+func ParseWindowId(id string) windows.HWND {
 	hwnd, _ := strconv.ParseUint(id, 0, 64)
-	return uintptr(hwnd)
+	return windows.HWND(uintptr(hwnd))
 }
 
 // GetParentWindowId is internal.

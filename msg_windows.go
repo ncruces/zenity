@@ -4,54 +4,55 @@ import (
 	"context"
 	"syscall"
 	"unsafe"
+
+	"github.com/ncruces/zenity/internal/win"
 )
 
 var (
 	getDlgCtrlID = user32.NewProc("GetDlgCtrlID")
-	messageBox   = user32.NewProc("MessageBoxW")
 )
 
 func message(kind messageKind, text string, opts options) error {
-	var flags uintptr
+	var flags uint32
 
 	switch {
 	case kind == questionKind && opts.extraButton != nil:
-		flags |= _MB_YESNOCANCEL
+		flags |= win.MB_YESNOCANCEL
 	case kind == questionKind:
-		flags |= _MB_OKCANCEL
+		flags |= win.MB_OKCANCEL
 	case opts.extraButton != nil:
-		flags |= _MB_YESNO
+		flags |= win.MB_YESNO
 	}
 
 	switch opts.icon {
 	case ErrorIcon:
-		flags |= _MB_ICONERROR
+		flags |= win.MB_ICONERROR
 	case QuestionIcon:
-		flags |= _MB_ICONQUESTION
+		flags |= win.MB_ICONQUESTION
 	case WarningIcon:
-		flags |= _MB_ICONWARNING
+		flags |= win.MB_ICONWARNING
 	case InfoIcon:
-		flags |= _MB_ICONINFORMATION
+		flags |= win.MB_ICONINFORMATION
 	case NoIcon:
 		//
 	default:
 		switch kind {
 		case errorKind:
-			flags |= _MB_ICONERROR
+			flags |= win.MB_ICONERROR
 		case questionKind:
-			flags |= _MB_ICONQUESTION
+			flags |= win.MB_ICONQUESTION
 		case warningKind:
-			flags |= _MB_ICONWARNING
+			flags |= win.MB_ICONWARNING
 		case infoKind:
-			flags |= _MB_ICONINFORMATION
+			flags |= win.MB_ICONINFORMATION
 		}
 	}
 
 	if kind == questionKind && opts.defaultCancel {
 		if opts.extraButton == nil {
-			flags |= _MB_DEFBUTTON2
+			flags |= win.MB_DEFBUTTON2
 		} else {
-			flags |= _MB_DEFBUTTON3
+			flags |= win.MB_DEFBUTTON3
 		}
 	}
 
@@ -70,18 +71,18 @@ func message(kind messageKind, text string, opts options) error {
 		title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 
-	owner, _ := opts.attach.(uintptr)
-	s, _, err := messageBox.Call(owner, strptr(text), uintptr(unsafe.Pointer(title)), flags)
+	owner, _ := opts.attach.(win.HWND)
+	s, err := win.MessageBox(owner, syscall.StringToUTF16Ptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
 	}
 	switch s {
-	case _IDOK, _IDYES:
+	case win.IDOK, win.IDYES:
 		return nil
-	case _IDCANCEL:
+	case win.IDCANCEL:
 		return ErrCanceled
-	case _IDNO:
+	case win.IDNO:
 		return ErrExtraButton
 	default:
 		return err
@@ -101,11 +102,11 @@ func hookMessageDialogCallback(wnd uintptr, lparam *options) uintptr {
 
 	var text *string
 	switch ctl {
-	case _IDOK, _IDYES:
+	case win.IDOK, win.IDYES:
 		text = lparam.okLabel
-	case _IDCANCEL:
+	case win.IDCANCEL:
 		text = lparam.cancelLabel
-	case _IDNO:
+	case win.IDNO:
 		text = lparam.extraButton
 	}
 	if text != nil {

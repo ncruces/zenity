@@ -9,7 +9,7 @@ const (
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow
 type BROWSEINFO struct {
-	Owner        uintptr
+	Owner        HWND
 	Root         uintptr
 	DisplayName  *uint16
 	Title        *uint16
@@ -22,11 +22,11 @@ type BROWSEINFO struct {
 // https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-notifyicondataw
 type NOTIFYICONDATA struct {
 	StructSize      uint32
-	Wnd             uintptr
+	Wnd             HWND
 	ID              uint32
 	Flags           uint32
 	CallbackMessage uint32
-	Icon            uintptr
+	Icon            Handle
 	Tip             [128]uint16 // NOTIFYICONDATAA_V1_SIZE
 	State           uint32
 	StateMask       uint32
@@ -34,8 +34,8 @@ type NOTIFYICONDATA struct {
 	Version         uint32
 	InfoTitle       [64]uint16
 	InfoFlags       uint32
-	// GuidItem     [16]byte       // NOTIFYICONDATAA_V2_SIZE
-	// BalloonIcon  syscall.Handle // NOTIFYICONDATAA_V3_SIZE
+	// GuidItem     [16]byte // NOTIFYICONDATAA_V2_SIZE
+	// BalloonIcon  Handle   // NOTIFYICONDATAA_V3_SIZE
 }
 
 type IShellItem struct {

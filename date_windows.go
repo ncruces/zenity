@@ -4,6 +4,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/ncruces/zenity/internal/win"
 )
 
 func calendar(text string, opts options) (time.Time, error) {
@@ -56,12 +58,12 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	}
 	defer unregisterClass.Call(cls, instance)
 
-	owner, _ := opts.attach.(uintptr)
+	owner, _ := opts.attach.(win.HWND)
 	dlg.wnd, _, _ = createWindowEx.Call(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
 		cls, strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 281, owner, 0, instance, uintptr(unsafe.Pointer(dlg)))
+		281, 281, uintptr(owner), 0, instance, uintptr(unsafe.Pointer(dlg)))
 
 	dlg.textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr(text),
@@ -77,16 +79,16 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
-		12, 206, 75, 24, dlg.wnd, _IDOK, instance, 0)
+		12, 206, 75, 24, dlg.wnd, win.IDOK, instance, 0)
 	dlg.cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-		12, 206, 75, 24, dlg.wnd, _IDCANCEL, instance, 0)
+		12, 206, 75, 24, dlg.wnd, win.IDCANCEL, instance, 0)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 206, 75, 24, dlg.wnd, _IDNO, instance, 0)
+			12, 206, 75, 24, dlg.wnd, win.IDNO, instance, 0)
 	}
 
 	if opts.time != nil {
@@ -168,13 +170,13 @@ func calendarProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		switch wparam {
 		default:
 			return 1
-		case _IDOK, _IDYES:
+		case win.IDOK, win.IDYES:
 			var date _SYSTEMTIME
 			sendMessage.Call(dlg.dateCtl, _MCM_GETCURSEL, 0, uintptr(unsafe.Pointer(&date)))
 			dlg.out = time.Date(int(date.year), time.Month(date.month), int(date.day), 0, 0, 0, 0, time.UTC)
-		case _IDCANCEL:
+		case win.IDCANCEL:
 			dlg.err = ErrCanceled
-		case _IDNO:
+		case win.IDNO:
 			dlg.err = ErrExtraButton
 		}
 		destroyWindow.Call(wnd)

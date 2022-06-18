@@ -27,7 +27,7 @@ func selectFile(opts options) (string, error) {
 
 	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Owner, _ = opts.attach.(uintptr)
+	args.Owner, _ = opts.attach.(win.HWND)
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
@@ -73,7 +73,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 
 	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Owner, _ = opts.attach.(uintptr)
+	args.Owner, _ = opts.attach.(win.HWND)
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_ALLOWMULTISELECT | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
@@ -144,7 +144,7 @@ func selectFileSave(opts options) (string, error) {
 
 	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
-	args.Owner, _ = opts.attach.(uintptr)
+	args.Owner, _ = opts.attach.(win.HWND)
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_PATHMUSTEXIST | win.OFN_NOREADONLYRETURN | win.OFN_EXPLORER
 
 	if opts.title != nil {
@@ -252,8 +252,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		defer unhook()
 	}
 
-	owner, _ := opts.attach.(uintptr)
-	hr, _, _ = dialog.Call(dialog.Show, owner)
+	owner, _ := opts.attach.(win.HWND)
+	hr, _, _ = dialog.Call(dialog.Show, uintptr(owner))
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
@@ -313,7 +313,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 
 func browseForFolder(opts options) (string, []string, error) {
 	var args win.BROWSEINFO
-	args.Owner, _ = opts.attach.(uintptr)
+	args.Owner, _ = opts.attach.(win.HWND)
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
 	if opts.title != nil {
