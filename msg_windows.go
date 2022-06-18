@@ -88,9 +88,8 @@ func message(kind messageKind, text string, opts options) error {
 }
 
 func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
-	return hookDialog(opts.ctx, opts.windowIcon, nil, func(wnd uintptr) {
-		enumChildWindows.Call(wnd,
-			syscall.NewCallback(hookMessageDialogCallback),
+	return hookDialog(opts.ctx, opts.windowIcon, nil, func(wnd win.HWND) {
+		win.EnumChildWindows(wnd, syscall.NewCallback(hookMessageDialogCallback),
 			uintptr(unsafe.Pointer(&opts)))
 	})
 }
@@ -108,14 +107,14 @@ func hookMessageDialogCallback(wnd win.HWND, lparam *options) uintptr {
 		text = lparam.extraButton
 	}
 	if text != nil {
-		setWindowText.Call(uintptr(wnd), strptr(*text))
+		win.SetWindowText(wnd, syscall.StringToUTF16Ptr(*text))
 	}
 
 	if ctl == 20 /*IDC_STATIC_OK*/ {
 		icon := getIcon(lparam.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
-			sendMessage.Call(uintptr(wnd), _STM_SETICON, icon.handle, 0)
+			win.SendMessage(wnd, win.STM_SETICON, icon.handle, 0)
 		}
 	}
 	return 1

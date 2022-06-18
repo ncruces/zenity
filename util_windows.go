@@ -36,8 +36,6 @@ var (
 	destroyWindow                = user32.NewProc("DestroyWindow")
 	dispatchMessage              = user32.NewProc("DispatchMessageW")
 	enableWindow                 = user32.NewProc("EnableWindow")
-	enumChildWindows             = user32.NewProc("EnumChildWindows")
-	enumWindows                  = user32.NewProc("EnumWindows")
 	getDpiForWindow              = user32.NewProc("GetDpiForWindow")
 	getMessage                   = user32.NewProc("GetMessageW")
 	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
@@ -79,7 +77,7 @@ func hwnd(i uint64) win.HWND { return win.HWND(uintptr(i)) }
 
 func setup() context.CancelFunc {
 	var wnd uintptr
-	enumWindows.Call(syscall.NewCallback(setupEnumCallback), uintptr(unsafe.Pointer(&wnd)))
+	win.EnumWindows(syscall.NewCallback(setupEnumCallback), uintptr(unsafe.Pointer(&wnd)))
 	if wnd == 0 {
 		wnd, _, _ = getConsoleWindow.Call()
 	}
@@ -130,7 +128,7 @@ func setupEnumCallback(wnd uintptr, lparam *uintptr) uintptr {
 	return 1 // continue enumeration
 }
 
-func hookDialog(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (unhook context.CancelFunc, err error) {
+func hookDialog(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (unhook context.CancelFunc, err error) {
 	if ctx != nil && ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -149,10 +147,10 @@ type dialogHook struct {
 	done  chan struct{}
 	icon  any
 	title *string
-	init  func(wnd uintptr)
+	init  func(wnd win.HWND)
 }
 
-func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (*dialogHook, error) {
+func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (*dialogHook, error) {
 	tid, _, _ := getCurrentThreadId.Call()
 	hk, _, err := setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
 		syscall.NewCallback(dialogHookProc), 0, tid)
@@ -181,19 +179,19 @@ func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 	if lparam.Message == 0x0110 { // WM_INITDIALOG
 		tid, _, _ := getCurrentThreadId.Call()
 		hook := (*dialogHook)(loadBackRef(tid))
-		atomic.StoreUintptr(&hook.wnd, lparam.Wnd)
+		atomic.StoreUintptr(&hook.wnd, uintptr(lparam.Wnd))
 		if hook.ctx != nil && hook.ctx.Err() != nil {
-			sendMessage.Call(lparam.Wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+			win.SendMessage(lparam.Wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 		} else {
 			if hook.icon != nil {
 				icon := getIcon(hook.icon)
 				if icon.handle != 0 {
 					defer icon.delete()
-					sendMessage.Call(lparam.Wnd, _WM_SETICON, 0, icon.handle)
+					win.SendMessage(lparam.Wnd, win.WM_SETICON, 0, icon.handle)
 				}
 			}
 			if hook.title != nil {
-				setWindowText.Call(lparam.Wnd, strptr(*hook.title))
+				win.SetWindowText(lparam.Wnd, syscall.StringToUTF16Ptr(*hook.title))
 			}
 			if hook.init != nil {
 				hook.init(lparam.Wnd)
@@ -217,7 +215,7 @@ func (h *dialogHook) wait() {
 	select {
 	case <-h.ctx.Done():
 		if wnd := atomic.LoadUintptr(&h.wnd); wnd != 0 {
-			sendMessage.Call(wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+			win.SendMessage(win.HWND(wnd), win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 		}
 	case <-h.done:
 	}
@@ -462,7 +460,7 @@ type _CWPRETSTRUCT struct {
 	LParam  uintptr
 	WParam  uintptr
 	Message uint32
-	Wnd     uintptr
+	Wnd     win.HWND
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw

@@ -97,7 +97,7 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 	centerWindow(dlg.wnd)
 	setFocus.Call(dlg.editCtl)
 	showWindow.Call(dlg.wnd, _SW_NORMAL, 0)
-	sendMessage.Call(dlg.editCtl, _EM_SETSEL, 0, intptr(-1))
+	sendMessage.Call(dlg.editCtl, win.EM_SETSEL, 0, intptr(-1))
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})
@@ -105,7 +105,7 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(dlg.wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+				sendMessage.Call(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -122,11 +122,11 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 
 func (dlg *entryDialog) layout(dpi dpi) {
 	font := dlg.font.forDPI(dpi)
-	sendMessage.Call(dlg.textCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.editCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.okBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.cancelBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.extraBtn, _WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.textCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.editCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.okBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.cancelBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.extraBtn, win.WM_SETFONT, font, 1)
 	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(141), _SWP_NOZORDER|_SWP_NOMOVE)
 	setWindowPos.Call(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
 	setWindowPos.Call(dlg.editCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), _SWP_NOZORDER)
@@ -143,24 +143,24 @@ func (dlg *entryDialog) layout(dpi dpi) {
 func entryProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *entryDialog
 	switch msg {
-	case _WM_NCCREATE:
+	case win.WM_NCCREATE:
 		saveBackRef(wnd, *lparam)
 		dlg = (*entryDialog)(*lparam)
-	case _WM_NCDESTROY:
+	case win.WM_NCDESTROY:
 		deleteBackRef(wnd)
 	default:
 		dlg = (*entryDialog)(loadBackRef(wnd))
 	}
 
 	switch msg {
-	case _WM_DESTROY:
+	case win.WM_DESTROY:
 		postQuitMessage.Call(0)
 
-	case _WM_CLOSE:
+	case win.WM_CLOSE:
 		dlg.err = ErrCanceled
 		destroyWindow.Call(wnd)
 
-	case _WM_COMMAND:
+	case win.WM_COMMAND:
 		switch wparam {
 		default:
 			return 1
@@ -173,7 +173,7 @@ func entryProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) 
 		}
 		destroyWindow.Call(wnd)
 
-	case _WM_DPICHANGED:
+	case win.WM_DPICHANGED:
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:

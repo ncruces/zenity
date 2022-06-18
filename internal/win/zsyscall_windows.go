@@ -62,7 +62,10 @@ var (
 	procSHCreateItemFromParsingName = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx       = modshell32.NewProc("SHGetPathFromIDListEx")
 	procShell_NotifyIconW           = modshell32.NewProc("Shell_NotifyIconW")
+	procEnumChildWindows            = moduser32.NewProc("EnumChildWindows")
 	procGetDlgCtrlID                = moduser32.NewProc("GetDlgCtrlID")
+	procSendMessageW                = moduser32.NewProc("SendMessageW")
+	procSetWindowTextW              = moduser32.NewProc("SetWindowTextW")
 	procWTSSendMessageW             = modwtsapi32.NewProc("WTSSendMessageW")
 )
 
@@ -161,9 +164,36 @@ func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) 
 	return
 }
 
+func EnumChildWindows(parent HWND, enumFunc uintptr, lparam uintptr) {
+	syscall.Syscall(procEnumChildWindows.Addr(), 3, uintptr(parent), uintptr(enumFunc), uintptr(lparam))
+	return
+}
+
+func EnumWindows(enumFunc uintptr, lparam uintptr) (err error) {
+	r1, _, e1 := syscall.Syscall(procEnumChildWindows.Addr(), 2, uintptr(enumFunc), uintptr(lparam), 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func GetDlgCtrlID(wnd HWND) (ret int) {
 	r0, _, _ := syscall.Syscall(procGetDlgCtrlID.Addr(), 1, uintptr(wnd), 0, 0)
 	ret = int(r0)
+	return
+}
+
+func SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) {
+	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
+func SetWindowText(wnd HWND, text *uint16) (err error) {
+	r1, _, e1 := syscall.Syscall(procSetWindowTextW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(text)), 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

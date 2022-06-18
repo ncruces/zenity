@@ -348,9 +348,9 @@ func browseForFolder(opts options) (string, []string, error) {
 	return str, []string{str}, nil
 }
 
-func browseForFolderCallback(wnd uintptr, msg uint32, lparam, data uintptr) uintptr {
+func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uintptr {
 	if msg == 1 { // BFFM_INITIALIZED
-		sendMessage.Call(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
+		win.SendMessage(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
 	}
 	return 0
 }

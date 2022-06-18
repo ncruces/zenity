@@ -114,7 +114,7 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	centerWindow(dlg.wnd)
 	setFocus.Call(dlg.uEditCtl)
 	showWindow.Call(dlg.wnd, _SW_NORMAL, 0)
-	sendMessage.Call(dlg.uEditCtl, _EM_SETSEL, 0, intptr(-1))
+	sendMessage.Call(dlg.uEditCtl, win.EM_SETSEL, 0, intptr(-1))
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})
@@ -122,7 +122,7 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(dlg.wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+				sendMessage.Call(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -139,13 +139,13 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 
 func (dlg *passwordDialog) layout(dpi dpi) {
 	font := dlg.font.forDPI(dpi)
-	sendMessage.Call(dlg.uTextCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.uEditCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.pTextCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.pEditCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.okBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.cancelBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.extraBtn, _WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.uTextCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.uEditCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.pTextCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.pEditCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.okBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.cancelBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.extraBtn, win.WM_SETFONT, font, 1)
 	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(191), _SWP_NOZORDER|_SWP_NOMOVE)
 	setWindowPos.Call(dlg.uTextCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
 	setWindowPos.Call(dlg.uEditCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), _SWP_NOZORDER)
@@ -164,24 +164,24 @@ func (dlg *passwordDialog) layout(dpi dpi) {
 func passwordProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *passwordDialog
 	switch msg {
-	case _WM_NCCREATE:
+	case win.WM_NCCREATE:
 		saveBackRef(wnd, *lparam)
 		dlg = (*passwordDialog)(*lparam)
-	case _WM_NCDESTROY:
+	case win.WM_NCDESTROY:
 		deleteBackRef(wnd)
 	default:
 		dlg = (*passwordDialog)(loadBackRef(wnd))
 	}
 
 	switch msg {
-	case _WM_DESTROY:
+	case win.WM_DESTROY:
 		postQuitMessage.Call(0)
 
-	case _WM_CLOSE:
+	case win.WM_CLOSE:
 		dlg.err = ErrCanceled
 		destroyWindow.Call(wnd)
 
-	case _WM_COMMAND:
+	case win.WM_COMMAND:
 		switch wparam {
 		default:
 			return 1
@@ -195,7 +195,7 @@ func passwordProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		}
 		destroyWindow.Call(wnd)
 
-	case _WM_DPICHANGED:
+	case win.WM_DPICHANGED:
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:

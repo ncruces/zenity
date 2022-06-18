@@ -111,7 +111,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	}
 
 	for _, item := range dlg.items {
-		sendMessage.Call(dlg.listCtl, _LB_ADDSTRING, 0, strptr(item))
+		sendMessage.Call(dlg.listCtl, win.LB_ADDSTRING, 0, strptr(item))
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
@@ -125,7 +125,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(dlg.wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+				sendMessage.Call(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -142,11 +142,11 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 
 func (dlg *listDialog) layout(dpi dpi) {
 	font := dlg.font.forDPI(dpi)
-	sendMessage.Call(dlg.textCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.listCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.okBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.cancelBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(dlg.extraBtn, _WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.textCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.listCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.okBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.cancelBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(dlg.extraBtn, win.WM_SETFONT, font, 1)
 	setWindowPos.Call(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), _SWP_NOZORDER|_SWP_NOMOVE)
 	setWindowPos.Call(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
 	setWindowPos.Call(dlg.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), _SWP_NOZORDER)
@@ -163,41 +163,41 @@ func (dlg *listDialog) layout(dpi dpi) {
 func listProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *listDialog
 	switch msg {
-	case _WM_NCCREATE:
+	case win.WM_NCCREATE:
 		saveBackRef(wnd, *lparam)
 		dlg = (*listDialog)(*lparam)
-	case _WM_NCDESTROY:
+	case win.WM_NCDESTROY:
 		deleteBackRef(wnd)
 	default:
 		dlg = (*listDialog)(loadBackRef(wnd))
 	}
 
 	switch msg {
-	case _WM_DESTROY:
+	case win.WM_DESTROY:
 		postQuitMessage.Call(0)
 
-	case _WM_CLOSE:
+	case win.WM_CLOSE:
 		dlg.err = ErrCanceled
 		destroyWindow.Call(wnd)
 
-	case _WM_COMMAND:
+	case win.WM_COMMAND:
 		switch wparam {
 		default:
 			return 1
 		case win.IDOK, win.IDYES:
 			if dlg.multiple {
-				if len, _, _ := sendMessage.Call(dlg.listCtl, _LB_GETSELCOUNT, 0, 0); int32(len) >= 0 {
+				if len, _, _ := sendMessage.Call(dlg.listCtl, win.LB_GETSELCOUNT, 0, 0); int32(len) >= 0 {
 					dlg.out = make([]string, len)
 					if len > 0 {
 						indices := make([]int32, len)
-						sendMessage.Call(dlg.listCtl, _LB_GETSELITEMS, len, uintptr(unsafe.Pointer(&indices[0])))
+						sendMessage.Call(dlg.listCtl, win.LB_GETSELITEMS, len, uintptr(unsafe.Pointer(&indices[0])))
 						for i, idx := range indices {
 							dlg.out[i] = dlg.items[idx]
 						}
 					}
 				}
 			} else {
-				if idx, _, _ := sendMessage.Call(dlg.listCtl, _LB_GETCURSEL, 0, 0); int32(idx) >= 0 {
+				if idx, _, _ := sendMessage.Call(dlg.listCtl, win.LB_GETCURSEL, 0, 0); int32(idx) >= 0 {
 					dlg.out = []string{dlg.items[idx]}
 				} else {
 					dlg.out = []string{}
@@ -210,7 +210,7 @@ func listProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) u
 		}
 		destroyWindow.Call(wnd)
 
-	case _WM_DPICHANGED:
+	case win.WM_DPICHANGED:
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:

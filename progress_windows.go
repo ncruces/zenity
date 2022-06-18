@@ -71,7 +71,7 @@ func (d *progressDialog) Text(text string) error {
 func (d *progressDialog) Value(value int) error {
 	select {
 	default:
-		sendMessage.Call(d.progCtl, _PBM_SETPOS, uintptr(value), 0)
+		sendMessage.Call(d.progCtl, win.PBM_SETPOS, uintptr(value), 0)
 		if value >= d.max {
 			enableWindow.Call(d.okBtn, 1)
 		}
@@ -93,8 +93,8 @@ func (d *progressDialog) Complete() error {
 	select {
 	default:
 		setWindowLong.Call(d.progCtl, intptr(_GWL_STYLE), _WS_CHILD|_WS_VISIBLE|_PBS_SMOOTH)
-		sendMessage.Call(d.progCtl, _PBM_SETRANGE32, 0, 1)
-		sendMessage.Call(d.progCtl, _PBM_SETPOS, 1, 0)
+		sendMessage.Call(d.progCtl, win.PBM_SETRANGE32, 0, 1)
+		sendMessage.Call(d.progCtl, win.PBM_SETPOS, 1, 0)
 		enableWindow.Call(d.okBtn, 1)
 		enableWindow.Call(d.cancelBtn, 0)
 		return nil
@@ -104,7 +104,7 @@ func (d *progressDialog) Complete() error {
 }
 
 func (d *progressDialog) Close() error {
-	sendMessage.Call(d.wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+	sendMessage.Call(d.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 	<-d.done
 	if d.err == ErrCanceled {
 		return nil
@@ -179,9 +179,9 @@ func (dlg *progressDialog) setup(opts options) error {
 	centerWindow(dlg.wnd)
 	showWindow.Call(dlg.wnd, _SW_NORMAL, 0)
 	if opts.maxValue < 0 {
-		sendMessage.Call(dlg.progCtl, _PBM_SETMARQUEE, 1, 0)
+		sendMessage.Call(dlg.progCtl, win.PBM_SETMARQUEE, 1, 0)
 	} else {
-		sendMessage.Call(dlg.progCtl, _PBM_SETRANGE32, 0, uintptr(opts.maxValue))
+		sendMessage.Call(dlg.progCtl, win.PBM_SETRANGE32, 0, uintptr(opts.maxValue))
 	}
 	once.Do(dlg.init.Done)
 
@@ -191,7 +191,7 @@ func (dlg *progressDialog) setup(opts options) error {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(dlg.wnd, _WM_SYSCOMMAND, _SC_CLOSE, 0)
+				sendMessage.Call(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -208,10 +208,10 @@ func (dlg *progressDialog) setup(opts options) error {
 
 func (d *progressDialog) layout(dpi dpi) {
 	font := d.font.forDPI(dpi)
-	sendMessage.Call(d.textCtl, _WM_SETFONT, font, 1)
-	sendMessage.Call(d.okBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(d.cancelBtn, _WM_SETFONT, font, 1)
-	sendMessage.Call(d.extraBtn, _WM_SETFONT, font, 1)
+	sendMessage.Call(d.textCtl, win.WM_SETFONT, font, 1)
+	sendMessage.Call(d.okBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(d.cancelBtn, win.WM_SETFONT, font, 1)
+	sendMessage.Call(d.extraBtn, win.WM_SETFONT, font, 1)
 	setWindowPos.Call(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), _SWP_NOZORDER|_SWP_NOMOVE)
 	setWindowPos.Call(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
 	setWindowPos.Call(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
@@ -237,24 +237,24 @@ func (d *progressDialog) layout(dpi dpi) {
 func progressProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *progressDialog
 	switch msg {
-	case _WM_NCCREATE:
+	case win.WM_NCCREATE:
 		saveBackRef(wnd, *lparam)
 		dlg = (*progressDialog)(*lparam)
-	case _WM_NCDESTROY:
+	case win.WM_NCDESTROY:
 		deleteBackRef(wnd)
 	default:
 		dlg = (*progressDialog)(loadBackRef(wnd))
 	}
 
 	switch msg {
-	case _WM_DESTROY:
+	case win.WM_DESTROY:
 		postQuitMessage.Call(0)
 
-	case _WM_CLOSE:
+	case win.WM_CLOSE:
 		dlg.err = ErrCanceled
 		destroyWindow.Call(wnd)
 
-	case _WM_COMMAND:
+	case win.WM_COMMAND:
 		switch wparam {
 		default:
 			return 1
@@ -267,7 +267,7 @@ func progressProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		}
 		destroyWindow.Call(wnd)
 
-	case _WM_DPICHANGED:
+	case win.WM_DPICHANGED:
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:
