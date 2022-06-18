@@ -41,8 +41,11 @@ var (
 	modcomctl32 = windows.NewLazySystemDLL("comctl32.dll")
 	modcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
 	modgdi32    = windows.NewLazySystemDLL("gdi32.dll")
+	modntdll    = windows.NewLazySystemDLL("ntdll.dll")
 	modole32    = windows.NewLazySystemDLL("ole32.dll")
 	modshell32  = windows.NewLazySystemDLL("shell32.dll")
+	moduser32   = windows.NewLazySystemDLL("user32.dll")
+	modwtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
 
 	procInitCommonControlsEx        = modcomctl32.NewProc("InitCommonControlsEx")
 	procChooseColorW                = modcomdlg32.NewProc("ChooseColorW")
@@ -52,12 +55,15 @@ var (
 	procCreateFontIndirectW         = modgdi32.NewProc("CreateFontIndirectW")
 	procDeleteObject                = modgdi32.NewProc("DeleteObject")
 	procGetDeviceCaps               = modgdi32.NewProc("GetDeviceCaps")
+	procRtlGetNtVersionNumbers      = modntdll.NewProc("RtlGetNtVersionNumbers")
 	procCoCreateInstance            = modole32.NewProc("CoCreateInstance")
 	procCoTaskMemFree               = modole32.NewProc("CoTaskMemFree")
 	procSHBrowseForFolder           = modshell32.NewProc("SHBrowseForFolder")
 	procSHCreateItemFromParsingName = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx       = modshell32.NewProc("SHGetPathFromIDListEx")
 	procShell_NotifyIconW           = modshell32.NewProc("Shell_NotifyIconW")
+	procGetDlgCtrlID                = moduser32.NewProc("GetDlgCtrlID")
+	procWTSSendMessageW             = modwtsapi32.NewProc("WTSSendMessageW")
 )
 
 func InitCommonControlsEx(icc *INITCOMMONCONTROLSEX) (ok bool) {
@@ -102,16 +108,21 @@ func DeleteObject(o Handle) (ok bool) {
 	return
 }
 
-func GetDeviceCaps(dc Handle, index int) (cap uintptr) {
+func GetDeviceCaps(dc Handle, index int) (cap int) {
 	r0, _, _ := syscall.Syscall(procGetDeviceCaps.Addr(), 2, uintptr(dc), uintptr(index), 0)
-	cap = uintptr(r0)
+	cap = int(r0)
 	return
 }
 
-func CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (ret error) {
+func RtlGetNtVersionNumbers(major *uint32, minor *uint32, build *uint32) {
+	syscall.Syscall(procRtlGetNtVersionNumbers.Addr(), 3, uintptr(unsafe.Pointer(major)), uintptr(unsafe.Pointer(minor)), uintptr(unsafe.Pointer(build)))
+	return
+}
+
+func CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
 	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unkOuter), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
 	if r0 != 0 {
-		ret = syscall.Errno(r0)
+		res = syscall.Errno(r0)
 	}
 	return
 }
@@ -127,19 +138,17 @@ func SHBrowseForFolder(bi *BROWSEINFO) (ptr uintptr) {
 	return
 }
 
-func SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (err error) {
-	r1, _, e1 := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(bc), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
-	if r1 == 0 {
-		err = errnoErr(e1)
+func SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (res error) {
+	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(bc), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
+	if r0 != 0 {
+		res = syscall.Errno(r0)
 	}
 	return
 }
 
-func SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (err error) {
-	r1, _, e1 := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(ptr), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+func SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (ok bool) {
+	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(ptr), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
+	ok = r0 != 0
 	return
 }
 
@@ -147,6 +156,24 @@ func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) 
 	r0, _, e1 := syscall.Syscall(procShell_NotifyIconW.Addr(), 2, uintptr(message), uintptr(unsafe.Pointer(data)), 0)
 	ret = int(r0)
 	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GetDlgCtrlID(wnd HWND) (ret int) {
+	r0, _, _ := syscall.Syscall(procGetDlgCtrlID.Addr(), 1, uintptr(wnd), 0, 0)
+	ret = int(r0)
+	return
+}
+
+func WTSSendMessage(server Handle, sessionID uint32, title *uint16, titleLength int, message *uint16, messageLength int, style uint32, timeout int, response *uint32, wait bool) (err error) {
+	var _p0 uint32
+	if wait {
+		_p0 = 1
+	}
+	r1, _, e1 := syscall.Syscall12(procWTSSendMessageW.Addr(), 10, uintptr(server), uintptr(sessionID), uintptr(unsafe.Pointer(title)), uintptr(titleLength), uintptr(unsafe.Pointer(message)), uintptr(messageLength), uintptr(style), uintptr(timeout), uintptr(unsafe.Pointer(response)), uintptr(_p0), 0, 0)
+	if r1 == 0 {
 		err = errnoErr(e1)
 	}
 	return

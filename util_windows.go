@@ -18,9 +18,7 @@ import (
 
 var (
 	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
-	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
 	user32   = windows.NewLazySystemDLL("user32.dll")
-	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
 
 	activateActCtx     = kernel32.NewProc("ActivateActCtx")
 	createActCtx       = kernel32.NewProc("CreateActCtxW")
@@ -261,7 +259,7 @@ func getDPI(wnd uintptr) dpi {
 	if wnd != 0 && getDpiForWindow.Find() == nil {
 		res, _, _ = getDpiForWindow.Call(wnd)
 	} else if dc, _, _ := getWindowDC.Call(wnd); dc != 0 {
-		res = win.GetDeviceCaps(win.Handle(dc), win.LOGPIXELSY)
+		res = uintptr(win.GetDeviceCaps(win.Handle(dc), win.LOGPIXELSY))
 		releaseDC.Call(0, dc)
 	}
 

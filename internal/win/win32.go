@@ -7,3 +7,5 @@ import "golang.org/x/sys/windows"
 
 type Handle = windows.Handle
 type HWND = windows.HWND
+
+//sys RtlGetNtVersionNumbers(major *uint32, minor *uint32, build *uint32) = ntdll.RtlGetNtVersionNumbers

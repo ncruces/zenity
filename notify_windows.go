@@ -11,11 +11,6 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-var (
-	rtlGetNtVersionNumbers = ntdll.NewProc("RtlGetNtVersionNumbers")
-	wtsSendMessage         = wtsapi32.NewProc("WTSSendMessageW")
-)
-
 func notify(text string, opts options) error {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
@@ -64,10 +59,7 @@ func notify(text string, opts options) error {
 	}
 
 	var major, minor, build uint32
-	rtlGetNtVersionNumbers.Call(
-		uintptr(unsafe.Pointer(&major)),
-		uintptr(unsafe.Pointer(&minor)),
-		uintptr(unsafe.Pointer(&build)))
+	win.RtlGetNtVersionNumbers(&major, &minor, &build)
 
 	// On Windows 7 (6.1) and lower, wait up to 10 seconds to clean up.
 	if major < 6 || major == 6 && minor < 2 {
@@ -86,7 +78,7 @@ func notify(text string, opts options) error {
 }
 
 func wtsMessage(text string, opts options) error {
-	var flags uintptr
+	var flags uint32
 
 	switch opts.icon {
 	case ErrorIcon:
@@ -113,15 +105,8 @@ func wtsMessage(text string, opts options) error {
 	ptitle := syscall.StringToUTF16(*title)
 
 	var res uint32
-	s, _, err := wtsSendMessage.Call(
-		0,          // WTS_CURRENT_SERVER_HANDLE
-		0xffffffff, // WTS_CURRENT_SESSION
-		uintptr(unsafe.Pointer(&ptitle[0])), uintptr(2*len(ptitle)),
-		uintptr(unsafe.Pointer(&ptext[0])), uintptr(2*len(ptext)),
-		flags, uintptr(timeout), uintptr(unsafe.Pointer(&res)), 0)
-
-	if s == 0 {
-		return err
-	}
-	return nil
+	return win.WTSSendMessage(
+		win.WTS_CURRENT_SERVER_HANDLE, win.WTS_CURRENT_SESSION,
+		&ptitle[0], 2*len(ptitle), &ptext[0], 2*len(ptext),
+		flags, timeout, &res, false)
 }

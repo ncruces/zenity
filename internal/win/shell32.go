@@ -53,6 +53,6 @@ type _IShellItemVtbl struct {
 }
 
 //sys SHBrowseForFolder(bi *BROWSEINFO) (ptr uintptr) = shell32.SHBrowseForFolder
-//sys SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (err error) = shell32.SHCreateItemFromParsingName
-//sys SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (err error) = shell32.SHGetPathFromIDListEx
+//sys SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
+//sys SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) = shell32.Shell_NotifyIconW

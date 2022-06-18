@@ -32,3 +32,5 @@ const (
 func MessageBox(hwnd HWND, text *uint16, caption *uint16, boxtype uint32) (ret int32, err error) {
 	return windows.MessageBox(hwnd, text, caption, boxtype)
 }
+
+//sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID

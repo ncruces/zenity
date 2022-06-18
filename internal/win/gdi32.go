@@ -27,4 +27,4 @@ type LOGFONT struct {
 
 //sys CreateFontIndirect(lf *LOGFONT) (font Handle) = gdi32.CreateFontIndirectW
 //sys DeleteObject(o Handle) (ok bool) = gdi32.DeleteObject
-//sys GetDeviceCaps(dc Handle, index int) (cap uintptr) = gdi32.GetDeviceCaps
+//sys GetDeviceCaps(dc Handle, index int) (cap int) = gdi32.GetDeviceCaps

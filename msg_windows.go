@@ -8,10 +8,6 @@ import (
 	"github.com/ncruces/zenity/internal/win"
 )
 
-var (
-	getDlgCtrlID = user32.NewProc("GetDlgCtrlID")
-)
-
 func message(kind messageKind, text string, opts options) error {
 	var flags uint32
 
@@ -22,6 +18,8 @@ func message(kind messageKind, text string, opts options) error {
 		flags |= win.MB_OKCANCEL
 	case opts.extraButton != nil:
 		flags |= win.MB_YESNO
+	default:
+		opts.cancelLabel = opts.okLabel
 	}
 
 	switch opts.icon {
@@ -59,7 +57,7 @@ func message(kind messageKind, text string, opts options) error {
 	defer setup()()
 
 	if opts.ctx != nil || opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || opts.icon != nil {
-		unhook, err := hookMessageDialog(kind, opts)
+		unhook, err := hookMessageDialog(opts)
 		if err != nil {
 			return err
 		}
@@ -89,7 +87,7 @@ func message(kind messageKind, text string, opts options) error {
 	}
 }
 
-func hookMessageDialog(kind messageKind, opts options) (unhook context.CancelFunc, err error) {
+func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
 	return hookDialog(opts.ctx, opts.windowIcon, nil, func(wnd uintptr) {
 		enumChildWindows.Call(wnd,
 			syscall.NewCallback(hookMessageDialogCallback),
@@ -97,8 +95,8 @@ func hookMessageDialog(kind messageKind, opts options) (unhook context.CancelFun
 	})
 }
 
-func hookMessageDialogCallback(wnd uintptr, lparam *options) uintptr {
-	ctl, _, _ := getDlgCtrlID.Call(wnd)
+func hookMessageDialogCallback(wnd win.HWND, lparam *options) uintptr {
+	ctl := win.GetDlgCtrlID(wnd)
 
 	var text *string
 	switch ctl {
@@ -110,14 +108,14 @@ func hookMessageDialogCallback(wnd uintptr, lparam *options) uintptr {
 		text = lparam.extraButton
 	}
 	if text != nil {
-		setWindowText.Call(wnd, strptr(*text))
+		setWindowText.Call(uintptr(wnd), strptr(*text))
 	}
 
 	if ctl == 20 /*IDC_STATIC_OK*/ {
 		icon := getIcon(lparam.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
-			sendMessage.Call(wnd, _STM_SETICON, icon.handle, 0)
+			sendMessage.Call(uintptr(wnd), _STM_SETICON, icon.handle, 0)
 		}
 	}
 	return 1

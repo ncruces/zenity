@@ -44,4 +44,4 @@ func (o *COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr er
 }
 
 //sys CoTaskMemFree(address uintptr) = ole32.CoTaskMemFree
-//sys CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (ret error) = ole32.CoCreateInstance
+//sys CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
