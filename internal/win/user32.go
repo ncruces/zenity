@@ -55,6 +55,10 @@ func MessageBox(hwnd HWND, text *uint16, caption *uint16, boxtype uint32) (ret i
 	return windows.MessageBox(hwnd, text, caption, boxtype)
 }
 
+func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
+	return windows.GetWindowThreadProcessId(hwnd, pid)
+}
+
 //sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
 //sys SetWindowText(wnd HWND, text *uint16) (err error) = user32.SetWindowTextW

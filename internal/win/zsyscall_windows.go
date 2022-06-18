@@ -41,6 +41,7 @@ var (
 	modcomctl32 = windows.NewLazySystemDLL("comctl32.dll")
 	modcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
 	modgdi32    = windows.NewLazySystemDLL("gdi32.dll")
+	modkernel32 = windows.NewLazySystemDLL("kernel32.dll")
 	modntdll    = windows.NewLazySystemDLL("ntdll.dll")
 	modole32    = windows.NewLazySystemDLL("ole32.dll")
 	modshell32  = windows.NewLazySystemDLL("shell32.dll")
@@ -55,6 +56,8 @@ var (
 	procCreateFontIndirectW         = modgdi32.NewProc("CreateFontIndirectW")
 	procDeleteObject                = modgdi32.NewProc("DeleteObject")
 	procGetDeviceCaps               = modgdi32.NewProc("GetDeviceCaps")
+	procGetConsoleWindow            = modkernel32.NewProc("GetConsoleWindow")
+	procGetModuleHandleW            = modkernel32.NewProc("GetModuleHandleW")
 	procRtlGetNtVersionNumbers      = modntdll.NewProc("RtlGetNtVersionNumbers")
 	procCoCreateInstance            = modole32.NewProc("CoCreateInstance")
 	procCoTaskMemFree               = modole32.NewProc("CoTaskMemFree")
@@ -114,6 +117,21 @@ func DeleteObject(o Handle) (ok bool) {
 func GetDeviceCaps(dc Handle, index int) (cap int) {
 	r0, _, _ := syscall.Syscall(procGetDeviceCaps.Addr(), 2, uintptr(dc), uintptr(index), 0)
 	cap = int(r0)
+	return
+}
+
+func GetConsoleWindow() (ret HWND) {
+	r0, _, _ := syscall.Syscall(procGetConsoleWindow.Addr(), 0, 0, 0, 0)
+	ret = HWND(r0)
+	return
+}
+
+func GetModuleHandle(moduleName *uint16) (ret Handle, err error) {
+	r0, _, e1 := syscall.Syscall(procGetModuleHandleW.Addr(), 1, uintptr(unsafe.Pointer(moduleName)), 0, 0)
+	ret = Handle(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

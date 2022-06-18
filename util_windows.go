@@ -20,13 +20,10 @@ var (
 	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
 	user32   = windows.NewLazySystemDLL("user32.dll")
 
-	activateActCtx     = kernel32.NewProc("ActivateActCtx")
-	createActCtx       = kernel32.NewProc("CreateActCtxW")
-	deactivateActCtx   = kernel32.NewProc("DeactivateActCtx")
-	getConsoleWindow   = kernel32.NewProc("GetConsoleWindow")
-	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
-	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
-	getSystemDirectory = kernel32.NewProc("GetSystemDirectoryW")
+	activateActCtx   = kernel32.NewProc("ActivateActCtx")
+	createActCtx     = kernel32.NewProc("CreateActCtxW")
+	deactivateActCtx = kernel32.NewProc("DeactivateActCtx")
+	getModuleHandle  = kernel32.NewProc("GetModuleHandleW")
 
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
 	createIconFromResource       = user32.NewProc("CreateIconFromResource")
@@ -43,7 +40,6 @@ var (
 	getWindowRect                = user32.NewProc("GetWindowRect")
 	getWindowText                = user32.NewProc("GetWindowTextW")
 	getWindowTextLength          = user32.NewProc("GetWindowTextLengthW")
-	getWindowThreadProcessId     = user32.NewProc("GetWindowThreadProcessId")
 	isDialogMessage              = user32.NewProc("IsDialogMessageW")
 	loadIcon                     = user32.NewProc("LoadIconW")
 	loadImage                    = user32.NewProc("LoadImageW")
@@ -76,13 +72,13 @@ func strptr(s string) uintptr {
 func hwnd(i uint64) win.HWND { return win.HWND(uintptr(i)) }
 
 func setup() context.CancelFunc {
-	var wnd uintptr
+	var wnd win.HWND
 	win.EnumWindows(syscall.NewCallback(setupEnumCallback), uintptr(unsafe.Pointer(&wnd)))
 	if wnd == 0 {
-		wnd, _, _ = getConsoleWindow.Call()
+		wnd = win.GetConsoleWindow()
 	}
 	if wnd != 0 {
-		setForegroundWindow.Call(wnd)
+		setForegroundWindow.Call(uintptr(wnd))
 	}
 
 	runtime.LockOSThread()
@@ -118,9 +114,9 @@ func setup() context.CancelFunc {
 	}
 }
 
-func setupEnumCallback(wnd uintptr, lparam *uintptr) uintptr {
-	var pid uintptr
-	getWindowThreadProcessId.Call(wnd, uintptr(unsafe.Pointer(&pid)))
+func setupEnumCallback(wnd win.HWND, lparam *win.HWND) uintptr {
+	var pid uint32
+	win.GetWindowThreadProcessId(wnd, &pid)
 	if int(pid) == os.Getpid() {
 		*lparam = wnd
 		return 0 // stop enumeration
@@ -141,7 +137,7 @@ func hookDialog(ctx context.Context, icon any, title *string, init func(wnd win.
 
 type dialogHook struct {
 	ctx   context.Context
-	tid   uintptr
+	tid   uint32
 	wnd   uintptr
 	hook  uintptr
 	done  chan struct{}
@@ -151,9 +147,9 @@ type dialogHook struct {
 }
 
 func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (*dialogHook, error) {
-	tid, _, _ := getCurrentThreadId.Call()
+	tid := win.GetCurrentThreadId()
 	hk, _, err := setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
-		syscall.NewCallback(dialogHookProc), 0, tid)
+		syscall.NewCallback(dialogHookProc), 0, uintptr(tid))
 	if hk == 0 {
 		return nil, err
 	}
@@ -171,14 +167,14 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 		go hook.wait()
 	}
 
-	saveBackRef(tid, unsafe.Pointer(&hook))
+	saveBackRef(uintptr(tid), unsafe.Pointer(&hook))
 	return &hook, nil
 }
 
 func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 	if lparam.Message == 0x0110 { // WM_INITDIALOG
-		tid, _, _ := getCurrentThreadId.Call()
-		hook := (*dialogHook)(loadBackRef(tid))
+		tid := win.GetCurrentThreadId()
+		hook := (*dialogHook)(loadBackRef(uintptr(tid)))
 		atomic.StoreUintptr(&hook.wnd, uintptr(lparam.Wnd))
 		if hook.ctx != nil && hook.ctx.Err() != nil {
 			win.SendMessage(lparam.Wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
@@ -204,7 +200,7 @@ func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 }
 
 func (h *dialogHook) unhook() {
-	deleteBackRef(h.tid)
+	deleteBackRef(uintptr(h.tid))
 	if h.done != nil {
 		close(h.done)
 	}
@@ -422,9 +418,8 @@ func messageLoop(wnd uintptr) error {
 
 // https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
 func enableVisualStyles() (cookie uintptr) {
-	var dir [260]uint16
-	n, _, _ := getSystemDirectory.Call(uintptr(unsafe.Pointer(&dir[0])), uintptr(len(dir)))
-	if n == 0 || int(n) >= len(dir) {
+	dir, err := win.GetSystemDirectory()
+	if err != nil {
 		return
 	}
 
@@ -432,7 +427,7 @@ func enableVisualStyles() (cookie uintptr) {
 	ctx.Size = uint32(unsafe.Sizeof(ctx))
 	ctx.Flags = 0x01c // ACTCTX_FLAG_RESOURCE_NAME_VALID|ACTCTX_FLAG_SET_PROCESS_DEFAULT|ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID
 	ctx.Source = syscall.StringToUTF16Ptr("shell32.dll")
-	ctx.AssemblyDirectory = &dir[0]
+	ctx.AssemblyDirectory = syscall.StringToUTF16Ptr(dir)
 	ctx.ResourceName = 124
 
 	if h, _, _ := createActCtx.Call(uintptr(unsafe.Pointer(&ctx))); h != 0 {
