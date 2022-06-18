@@ -7,27 +7,11 @@ import (
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
-)
 
-var (
-	getOpenFileName             = comdlg32.NewProc("GetOpenFileNameW")
-	getSaveFileName             = comdlg32.NewProc("GetSaveFileNameW")
-	shBrowseForFolder           = shell32.NewProc("SHBrowseForFolderW")
-	shCreateItemFromParsingName = shell32.NewProc("SHCreateItemFromParsingName")
-	shGetPathFromIDListEx       = shell32.NewProc("SHGetPathFromIDListEx")
+	"github.com/ncruces/zenity/internal/win"
 )
 
 const (
-	_OFN_OVERWRITEPROMPT  = 0x00000002
-	_OFN_NOCHANGEDIR      = 0x00000008
-	_OFN_ALLOWMULTISELECT = 0x00000200
-	_OFN_PATHMUSTEXIST    = 0x00000800
-	_OFN_FILEMUSTEXIST    = 0x00001000
-	_OFN_CREATEPROMPT     = 0x00002000
-	_OFN_NOREADONLYRETURN = 0x00008000
-	_OFN_EXPLORER         = 0x00080000
-	_OFN_FORCESHOWHIDDEN  = 0x10000000
-
 	_FOS_NOCHANGEDIR      = 0x00000008
 	_FOS_PICKFOLDERS      = 0x00000020
 	_FOS_FORCEFILESYSTEM  = 0x00000040
@@ -41,16 +25,16 @@ func selectFile(opts options) (string, error) {
 		return res, err
 	}
 
-	var args _OPENFILENAME
+	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Owner, _ = opts.attach.(uintptr)
-	args.Flags = _OFN_NOCHANGEDIR | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
+	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
-		args.Flags |= _OFN_FORCESHOWHIDDEN
+		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -71,12 +55,12 @@ func selectFile(opts options) (string, error) {
 		defer unhook()
 	}
 
-	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	ok := win.GetOpenFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
 	}
-	if s == 0 {
-		return "", commDlgError()
+	if !ok {
+		return "", win.CommDlgError()
 	}
 	return syscall.UTF16ToString(res[:]), nil
 }
@@ -87,16 +71,16 @@ func selectFileMultiple(opts options) ([]string, error) {
 		return res, err
 	}
 
-	var args _OPENFILENAME
+	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Owner, _ = opts.attach.(uintptr)
-	args.Flags = _OFN_NOCHANGEDIR | _OFN_ALLOWMULTISELECT | _OFN_FILEMUSTEXIST | _OFN_EXPLORER
+	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_ALLOWMULTISELECT | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.showHidden {
-		args.Flags |= _OFN_FORCESHOWHIDDEN
+		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -117,12 +101,12 @@ func selectFileMultiple(opts options) ([]string, error) {
 		defer unhook()
 	}
 
-	s, _, _ := getOpenFileName.Call(uintptr(unsafe.Pointer(&args)))
+	ok := win.GetOpenFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
 	}
-	if s == 0 {
-		return nil, commDlgError()
+	if !ok {
+		return nil, win.CommDlgError()
 	}
 
 	var i int
@@ -158,22 +142,22 @@ func selectFileSave(opts options) (string, error) {
 		return res, err
 	}
 
-	var args _OPENFILENAME
+	var args win.OPENFILENAME
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Owner, _ = opts.attach.(uintptr)
-	args.Flags = _OFN_NOCHANGEDIR | _OFN_PATHMUSTEXIST | _OFN_NOREADONLYRETURN | _OFN_EXPLORER
+	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_PATHMUSTEXIST | win.OFN_NOREADONLYRETURN | win.OFN_EXPLORER
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
 	}
 	if opts.confirmOverwrite {
-		args.Flags |= _OFN_OVERWRITEPROMPT
+		args.Flags |= win.OFN_OVERWRITEPROMPT
 	}
 	if opts.confirmCreate {
-		args.Flags |= _OFN_CREATEPROMPT
+		args.Flags |= win.OFN_CREATEPROMPT
 	}
 	if opts.showHidden {
-		args.Flags |= _OFN_FORCESHOWHIDDEN
+		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
 		args.Filter = &initFilters(opts.fileFilters)[0]
@@ -194,12 +178,12 @@ func selectFileSave(opts options) (string, error) {
 		defer unhook()
 	}
 
-	s, _, _ := getSaveFileName.Call(uintptr(unsafe.Pointer(&args)))
+	ok := win.GetSaveFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", opts.ctx.Err()
 	}
-	if s == 0 {
-		return "", commDlgError()
+	if !ok {
+		return "", win.CommDlgError()
 	}
 	return syscall.UTF16ToString(res[:]), nil
 }
@@ -207,19 +191,19 @@ func selectFileSave(opts options) (string, error) {
 func pickFolders(opts options, multi bool) (str string, lst []string, err error) {
 	defer setup()()
 
-	hr, _, _ := coInitializeEx.Call(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
-	if hr != 0x80010106 {                   // RPC_E_CHANGED_MODE
-		if int32(hr) < 0 {
-			return "", nil, syscall.Errno(hr)
+	err = win.CoInitializeEx(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
+	if err != win.RPC_E_CHANGED_MODE {
+		if err != nil {
+			return "", nil, err
 		}
-		defer coUninitialize.Call()
+		defer win.CoUninitialize()
 	}
 
 	var dialog *_IFileOpenDialog
-	hr, _, _ = coCreateInstance.Call(
-		_CLSID_FileOpenDialog, 0, 0x17, // CLSCTX_ALL
-		_IID_IFileOpenDialog, uintptr(unsafe.Pointer(&dialog)))
-	if int32(hr) < 0 {
+	err = win.CoCreateInstance(
+		_CLSID_FileOpenDialog, nil, 0x17, // CLSCTX_ALL
+		_IID_IFileOpenDialog, unsafe.Pointer(&dialog))
+	if err != nil {
 		if multi {
 			return "", nil, fmt.Errorf("%w: multiple directory", ErrUnsupported)
 		}
@@ -228,7 +212,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	defer dialog.Call(dialog.Release)
 
 	var flgs int
-	hr, _, _ = dialog.Call(dialog.GetOptions, uintptr(unsafe.Pointer(&flgs)))
+	hr, _, _ := dialog.Call(dialog.GetOptions, uintptr(unsafe.Pointer(&flgs)))
 	if int32(hr) < 0 {
 		return "", nil, syscall.Errno(hr)
 	}
@@ -250,12 +234,9 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 
 	if opts.filename != "" {
-		var item *_IShellItem
+		var item *win.IShellItem
 		ptr := syscall.StringToUTF16Ptr(opts.filename)
-		hr, _, _ = shCreateItemFromParsingName.Call(
-			uintptr(unsafe.Pointer(ptr)), 0,
-			_IID_IShellItem,
-			uintptr(unsafe.Pointer(&item)))
+		win.SHCreateItemFromParsingName(ptr, nil, _IID_IShellItem, &item)
 
 		if int32(hr) >= 0 && item != nil {
 			dialog.Call(dialog.SetFolder, uintptr(unsafe.Pointer(item)))
@@ -283,8 +264,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		return "", nil, syscall.Errno(hr)
 	}
 
-	shellItemPath := func(obj *_COMObject, trap uintptr, a ...uintptr) error {
-		var item *_IShellItem
+	shellItemPath := func(obj *win.COMObject, trap uintptr, a ...uintptr) error {
+		var item *win.IShellItem
 		hr, _, _ := obj.Call(trap, append(a, uintptr(unsafe.Pointer(&item)))...)
 		if int32(hr) < 0 {
 			return syscall.Errno(hr)
@@ -298,11 +279,11 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		if int32(hr) < 0 {
 			return syscall.Errno(hr)
 		}
-		defer coTaskMemFree.Call(ptr)
+		defer win.CoTaskMemFree(ptr)
 
 		var res []uint16
 		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&res))
-		hdr.Data, hdr.Len, hdr.Cap = ptr, 32768, 32768
+		hdr.Data, hdr.Len, hdr.Cap = uintptr(ptr), 32768, 32768
 		str = syscall.UTF16ToString(res)
 		lst = append(lst, str)
 		return nil
@@ -322,16 +303,16 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 			return "", nil, syscall.Errno(hr)
 		}
 		for i := uintptr(0); i < uintptr(count) && err == nil; i++ {
-			err = shellItemPath(&items._COMObject, items.GetItemAt, i)
+			err = shellItemPath(&items.COMObject, items.GetItemAt, i)
 		}
 	} else {
-		err = shellItemPath(&dialog._COMObject, dialog.GetResult)
+		err = shellItemPath(&dialog.COMObject, dialog.GetResult)
 	}
 	return
 }
 
 func browseForFolder(opts options) (string, []string, error) {
-	var args _BROWSEINFO
+	var args win.BROWSEINFO
 	args.Owner, _ = opts.attach.(uintptr)
 	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
 
@@ -351,17 +332,17 @@ func browseForFolder(opts options) (string, []string, error) {
 		defer unhook()
 	}
 
-	ptr, _, _ := shBrowseForFolder.Call(uintptr(unsafe.Pointer(&args)))
+	ptr := win.SHBrowseForFolder(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
 	if ptr == 0 {
 		return "", nil, ErrCanceled
 	}
-	defer coTaskMemFree.Call(ptr)
+	defer win.CoTaskMemFree(ptr)
 
 	var res [32768]uint16
-	shGetPathFromIDListEx.Call(ptr, uintptr(unsafe.Pointer(&res[0])), uintptr(len(res)), 0)
+	win.SHGetPathFromIDListEx(ptr, &res[0], len(res), 0)
 
 	str := syscall.UTF16ToString(res[:])
 	return str, []string{str}, nil
@@ -408,45 +389,6 @@ func initFilters(filters FileFilters) []uint16 {
 	return res
 }
 
-// https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamew
-type _OPENFILENAME struct {
-	StructSize      uint32
-	Owner           uintptr
-	Instance        uintptr
-	Filter          *uint16
-	CustomFilter    *uint16
-	MaxCustomFilter uint32
-	FilterIndex     uint32
-	File            *uint16
-	MaxFile         uint32
-	FileTitle       *uint16
-	MaxFileTitle    uint32
-	InitialDir      *uint16
-	Title           *uint16
-	Flags           uint32
-	FileOffset      uint16
-	FileExtension   uint16
-	DefExt          *uint16
-	CustData        uintptr
-	FnHook          uintptr
-	TemplateName    *uint16
-	PvReserved      uintptr
-	DwReserved      uint32
-	FlagsEx         uint32
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow
-type _BROWSEINFO struct {
-	Owner        uintptr
-	Root         uintptr
-	DisplayName  *uint16
-	Title        *uint16
-	Flags        uint32
-	CallbackFunc uintptr
-	LParam       *uint16
-	Image        int32
-}
-
 // https://github.com/wine-mirror/wine/blob/master/include/shobjidl.idl
 
 var (
@@ -456,17 +398,12 @@ var (
 )
 
 type _IFileOpenDialog struct {
-	_COMObject
+	win.COMObject
 	*_IFileOpenDialogVtbl
 }
 
-type _IShellItem struct {
-	_COMObject
-	*_IShellItemVtbl
-}
-
 type _IShellItemArray struct {
-	_COMObject
+	win.COMObject
 	*_IShellItemArrayVtbl
 }
 
@@ -506,15 +443,6 @@ type _IFileDialogVtbl struct {
 type _IModalWindowVtbl struct {
 	_IUnknownVtbl
 	Show uintptr
-}
-
-type _IShellItemVtbl struct {
-	_IUnknownVtbl
-	BindToHandler  uintptr
-	GetParent      uintptr
-	GetDisplayName uintptr
-	GetAttributes  uintptr
-	Compare        uintptr
 }
 
 type _IShellItemArrayVtbl struct {

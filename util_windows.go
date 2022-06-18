@@ -3,7 +3,6 @@ package zenity
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"os"
 	"reflect"
 	"runtime"
@@ -13,22 +12,16 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/ncruces/zenity/internal/win"
 	"golang.org/x/sys/windows"
 )
 
 var (
-	comctl32 = windows.NewLazySystemDLL("comctl32.dll")
-	comdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
 	gdi32    = windows.NewLazySystemDLL("gdi32.dll")
 	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
 	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
-	ole32    = windows.NewLazySystemDLL("ole32.dll")
-	shell32  = windows.NewLazySystemDLL("shell32.dll")
 	user32   = windows.NewLazySystemDLL("user32.dll")
 	wtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
-
-	commDlgExtendedError = comdlg32.NewProc("CommDlgExtendedError")
-	initCommonControlsEx = comctl32.NewProc("InitCommonControlsEx")
 
 	createFontIndirect = gdi32.NewProc("CreateFontIndirectW")
 	deleteObject       = gdi32.NewProc("DeleteObject")
@@ -41,11 +34,6 @@ var (
 	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
 	getModuleHandle    = kernel32.NewProc("GetModuleHandleW")
 	getSystemDirectory = kernel32.NewProc("GetSystemDirectoryW")
-
-	coCreateInstance = ole32.NewProc("CoCreateInstance")
-	coInitializeEx   = ole32.NewProc("CoInitializeEx")
-	coTaskMemFree    = ole32.NewProc("CoTaskMemFree")
-	coUninitialize   = ole32.NewProc("CoUninitialize")
 
 	callNextHookEx               = user32.NewProc("CallNextHookEx")
 	createIconFromResource       = user32.NewProc("CreateIconFromResource")
@@ -121,10 +109,10 @@ func setup() context.CancelFunc {
 		}
 	}
 
-	var icc _INITCOMMONCONTROLSEX
+	var icc win.INITCOMMONCONTROLSEX
 	icc.Size = uint32(unsafe.Sizeof(icc))
 	icc.ICC = 0x00004020 // ICC_STANDARD_CLASSES|ICC_PROGRESS_CLASS
-	initCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
+	win.InitCommonControlsEx(&icc)
 
 	return func() {
 		if restore != 0 {
@@ -145,15 +133,6 @@ func setupEnumCallback(wnd uintptr, lparam *uintptr) uintptr {
 		return 0 // stop enumeration
 	}
 	return 1 // continue enumeration
-}
-
-func commDlgError() error {
-	s, _, _ := commDlgExtendedError.Call()
-	if s == 0 {
-		return ErrCanceled
-	} else {
-		return fmt.Errorf("Common Dialog error: %x", s)
-	}
 }
 
 func hookDialog(ctx context.Context, icon any, title *string, init func(wnd uintptr)) (unhook context.CancelFunc, err error) {
@@ -482,12 +461,6 @@ type _ACTCTX struct {
 	Module                uintptr
 }
 
-// https://docs.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-initcommoncontrolsex
-type _INITCOMMONCONTROLSEX struct {
-	Size uint32
-	ICC  uint32
-}
-
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
 type _CWPRETSTRUCT struct {
 	Result  uintptr
@@ -595,20 +568,4 @@ type _IUnknownVtbl struct {
 
 func uuid(s string) uintptr {
 	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
-}
-
-type _COMObject struct{}
-
-//go:uintptrescapes
-func (o *_COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	switch nargs := uintptr(len(a)); nargs {
-	case 0:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), 0, 0)
-	case 1:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], 0)
-	case 2:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], a[1])
-	default:
-		panic("COM call with too many arguments.")
-	}
 }

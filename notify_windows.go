@@ -7,12 +7,12 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/ncruces/zenity/internal/win"
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
 var (
 	rtlGetNtVersionNumbers = ntdll.NewProc("RtlGetNtVersionNumbers")
-	shellNotifyIcon        = shell32.NewProc("Shell_NotifyIconW")
 	wtsSendMessage         = wtsapi32.NewProc("WTSSendMessageW")
 )
 
@@ -21,7 +21,7 @@ func notify(text string, opts options) error {
 		return opts.ctx.Err()
 	}
 
-	var args _NOTIFYICONDATA
+	var args win.NOTIFYICONDATA
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.ID = rand.Uint32()
 	args.Flags = 0x00000010 // NIF_INFO
@@ -55,7 +55,7 @@ func notify(text string, opts options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	s, _, err := shellNotifyIcon.Call(0 /* NIM_ADD */, uintptr(unsafe.Pointer(&args)))
+	s, err := win.ShellNotifyIcon(win.NIM_ADD, &args)
 	if s == 0 {
 		if errno, ok := err.(syscall.Errno); ok && errno == 0 {
 			return wtsMessage(text, opts)
@@ -81,7 +81,7 @@ func notify(text string, opts options) error {
 		}
 	}
 
-	shellNotifyIcon.Call(2 /* NIM_DELETE */, uintptr(unsafe.Pointer(&args)))
+	win.ShellNotifyIcon(win.NIM_DELETE, &args)
 	return nil
 }
 
@@ -124,23 +124,4 @@ func wtsMessage(text string, opts options) error {
 		return err
 	}
 	return nil
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-notifyicondataw
-type _NOTIFYICONDATA struct {
-	StructSize      uint32
-	Wnd             uintptr
-	ID              uint32
-	Flags           uint32
-	CallbackMessage uint32
-	Icon            uintptr
-	Tip             [128]uint16 // NOTIFYICONDATAA_V1_SIZE
-	State           uint32
-	StateMask       uint32
-	Info            [256]uint16
-	Version         uint32
-	InfoTitle       [64]uint16
-	InfoFlags       uint32
-	// GuidItem     [16]byte       // NOTIFYICONDATAA_V2_SIZE
-	// BalloonIcon  syscall.Handle // NOTIFYICONDATAA_V3_SIZE
 }

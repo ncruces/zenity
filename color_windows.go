@@ -4,11 +4,11 @@ import (
 	"image/color"
 	"sync"
 	"unsafe"
+
+	"github.com/ncruces/zenity/internal/win"
 )
 
 var (
-	chooseColor = comdlg32.NewProc("ChooseColorW")
-
 	savedColors [16]uint32
 	colorsMutex sync.Mutex
 )
@@ -19,32 +19,26 @@ func init() {
 	}
 }
 
-const (
-	_CC_RGBINIT         = 0x00000001
-	_CC_FULLOPEN        = 0x00000002
-	_CC_PREVENTFULLOPEN = 0x00000004
-)
-
 func selectColor(opts options) (color.Color, error) {
 	// load custom colors
 	colorsMutex.Lock()
 	customColors := savedColors
 	colorsMutex.Unlock()
 
-	var args _CHOOSECOLOR
+	var args win.CHOOSECOLOR
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.Owner, _ = opts.attach.(uintptr)
 	args.CustColors = &customColors
 
 	if opts.color != nil {
-		args.Flags |= _CC_RGBINIT
+		args.Flags |= win.CC_RGBINIT
 		n := color.NRGBAModel.Convert(opts.color).(color.NRGBA)
 		args.RgbResult = uint32(n.R) | uint32(n.G)<<8 | uint32(n.B)<<16
 	}
 	if opts.showPalette {
-		args.Flags |= _CC_PREVENTFULLOPEN
+		args.Flags |= win.CC_PREVENTFULLOPEN
 	} else {
-		args.Flags |= _CC_FULLOPEN
+		args.Flags |= win.CC_FULLOPEN
 	}
 
 	defer setup()()
@@ -57,12 +51,12 @@ func selectColor(opts options) (color.Color, error) {
 		defer unhook()
 	}
 
-	s, _, _ := chooseColor.Call(uintptr(unsafe.Pointer(&args)))
+	ok := win.ChooseColor(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return nil, opts.ctx.Err()
 	}
-	if s == 0 {
-		return nil, commDlgError()
+	if !ok {
+		return nil, win.CommDlgError()
 	}
 
 	// save custom colors back
@@ -74,17 +68,4 @@ func selectColor(opts options) (color.Color, error) {
 	g := uint8(args.RgbResult >> 8)
 	b := uint8(args.RgbResult >> 16)
 	return color.RGBA{R: r, G: g, B: b, A: 255}, nil
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-choosecolorw-r1
-type _CHOOSECOLOR struct {
-	StructSize   uint32
-	Owner        uintptr
-	Instance     uintptr
-	RgbResult    uint32
-	CustColors   *[16]uint32
-	Flags        uint32
-	CustData     uintptr
-	FnHook       uintptr
-	TemplateName *uint16
 }
