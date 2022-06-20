@@ -33,7 +33,7 @@ func selectFile(opts options) (string, error) {
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
-		args.Title = syscall.StringToUTF16Ptr(*opts.title)
+		args.Title = strptr(*opts.title)
 	}
 	if opts.showHidden {
 		args.Flags |= win.OFN_FORCESHOWHIDDEN
@@ -79,7 +79,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_ALLOWMULTISELECT | win.OFN_FILEMUSTEXIST | win.OFN_EXPLORER
 
 	if opts.title != nil {
-		args.Title = syscall.StringToUTF16Ptr(*opts.title)
+		args.Title = strptr(*opts.title)
 	}
 	if opts.showHidden {
 		args.Flags |= win.OFN_FORCESHOWHIDDEN
@@ -150,7 +150,7 @@ func selectFileSave(opts options) (string, error) {
 	args.Flags = win.OFN_NOCHANGEDIR | win.OFN_PATHMUSTEXIST | win.OFN_NOREADONLYRETURN | win.OFN_EXPLORER
 
 	if opts.title != nil {
-		args.Title = syscall.StringToUTF16Ptr(*opts.title)
+		args.Title = strptr(*opts.title)
 	}
 	if opts.confirmOverwrite {
 		args.Flags |= win.OFN_OVERWRITEPROMPT
@@ -231,13 +231,13 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 
 	if opts.title != nil {
-		ptr := syscall.StringToUTF16Ptr(*opts.title)
+		ptr := strptr(*opts.title)
 		dialog.Call(dialog.SetTitle, uintptr(unsafe.Pointer(ptr)))
 	}
 
 	if opts.filename != "" {
 		var item *win.IShellItem
-		ptr := syscall.StringToUTF16Ptr(opts.filename)
+		ptr := strptr(opts.filename)
 		win.SHCreateItemFromParsingName(ptr, nil, _IID_IShellItem, &item)
 
 		if int32(hr) >= 0 && item != nil {
@@ -318,10 +318,10 @@ func browseForFolder(opts options) (string, []string, error) {
 	args.Flags = win.BIF_RETURNONLYFSDIRS
 
 	if opts.title != nil {
-		args.Title = syscall.StringToUTF16Ptr(*opts.title)
+		args.Title = strptr(*opts.title)
 	}
 	if opts.filename != "" {
-		args.LParam = syscall.StringToUTF16Ptr(opts.filename)
+		args.LParam = strptr(opts.filename)
 		args.CallbackFunc = syscall.NewCallback(browseForFolderCallback)
 	}
 
@@ -363,10 +363,10 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 		copy(name, syscall.StringToUTF16(n))
 	}
 	if d != "" {
-		dir = syscall.StringToUTF16Ptr(d)
+		dir = strptr(d)
 	}
 	if len(e) > 1 {
-		ext = syscall.StringToUTF16Ptr(e[1:])
+		ext = strptr(e[1:])
 	}
 	return
 }

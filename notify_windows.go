@@ -58,9 +58,7 @@ func notify(text string, opts options) error {
 		return err
 	}
 
-	var major, minor, build uint32
-	win.RtlGetNtVersionNumbers(&major, &minor, &build)
-
+	major, minor, _ := win.RtlGetNtVersionNumbers()
 	// On Windows 7 (6.1) and lower, wait up to 10 seconds to clean up.
 	if major < 6 || major == 6 && minor < 2 {
 		if opts.ctx != nil {

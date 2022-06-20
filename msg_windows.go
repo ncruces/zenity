@@ -66,11 +66,11 @@ func message(kind messageKind, text string, opts options) error {
 
 	var title *uint16
 	if opts.title != nil {
-		title = syscall.StringToUTF16Ptr(*opts.title)
+		title = strptr(*opts.title)
 	}
 
 	owner, _ := opts.attach.(win.HWND)
-	s, err := win.MessageBox(owner, syscall.StringToUTF16Ptr(text), title, flags)
+	s, err := win.MessageBox(owner, strptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return opts.ctx.Err()
@@ -107,7 +107,7 @@ func hookMessageDialogCallback(wnd win.HWND, lparam *options) uintptr {
 		text = lparam.extraButton
 	}
 	if text != nil {
-		win.SetWindowText(wnd, syscall.StringToUTF16Ptr(*text))
+		win.SetWindowText(wnd, strptr(*text))
 	}
 
 	if ctl == 20 /*IDC_STATIC_OK*/ {

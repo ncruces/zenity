@@ -49,19 +49,19 @@ type progressDialog struct {
 	max  int
 	err  error
 
-	wnd       uintptr
-	textCtl   uintptr
-	progCtl   uintptr
-	okBtn     uintptr
-	cancelBtn uintptr
-	extraBtn  uintptr
+	wnd       win.HWND
+	textCtl   win.HWND
+	progCtl   win.HWND
+	okBtn     win.HWND
+	cancelBtn win.HWND
+	extraBtn  win.HWND
 	font      font
 }
 
 func (d *progressDialog) Text(text string) error {
 	select {
 	default:
-		setWindowText.Call(d.textCtl, strptr(text))
+		win.SetWindowText(d.textCtl, strptr(text))
 		return nil
 	case <-d.done:
 		return d.err
@@ -71,9 +71,9 @@ func (d *progressDialog) Text(text string) error {
 func (d *progressDialog) Value(value int) error {
 	select {
 	default:
-		sendMessage.Call(d.progCtl, win.PBM_SETPOS, uintptr(value), 0)
+		win.SendMessage(d.progCtl, win.PBM_SETPOS, uintptr(value), 0)
 		if value >= d.max {
-			enableWindow.Call(d.okBtn, 1)
+			win.EnableWindow(d.okBtn, true)
 		}
 		return nil
 	case <-d.done:
@@ -92,11 +92,11 @@ func (d *progressDialog) Done() <-chan struct{} {
 func (d *progressDialog) Complete() error {
 	select {
 	default:
-		setWindowLong.Call(d.progCtl, intptr(_GWL_STYLE), _WS_CHILD|_WS_VISIBLE|_PBS_SMOOTH)
-		sendMessage.Call(d.progCtl, win.PBM_SETRANGE32, 0, 1)
-		sendMessage.Call(d.progCtl, win.PBM_SETPOS, 1, 0)
-		enableWindow.Call(d.okBtn, 1)
-		enableWindow.Call(d.cancelBtn, 0)
+		win.SetWindowLong(d.progCtl, _GWL_STYLE, _WS_CHILD|_WS_VISIBLE|_PBS_SMOOTH)
+		win.SendMessage(d.progCtl, win.PBM_SETRANGE32, 0, 1)
+		win.SendMessage(d.progCtl, win.PBM_SETPOS, 1, 0)
+		win.EnableWindow(d.okBtn, true)
+		win.EnableWindow(d.cancelBtn, false)
 		return nil
 	case <-d.done:
 		return d.err
@@ -104,7 +104,7 @@ func (d *progressDialog) Complete() error {
 }
 
 func (d *progressDialog) Close() error {
-	sendMessage.Call(d.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+	win.SendMessage(d.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 	<-d.done
 	if d.err == ErrCanceled {
 		return nil
@@ -138,50 +138,50 @@ func (dlg *progressDialog) setup(opts options) error {
 	defer win.UnregisterClass(cls, instance)
 
 	owner, _ := opts.attach.(win.HWND)
-	dlg.wnd, _, _ = createWindowEx.Call(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
-		uintptr(cls), strptr(*opts.title),
+	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
+		cls, strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 133, uintptr(owner), 0, uintptr(instance), uintptr(unsafe.Pointer(dlg)))
+		281, 133, owner, 0, instance, unsafe.Pointer(dlg))
 
-	dlg.textCtl, _, _ = createWindowEx.Call(0,
-		strptr("STATIC"), 0,
+	dlg.textCtl, _ = win.CreateWindowEx(0,
+		strptr("STATIC"), nil,
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
-		12, 10, 241, 16, dlg.wnd, 0, uintptr(instance), 0)
+		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
 
-	var flags uintptr = _WS_CHILD | _WS_VISIBLE | _PBS_SMOOTH
+	var flags uint32 = _WS_CHILD | _WS_VISIBLE | _PBS_SMOOTH
 	if opts.maxValue < 0 {
 		flags |= _PBS_MARQUEE
 	}
-	dlg.progCtl, _, _ = createWindowEx.Call(0,
+	dlg.progCtl, _ = win.CreateWindowEx(0,
 		strptr(_PROGRESS_CLASS),
-		0, flags,
-		12, 30, 241, 16, dlg.wnd, 0, uintptr(instance), 0)
+		nil, flags,
+		12, 30, 241, 16, dlg.wnd, 0, instance, nil)
 
-	dlg.okBtn, _, _ = createWindowEx.Call(0,
+	dlg.okBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON|_WS_DISABLED,
-		12, 58, 75, 24, dlg.wnd, win.IDOK, uintptr(instance), 0)
+		12, 58, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	if !opts.noCancel {
-		dlg.cancelBtn, _, _ = createWindowEx.Call(0,
+		dlg.cancelBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.cancelLabel),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 58, 75, 24, dlg.wnd, win.IDCANCEL, uintptr(instance), 0)
+			12, 58, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	}
 	if opts.extraButton != nil {
-		dlg.extraBtn, _, _ = createWindowEx.Call(0,
+		dlg.extraBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 58, 75, 24, dlg.wnd, win.IDNO, uintptr(instance), 0)
+			12, 58, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
-	showWindow.Call(dlg.wnd, _SW_NORMAL, 0)
+	win.ShowWindow(dlg.wnd, _SW_NORMAL)
 	if opts.maxValue < 0 {
-		sendMessage.Call(dlg.progCtl, win.PBM_SETMARQUEE, 1, 0)
+		win.SendMessage(dlg.progCtl, win.PBM_SETMARQUEE, 1, 0)
 	} else {
-		sendMessage.Call(dlg.progCtl, win.PBM_SETRANGE32, 0, uintptr(opts.maxValue))
+		win.SendMessage(dlg.progCtl, win.PBM_SETRANGE32, 0, uintptr(opts.maxValue))
 	}
 	once.Do(dlg.init.Done)
 
@@ -191,7 +191,7 @@ func (dlg *progressDialog) setup(opts options) error {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				sendMessage.Call(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -208,28 +208,28 @@ func (dlg *progressDialog) setup(opts options) error {
 
 func (d *progressDialog) layout(dpi dpi) {
 	font := d.font.forDPI(dpi)
-	sendMessage.Call(d.textCtl, win.WM_SETFONT, font, 1)
-	sendMessage.Call(d.okBtn, win.WM_SETFONT, font, 1)
-	sendMessage.Call(d.cancelBtn, win.WM_SETFONT, font, 1)
-	sendMessage.Call(d.extraBtn, win.WM_SETFONT, font, 1)
-	setWindowPos.Call(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), _SWP_NOZORDER|_SWP_NOMOVE)
-	setWindowPos.Call(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	setWindowPos.Call(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
+	win.SendMessage(d.textCtl, win.WM_SETFONT, font, 1)
+	win.SendMessage(d.okBtn, win.WM_SETFONT, font, 1)
+	win.SendMessage(d.cancelBtn, win.WM_SETFONT, font, 1)
+	win.SendMessage(d.extraBtn, win.WM_SETFONT, font, 1)
+	win.SetWindowPos(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), _SWP_NOZORDER|_SWP_NOMOVE)
+	win.SetWindowPos(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
+	win.SetWindowPos(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
 	if d.extraBtn == 0 {
 		if d.cancelBtn == 0 {
-			setWindowPos.Call(d.okBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 		} else {
-			setWindowPos.Call(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			setWindowPos.Call(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 		}
 	} else {
 		if d.cancelBtn == 0 {
-			setWindowPos.Call(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			setWindowPos.Call(d.extraBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.extraBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 		} else {
-			setWindowPos.Call(d.okBtn, 0, dpi.scale(12), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			setWindowPos.Call(d.extraBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			setWindowPos.Call(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(12), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.extraBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
 		}
 	}
 }

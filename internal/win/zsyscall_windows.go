@@ -42,7 +42,6 @@ var (
 	modcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
 	modgdi32    = windows.NewLazySystemDLL("gdi32.dll")
 	modkernel32 = windows.NewLazySystemDLL("kernel32.dll")
-	modntdll    = windows.NewLazySystemDLL("ntdll.dll")
 	modole32    = windows.NewLazySystemDLL("ole32.dll")
 	modshell32  = windows.NewLazySystemDLL("shell32.dll")
 	moduser32   = windows.NewLazySystemDLL("user32.dll")
@@ -62,29 +61,37 @@ var (
 	procGetConsoleWindow             = modkernel32.NewProc("GetConsoleWindow")
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
-	procRtlGetNtVersionNumbers       = modntdll.NewProc("RtlGetNtVersionNumbers")
 	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
 	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
 	procSHCreateItemFromParsingName  = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
 	procShell_NotifyIconW            = modshell32.NewProc("Shell_NotifyIconW")
 	procCreateIconFromResource       = moduser32.NewProc("CreateIconFromResource")
+	procCreateWindowExW              = moduser32.NewProc("CreateWindowExW")
 	procDestroyIcon                  = moduser32.NewProc("DestroyIcon")
 	procDispatchMessageW             = moduser32.NewProc("DispatchMessageW")
+	procEnableWindow                 = moduser32.NewProc("EnableWindow")
 	procEnumChildWindows             = moduser32.NewProc("EnumChildWindows")
 	procGetDlgCtrlID                 = moduser32.NewProc("GetDlgCtrlID")
 	procGetDpiForWindow              = moduser32.NewProc("GetDpiForWindow")
 	procGetMessageW                  = moduser32.NewProc("GetMessageW")
 	procGetWindowDC                  = moduser32.NewProc("GetWindowDC")
+	procGetWindowRect                = moduser32.NewProc("GetWindowRect")
+	procGetWindowTextLengthW         = moduser32.NewProc("GetWindowTextLengthW")
+	procGetWindowTextW               = moduser32.NewProc("GetWindowTextW")
 	procIsDialogMessageW             = moduser32.NewProc("IsDialogMessageW")
 	procLoadIconW                    = moduser32.NewProc("LoadIconW")
 	procLoadImageW                   = moduser32.NewProc("LoadImageW")
 	procRegisterClassExW             = moduser32.NewProc("RegisterClassExW")
 	procReleaseDC                    = moduser32.NewProc("ReleaseDC")
 	procSendMessageW                 = moduser32.NewProc("SendMessageW")
+	procSetFocus                     = moduser32.NewProc("SetFocus")
 	procSetForegroundWindow          = moduser32.NewProc("SetForegroundWindow")
 	procSetThreadDpiAwarenessContext = moduser32.NewProc("SetThreadDpiAwarenessContext")
+	procSetWindowLongW               = moduser32.NewProc("SetWindowLongW")
+	procSetWindowPos                 = moduser32.NewProc("SetWindowPos")
 	procSetWindowTextW               = moduser32.NewProc("SetWindowTextW")
+	procShowWindow                   = moduser32.NewProc("ShowWindow")
 	procTranslateMessage             = moduser32.NewProc("TranslateMessage")
 	procUnregisterClassW             = moduser32.NewProc("UnregisterClassW")
 	procWTSSendMessageW              = modwtsapi32.NewProc("WTSSendMessageW")
@@ -183,11 +190,6 @@ func ReleaseActCtx(actCtx Handle) {
 	return
 }
 
-func RtlGetNtVersionNumbers(major *uint32, minor *uint32, build *uint32) {
-	syscall.Syscall(procRtlGetNtVersionNumbers.Addr(), 3, uintptr(unsafe.Pointer(major)), uintptr(unsafe.Pointer(minor)), uintptr(unsafe.Pointer(build)))
-	return
-}
-
 func CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
 	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unkOuter), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
 	if r0 != 0 {
@@ -225,7 +227,7 @@ func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) 
 	return
 }
 
-func CreateIconFromResource(resBits []byte, resSize int, icon bool, ver uint32) (ret Handle, err error) {
+func CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) {
 	var _p0 *byte
 	if len(resBits) > 0 {
 		_p0 = &resBits[0]
@@ -234,8 +236,17 @@ func CreateIconFromResource(resBits []byte, resSize int, icon bool, ver uint32) 
 	if icon {
 		_p1 = 1
 	}
-	r0, _, e1 := syscall.Syscall6(procCreateIconFromResource.Addr(), 5, uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(resSize), uintptr(_p1), uintptr(ver), 0)
+	r0, _, e1 := syscall.Syscall6(procCreateIconFromResource.Addr(), 4, uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(_p1), uintptr(ver), 0, 0)
 	ret = Handle(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) {
+	r0, _, e1 := syscall.Syscall12(procCreateWindowExW.Addr(), 12, uintptr(exStyle), uintptr(unsafe.Pointer(className)), uintptr(unsafe.Pointer(windowName)), uintptr(style), uintptr(x), uintptr(y), uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(param))
+	ret = HWND(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
 	}
@@ -253,6 +264,16 @@ func DestroyIcon(icon Handle) (err error) {
 func DispatchMessage(msg *MSG) (ret uintptr) {
 	r0, _, _ := syscall.Syscall(procDispatchMessageW.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
 	ret = uintptr(r0)
+	return
+}
+
+func EnableWindow(wnd HWND, enable bool) (ok bool) {
+	var _p0 uint32
+	if enable {
+		_p0 = 1
+	}
+	r0, _, _ := syscall.Syscall(procEnableWindow.Addr(), 2, uintptr(wnd), uintptr(_p0), 0)
+	ok = r0 != 0
 	return
 }
 
@@ -293,6 +314,32 @@ func GetWindowDC(wnd HWND) (ret Handle) {
 	return
 }
 
+func GetWindowRect(wnd HWND, cmdShow *RECT) (err error) {
+	r1, _, e1 := syscall.Syscall(procGetWindowRect.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(cmdShow)), 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GetWindowTextLength(wnd HWND) (ret int, err error) {
+	r0, _, e1 := syscall.Syscall(procGetWindowTextLengthW.Addr(), 1, uintptr(wnd), 0, 0)
+	ret = int(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GetWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) {
+	r0, _, e1 := syscall.Syscall(procGetWindowTextW.Addr(), 3, uintptr(wnd), uintptr(unsafe.Pointer(str)), uintptr(maxCount))
+	ret = int(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func IsDialogMessage(wnd HWND, msg *MSG) (ok bool) {
 	r0, _, _ := syscall.Syscall(procIsDialogMessageW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(msg)), 0)
 	ok = r0 != 0
@@ -317,10 +364,9 @@ func LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int)
 	return
 }
 
-func RegisterClassEx(cls *WNDCLASSEX) (ret uint16, err error) {
-	r0, _, e1 := syscall.Syscall(procRegisterClassExW.Addr(), 1, uintptr(unsafe.Pointer(cls)), 0, 0)
-	ret = uint16(r0)
-	if ret == 0 {
+func RegisterClassEx(cls *WNDCLASSEX) (err error) {
+	r1, _, e1 := syscall.Syscall(procRegisterClassExW.Addr(), 1, uintptr(unsafe.Pointer(cls)), 0, 0)
+	if r1 == 0 {
 		err = errnoErr(e1)
 	}
 	return
@@ -338,6 +384,15 @@ func SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uint
 	return
 }
 
+func SetFocus(wnd HWND) (ret HWND, err error) {
+	r0, _, e1 := syscall.Syscall(procSetFocus.Addr(), 1, uintptr(wnd), 0, 0)
+	ret = HWND(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func SetForegroundWindow(wnd HWND) (ok bool) {
 	r0, _, _ := syscall.Syscall(procSetForegroundWindow.Addr(), 1, uintptr(wnd), 0, 0)
 	ok = r0 != 0
@@ -350,11 +405,34 @@ func setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) {
 	return
 }
 
+func SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) {
+	r0, _, e1 := syscall.Syscall(procSetWindowLongW.Addr(), 3, uintptr(wnd), uintptr(index), uintptr(newLong))
+	ret = int(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, flags int) (err error) {
+	r1, _, e1 := syscall.Syscall9(procSetWindowPos.Addr(), 7, uintptr(wnd), uintptr(wndInsertAfter), uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), uintptr(flags), 0, 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func SetWindowText(wnd HWND, text *uint16) (err error) {
 	r1, _, e1 := syscall.Syscall(procSetWindowTextW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(text)), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
+	return
+}
+
+func ShowWindow(wnd HWND, cmdShow int) (ok bool) {
+	r0, _, _ := syscall.Syscall(procShowWindow.Addr(), 2, uintptr(wnd), uintptr(cmdShow), 0)
+	ok = r0 != 0
 	return
 }
 
@@ -364,8 +442,8 @@ func TranslateMessage(msg *MSG) (ok bool) {
 	return
 }
 
-func UnregisterClass(atom uint16, instance Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procUnregisterClassW.Addr(), 2, uintptr(atom), uintptr(instance), 0)
+func UnregisterClass(className *uint16, instance Handle) (err error) {
+	r1, _, e1 := syscall.Syscall(procUnregisterClassW.Addr(), 2, uintptr(unsafe.Pointer(className)), uintptr(instance), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}

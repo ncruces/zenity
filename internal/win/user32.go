@@ -86,6 +86,12 @@ func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
 	return windows.GetWindowThreadProcessId(hwnd, pid)
 }
 
+func SendMessagePointer(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
+	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
 func GetDpiForWindow(wnd HWND) (ret int, err error) {
 	if err := procGetDpiForWindow.Find(); err != nil {
 		return 0, err
@@ -138,7 +144,15 @@ type MSG struct {
 
 // https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
 type POINT struct {
-	x, y int32
+	X, Y int32
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect
+type RECT struct {
+	Left   int32
+	Top    int32
+	Right  int32
+	Bottom int32
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
@@ -157,23 +171,32 @@ type WNDCLASSEX struct {
 	IconSm     Handle
 }
 
+//sys CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
+//sys CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) = user32.CreateWindowExW
 //sys DestroyIcon(icon Handle) (err error) = user32.DestroyIcon
 //sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
+//sys EnableWindow(wnd HWND, enable bool) (ok bool) = user32.EnableWindow
 //sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
 //sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
 //sys getDpiForWindow(wnd HWND) (ret int) = user32.GetDpiForWindow
 //sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
 //sys GetWindowDC(wnd HWND) (ret Handle) = user32.GetWindowDC
+//sys GetWindowRect(wnd HWND, cmdShow *RECT) (err error) = user32.GetWindowRect
+//sys GetWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) = user32.GetWindowTextW
+//sys GetWindowTextLength(wnd HWND) (ret int, err error) = user32.GetWindowTextLengthW
 //sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
 //sys LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) = user32.LoadIconW
 //sys LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) = user32.LoadImageW
-//sys RegisterClassEx(cls *WNDCLASSEX) (ret uint16, err error) = user32.RegisterClassExW
+//sys RegisterClassEx(cls *WNDCLASSEX) (err error) = user32.RegisterClassExW
 //sys ReleaseDC(wnd HWND, dc Handle) (ok bool) = user32.ReleaseDC
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
+//sys SetFocus(wnd HWND) (ret HWND, err error) = user32.SetFocus
 //sys SetForegroundWindow(wnd HWND) (ok bool) = user32.SetForegroundWindow
 //sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
+//sys SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) = user32.SetWindowLongW
+//sys SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, flags int) (err error) = user32.SetWindowPos
 //sys SetWindowText(wnd HWND, text *uint16) (err error) = user32.SetWindowTextW
+//sys ShowWindow(wnd HWND, cmdShow int) (ok bool) = user32.ShowWindow
 //sys TranslateMessage(msg *MSG) (ok bool) = user32.TranslateMessage
-//sys UnregisterClass(atom uint16, instance Handle) (err error) = user32.UnregisterClassW
-//sys CreateIconFromResource(resBits []byte, resSize int, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
+//sys UnregisterClass(className *uint16, instance Handle) (err error) = user32.UnregisterClassW
