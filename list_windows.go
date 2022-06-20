@@ -63,28 +63,28 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		return nil, opts.ctx.Err()
 	}
 
-	instance, _, err := getModuleHandle.Call(0)
-	if instance == 0 {
+	instance, err := win.GetModuleHandle(nil)
+	if err != nil {
 		return nil, err
 	}
 
 	cls, err := registerClass(instance, icon.handle, syscall.NewCallback(listProc))
-	if cls == 0 {
+	if err != nil {
 		return nil, err
 	}
-	defer unregisterClass.Call(cls, instance)
+	defer win.UnregisterClass(cls, instance)
 
 	owner, _ := opts.attach.(win.HWND)
 	dlg.wnd, _, _ = createWindowEx.Call(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
-		cls, strptr(*opts.title),
+		uintptr(cls), strptr(*opts.title),
 		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
 		_CW_USEDEFAULT, _CW_USEDEFAULT,
-		281, 281, uintptr(owner), 0, instance, uintptr(unsafe.Pointer(dlg)))
+		281, 281, uintptr(owner), 0, uintptr(instance), uintptr(unsafe.Pointer(dlg)))
 
 	dlg.textCtl, _, _ = createWindowEx.Call(0,
 		strptr("STATIC"), strptr(text),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
-		12, 10, 241, 16, dlg.wnd, 0, instance, 0)
+		12, 10, 241, 16, dlg.wnd, 0, uintptr(instance), 0)
 
 	var flags uintptr = _WS_CHILD | _WS_VISIBLE | _WS_GROUP | _WS_TABSTOP | _WS_VSCROLL
 	if dlg.multiple {
@@ -93,21 +93,21 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	dlg.listCtl, _, _ = createWindowEx.Call(_WS_EX_CLIENTEDGE,
 		strptr("LISTBOX"), strptr(opts.entryText),
 		flags,
-		12, 30, 241, 164, dlg.wnd, 0, instance, 0)
+		12, 30, 241, 164, dlg.wnd, 0, uintptr(instance), 0)
 
 	dlg.okBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
-		12, 206, 75, 24, dlg.wnd, win.IDOK, instance, 0)
+		12, 206, 75, 24, dlg.wnd, win.IDOK, uintptr(instance), 0)
 	dlg.cancelBtn, _, _ = createWindowEx.Call(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
 		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-		12, 206, 75, 24, dlg.wnd, win.IDCANCEL, instance, 0)
+		12, 206, 75, 24, dlg.wnd, win.IDCANCEL, uintptr(instance), 0)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _, _ = createWindowEx.Call(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
 			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
-			12, 206, 75, 24, dlg.wnd, win.IDNO, instance, 0)
+			12, 206, 75, 24, dlg.wnd, win.IDNO, uintptr(instance), 0)
 	}
 
 	for _, item := range dlg.items {

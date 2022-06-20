@@ -55,11 +55,27 @@ const (
 	PBM_SETMARQUEE = WM_USER + 10
 	STM_SETICON    = 0x0170
 
+	USER_DEFAULT_SCREEN_DPI = 96
+
 	DPI_AWARENESS_CONTEXT_UNAWARE              = ^uintptr(1) + 1
 	DPI_AWARENESS_CONTEXT_SYSTEM_AWARE         = ^uintptr(2) + 1
 	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE    = ^uintptr(3) + 1
 	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ^uintptr(4) + 1
 	DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED    = ^uintptr(5) + 1
+
+	IMAGE_BITMAP = 0
+	IMAGE_ICON   = 1
+	IMAGE_CURSOR = 2
+
+	LR_DEFAULTCOLOR     = 0x00000000
+	LR_MONOCHROME       = 0x00000001
+	LR_LOADFROMFILE     = 0x00000010
+	LR_LOADTRANSPARENT  = 0x00000020
+	LR_DEFAULTSIZE      = 0x00000040
+	LR_VGACOLOR         = 0x00000080
+	LR_LOADMAP3DCOLORS  = 0x00001000
+	LR_CREATEDIBSECTION = 0x00002000
+	LR_SHARED           = 0x00008000
 )
 
 func MessageBox(hwnd HWND, text *uint16, caption *uint16, boxtype uint32) (ret int32, err error) {
@@ -68,6 +84,13 @@ func MessageBox(hwnd HWND, text *uint16, caption *uint16, boxtype uint32) (ret i
 
 func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
 	return windows.GetWindowThreadProcessId(hwnd, pid)
+}
+
+func GetDpiForWindow(wnd HWND) (ret int, err error) {
+	if err := procGetDpiForWindow.Find(); err != nil {
+		return 0, err
+	}
+	return getDpiForWindow(wnd), nil
 }
 
 func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
@@ -110,6 +133,7 @@ type MSG struct {
 	LParam  uintptr
 	Time    uint32
 	Pt      POINT
+	private uint32
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
@@ -117,14 +141,39 @@ type POINT struct {
 	x, y int32
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
+type WNDCLASSEX struct {
+	Size       uint32
+	Style      uint32
+	WndProc    uintptr
+	ClsExtra   int32
+	WndExtra   int32
+	Instance   Handle
+	Icon       Handle
+	Cursor     Handle
+	Background Handle
+	MenuName   *uint16
+	ClassName  *uint16
+	IconSm     Handle
+}
+
+//sys DestroyIcon(icon Handle) (err error) = user32.DestroyIcon
 //sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
 //sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
 //sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
+//sys getDpiForWindow(wnd HWND) (ret int) = user32.GetDpiForWindow
 //sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
+//sys GetWindowDC(wnd HWND) (ret Handle) = user32.GetWindowDC
 //sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
+//sys LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) = user32.LoadIconW
+//sys LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) = user32.LoadImageW
+//sys RegisterClassEx(cls *WNDCLASSEX) (ret uint16, err error) = user32.RegisterClassExW
+//sys ReleaseDC(wnd HWND, dc Handle) (ok bool) = user32.ReleaseDC
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
 //sys SetForegroundWindow(wnd HWND) (ok bool) = user32.SetForegroundWindow
 //sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
 //sys SetWindowText(wnd HWND, text *uint16) (err error) = user32.SetWindowTextW
 //sys TranslateMessage(msg *MSG) (ok bool) = user32.TranslateMessage
+//sys UnregisterClass(atom uint16, instance Handle) (err error) = user32.UnregisterClassW
+//sys CreateIconFromResource(resBits []byte, resSize int, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource

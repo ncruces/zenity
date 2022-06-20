@@ -61,8 +61,8 @@ type OPENFILENAME struct {
 	CustData        Pointer
 	FnHook          uintptr
 	TemplateName    *uint16
-	PvReserved      uintptr
-	DwReserved      uint32
+	pvReserved      uintptr
+	dwReserved      uint32
 	FlagsEx         uint32
 }
 
@@ -74,7 +74,7 @@ func CommDlgError() error {
 	}
 }
 
-//sys commDlgExtendedError() (code int) = comdlg32.CommDlgExtendedError
 //sys ChooseColor(cc *CHOOSECOLOR) (ok bool) = comdlg32.ChooseColorW
+//sys commDlgExtendedError() (code int) = comdlg32.CommDlgExtendedError
 //sys GetOpenFileName(ofn *OPENFILENAME) (ok bool) = comdlg32.GetOpenFileNameW
 //sys GetSaveFileName(ofn *OPENFILENAME) (ok bool) = comdlg32.GetSaveFileNameW

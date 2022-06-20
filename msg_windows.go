@@ -114,7 +114,7 @@ func hookMessageDialogCallback(wnd win.HWND, lparam *options) uintptr {
 		icon := getIcon(lparam.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
-			win.SendMessage(wnd, win.STM_SETICON, icon.handle, 0)
+			win.SendMessage(wnd, win.STM_SETICON, uintptr(icon.handle), 0)
 		}
 	}
 	return 1

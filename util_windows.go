@@ -17,42 +17,27 @@ import (
 )
 
 var (
-	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
-	user32   = windows.NewLazySystemDLL("user32.dll")
+	user32 = windows.NewLazySystemDLL("user32.dll")
 
-	activateActCtx   = kernel32.NewProc("ActivateActCtx")
-	createActCtx     = kernel32.NewProc("CreateActCtxW")
-	deactivateActCtx = kernel32.NewProc("DeactivateActCtx")
-	getModuleHandle  = kernel32.NewProc("GetModuleHandleW")
-
-	callNextHookEx         = user32.NewProc("CallNextHookEx")
-	createIconFromResource = user32.NewProc("CreateIconFromResource")
-	createWindowEx         = user32.NewProc("CreateWindowExW")
-	defWindowProc          = user32.NewProc("DefWindowProcW")
-	destroyIcon            = user32.NewProc("DestroyIcon")
-	destroyWindow          = user32.NewProc("DestroyWindow")
-	enableWindow           = user32.NewProc("EnableWindow")
-	getDpiForWindow        = user32.NewProc("GetDpiForWindow")
-	getSystemMetrics       = user32.NewProc("GetSystemMetrics")
-	getWindowDC            = user32.NewProc("GetWindowDC")
-	getWindowRect          = user32.NewProc("GetWindowRect")
-	getWindowText          = user32.NewProc("GetWindowTextW")
-	getWindowTextLength    = user32.NewProc("GetWindowTextLengthW")
-	loadIcon               = user32.NewProc("LoadIconW")
-	loadImage              = user32.NewProc("LoadImageW")
-	postQuitMessage        = user32.NewProc("PostQuitMessage")
-	registerClassEx        = user32.NewProc("RegisterClassExW")
-	releaseDC              = user32.NewProc("ReleaseDC")
-	sendMessage            = user32.NewProc("SendMessageW")
-	setFocus               = user32.NewProc("SetFocus")
-	setWindowLong          = user32.NewProc("SetWindowLongW")
-	setWindowPos           = user32.NewProc("SetWindowPos")
-	setWindowsHookEx       = user32.NewProc("SetWindowsHookExW")
-	setWindowText          = user32.NewProc("SetWindowTextW")
-	showWindow             = user32.NewProc("ShowWindow")
-	systemParametersInfo   = user32.NewProc("SystemParametersInfoW")
-	unhookWindowsHookEx    = user32.NewProc("UnhookWindowsHookEx")
-	unregisterClass        = user32.NewProc("UnregisterClassW")
+	callNextHookEx       = user32.NewProc("CallNextHookEx")
+	createWindowEx       = user32.NewProc("CreateWindowExW")
+	defWindowProc        = user32.NewProc("DefWindowProcW")
+	destroyWindow        = user32.NewProc("DestroyWindow")
+	enableWindow         = user32.NewProc("EnableWindow")
+	getSystemMetrics     = user32.NewProc("GetSystemMetrics")
+	getWindowRect        = user32.NewProc("GetWindowRect")
+	getWindowText        = user32.NewProc("GetWindowTextW")
+	getWindowTextLength  = user32.NewProc("GetWindowTextLengthW")
+	postQuitMessage      = user32.NewProc("PostQuitMessage")
+	sendMessage          = user32.NewProc("SendMessageW")
+	setFocus             = user32.NewProc("SetFocus")
+	setWindowLong        = user32.NewProc("SetWindowLongW")
+	setWindowPos         = user32.NewProc("SetWindowPos")
+	setWindowsHookEx     = user32.NewProc("SetWindowsHookExW")
+	setWindowText        = user32.NewProc("SetWindowTextW")
+	showWindow           = user32.NewProc("ShowWindow")
+	systemParametersInfo = user32.NewProc("SystemParametersInfoW")
+	unhookWindowsHookEx  = user32.NewProc("UnhookWindowsHookEx")
 )
 
 func intptr(i int64) uintptr {
@@ -97,7 +82,7 @@ func setup() context.CancelFunc {
 			win.SetThreadDpiAwarenessContext(restore)
 		}
 		if cookie != 0 {
-			deactivateActCtx.Call(0, cookie)
+			win.DeactivateActCtx(0, cookie)
 		}
 		runtime.UnlockOSThread()
 	}
@@ -172,7 +157,7 @@ func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 				icon := getIcon(hook.icon)
 				if icon.handle != 0 {
 					defer icon.delete()
-					win.SendMessage(lparam.Wnd, win.WM_SETICON, 0, icon.handle)
+					win.SendMessage(lparam.Wnd, win.WM_SETICON, 0, uintptr(icon.handle))
 				}
 			}
 			if hook.title != nil {
@@ -234,20 +219,23 @@ func deleteBackRef(id uintptr) {
 	delete(backRefs.m, id)
 }
 
-type dpi uintptr
+type dpi int
 
-func getDPI(wnd uintptr) dpi {
-	var res uintptr
+func getDPI(_wnd uintptr) dpi {
+	wnd := win.HWND(_wnd)
 
-	if wnd != 0 && getDpiForWindow.Find() == nil {
-		res, _, _ = getDpiForWindow.Call(wnd)
-	} else if dc, _, _ := getWindowDC.Call(wnd); dc != 0 {
-		res = uintptr(win.GetDeviceCaps(win.Handle(dc), win.LOGPIXELSY))
-		releaseDC.Call(0, dc)
+	res, _ := win.GetDpiForWindow(wnd)
+	if res != 0 {
+		return dpi(res)
+	}
+
+	if dc := win.GetWindowDC(wnd); dc != 0 {
+		res = win.GetDeviceCaps(dc, win.LOGPIXELSY)
+		win.ReleaseDC(wnd, dc)
 	}
 
 	if res == 0 {
-		return 96 // USER_DEFAULT_SCREEN_DPI
+		return win.USER_DEFAULT_SCREEN_DPI
 	}
 	return dpi(res)
 }
@@ -256,7 +244,7 @@ func (d dpi) scale(dim uintptr) uintptr {
 	if d == 0 {
 		return dim
 	}
-	return dim * uintptr(d) / 96 // USER_DEFAULT_SCREEN_DPI
+	return dim * uintptr(d) / win.USER_DEFAULT_SCREEN_DPI
 }
 
 type font struct {
@@ -289,7 +277,7 @@ func (f *font) delete() {
 }
 
 type icon struct {
-	handle  uintptr
+	handle  win.Handle
 	destroy bool
 }
 
@@ -307,7 +295,7 @@ func getIcon(i any) icon {
 		resource = 32516 // IDI_INFORMATION
 	}
 	if resource != 0 {
-		res.handle, _, _ = loadIcon.Call(0, resource)
+		res.handle, _ = win.LoadIcon(0, resource)
 		return res
 	}
 
@@ -323,16 +311,13 @@ func getIcon(i any) icon {
 
 	switch {
 	case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
-		res.handle, _, _ = loadImage.Call(0,
-			strptr(path),
-			1, /*IMAGE_ICON*/
-			0, 0,
-			0x00008050 /*LR_LOADFROMFILE|LR_DEFAULTSIZE|LR_SHARED*/)
+		res.handle, _ = win.LoadImage(0,
+			syscall.StringToUTF16Ptr(path),
+			win.IMAGE_ICON, 0, 0,
+			win.LR_LOADFROMFILE|win.LR_DEFAULTSIZE|win.LR_SHARED)
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-		res.handle, _, _ = createIconFromResource.Call(
-			uintptr(unsafe.Pointer(&data[0])),
-			uintptr(len(data)),
-			1, 0x00030000)
+		res.handle, _ = win.CreateIconFromResource(
+			data, len(data), true, 0x00030000)
 		res.destroy = true
 	}
 	return res
@@ -340,7 +325,7 @@ func getIcon(i any) icon {
 
 func (i *icon) delete() {
 	if i.handle != 0 {
-		destroyIcon.Call(i.handle)
+		win.DestroyIcon(i.handle)
 		i.handle = 0
 	}
 }
@@ -365,10 +350,10 @@ func getWindowString(wnd uintptr) string {
 	return syscall.UTF16ToString(buf)
 }
 
-func registerClass(instance, icon, proc uintptr) (uintptr, error) {
+func registerClass(instance, icon win.Handle, proc uintptr) (uint16, error) {
 	name := "WC_" + strconv.FormatUint(uint64(proc), 16)
 
-	var wcx _WNDCLASSEX
+	var wcx win.WNDCLASSEX
 	wcx.Size = uint32(unsafe.Sizeof(wcx))
 	wcx.WndProc = proc
 	wcx.Icon = icon
@@ -376,8 +361,7 @@ func registerClass(instance, icon, proc uintptr) (uintptr, error) {
 	wcx.Background = 5 // COLOR_WINDOW
 	wcx.ClassName = syscall.StringToUTF16Ptr(name)
 
-	atom, _, err := registerClassEx.Call(uintptr(unsafe.Pointer(&wcx)))
-	return atom, err
+	return win.RegisterClassEx(&wcx)
 }
 
 // https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
@@ -387,30 +371,18 @@ func enableVisualStyles() (cookie uintptr) {
 		return
 	}
 
-	var ctx _ACTCTX
+	var ctx win.ACTCTX
 	ctx.Size = uint32(unsafe.Sizeof(ctx))
-	ctx.Flags = 0x01c // ACTCTX_FLAG_RESOURCE_NAME_VALID|ACTCTX_FLAG_SET_PROCESS_DEFAULT|ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID
+	ctx.Flags = win.ACTCTX_FLAG_RESOURCE_NAME_VALID | win.ACTCTX_FLAG_SET_PROCESS_DEFAULT | win.ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID
 	ctx.Source = syscall.StringToUTF16Ptr("shell32.dll")
 	ctx.AssemblyDirectory = syscall.StringToUTF16Ptr(dir)
 	ctx.ResourceName = 124
 
-	if h, _, _ := createActCtx.Call(uintptr(unsafe.Pointer(&ctx))); h != 0 {
-		activateActCtx.Call(h, uintptr(unsafe.Pointer(&cookie)))
+	if hnd, err := win.CreateActCtx(&ctx); err == nil {
+		win.ActivateActCtx(hnd, &cookie)
+		win.ReleaseActCtx(hnd)
 	}
 	return
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-actctxw
-type _ACTCTX struct {
-	Size                  uint32
-	Flags                 uint32
-	Source                *uint16
-	ProcessorArchitecture uint16
-	LangId                uint16
-	AssemblyDirectory     *uint16
-	ResourceName          uintptr
-	ApplicationName       *uint16
-	Module                uintptr
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
@@ -447,22 +419,6 @@ type _RECT struct {
 	top    int32
 	right  int32
 	bottom int32
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexw
-type _WNDCLASSEX struct {
-	Size       uint32
-	Style      uint32
-	WndProc    uintptr
-	ClsExtra   int32
-	WndExtra   int32
-	Instance   uintptr
-	Icon       uintptr
-	Cursor     uintptr
-	Background uintptr
-	MenuName   *uint16
-	ClassName  *uint16
-	IconSm     uintptr
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
