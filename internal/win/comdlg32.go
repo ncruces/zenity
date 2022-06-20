@@ -22,7 +22,7 @@ type CHOOSECOLOR struct {
 	RgbResult    uint32
 	CustColors   *[16]uint32
 	Flags        uint32
-	CustData     uintptr
+	CustData     Pointer
 	FnHook       uintptr
 	TemplateName *uint16
 }
@@ -58,7 +58,7 @@ type OPENFILENAME struct {
 	FileOffset      uint16
 	FileExtension   uint16
 	DefExt          *uint16
-	CustData        uintptr
+	CustData        Pointer
 	FnHook          uintptr
 	TemplateName    *uint16
 	PvReserved      uintptr

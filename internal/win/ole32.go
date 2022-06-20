@@ -10,7 +10,19 @@ import (
 )
 
 const (
-	RPC_E_CHANGED_MODE syscall.Errno = 0x80010106
+	COINIT_MULTITHREADED     = windows.COINIT_MULTITHREADED
+	COINIT_APARTMENTTHREADED = windows.COINIT_APARTMENTTHREADED
+	COINIT_DISABLE_OLE1DDE   = windows.COINIT_DISABLE_OLE1DDE
+	COINIT_SPEED_OVER_MEMORY = windows.COINIT_SPEED_OVER_MEMORY
+
+	CLSCTX_INPROC_SERVER  = windows.CLSCTX_INPROC_SERVER
+	CLSCTX_INPROC_HANDLER = windows.CLSCTX_INPROC_HANDLER
+	CLSCTX_LOCAL_SERVER   = windows.CLSCTX_LOCAL_SERVER
+	CLSCTX_REMOTE_SERVER  = windows.CLSCTX_REMOTE_SERVER
+	CLSCTX_ALL            = windows.CLSCTX_INPROC_SERVER | windows.CLSCTX_INPROC_HANDLER | windows.CLSCTX_LOCAL_SERVER | windows.CLSCTX_REMOTE_SERVER
+
+	E_CANCELED         = windows.ERROR_CANCELLED | windows.FACILITY_WIN32<<16 | 0x80000000
+	RPC_E_CHANGED_MODE = syscall.Errno(windows.RPC_E_CHANGED_MODE)
 )
 
 func CoInitializeEx(reserved uintptr, coInit uint32) error {
@@ -18,6 +30,8 @@ func CoInitializeEx(reserved uintptr, coInit uint32) error {
 }
 
 func CoUninitialize() { windows.CoUninitialize() }
+
+func CoTaskMemFree(address unsafe.Pointer) { windows.CoTaskMemFree(address) }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
 
@@ -43,5 +57,4 @@ func (o *COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr er
 	}
 }
 
-//sys CoTaskMemFree(address uintptr) = ole32.CoTaskMemFree
 //sys CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance

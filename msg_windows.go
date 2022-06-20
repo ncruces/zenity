@@ -90,7 +90,7 @@ func message(kind messageKind, text string, opts options) error {
 func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
 	return hookDialog(opts.ctx, opts.windowIcon, nil, func(wnd win.HWND) {
 		win.EnumChildWindows(wnd, syscall.NewCallback(hookMessageDialogCallback),
-			uintptr(unsafe.Pointer(&opts)))
+			unsafe.Pointer(&opts))
 	})
 }
 

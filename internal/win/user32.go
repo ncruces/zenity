@@ -2,7 +2,12 @@
 
 package win
 
-import "golang.org/x/sys/windows"
+import (
+	"syscall"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
 
 const (
 	IDOK     = 1
@@ -49,6 +54,12 @@ const (
 	PBM_SETRANGE32 = WM_USER + 6
 	PBM_SETMARQUEE = WM_USER + 10
 	STM_SETICON    = 0x0170
+
+	DPI_AWARENESS_CONTEXT_UNAWARE              = ^uintptr(1) + 1
+	DPI_AWARENESS_CONTEXT_SYSTEM_AWARE         = ^uintptr(2) + 1
+	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE    = ^uintptr(3) + 1
+	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ^uintptr(4) + 1
+	DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED    = ^uintptr(5) + 1
 )
 
 func MessageBox(hwnd HWND, text *uint16, caption *uint16, boxtype uint32) (ret int32, err error) {
@@ -59,8 +70,61 @@ func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
 	return windows.GetWindowThreadProcessId(hwnd, pid)
 }
 
+func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
+	if err := procSetThreadDpiAwarenessContext.Find(); err != nil {
+		return 0, err
+	}
+	return setThreadDpiAwarenessContext(dpiContext), nil
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
+func MessageLoop(wnd HWND) error {
+	getMessage := procGetMessageW.Addr()
+	translateMessage := procTranslateMessage.Addr()
+	dispatchMessage := procDispatchMessageW.Addr()
+	isDialogMessage := procIsDialogMessageW.Addr()
+
+	for {
+		var msg MSG
+		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
+		if int32(s) == -1 {
+			return err
+		}
+		if s == 0 {
+			return nil
+		}
+
+		s, _, _ = syscall.Syscall(isDialogMessage, 2, uintptr(wnd), uintptr(unsafe.Pointer(&msg)), 0)
+		if s == 0 {
+			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+		}
+	}
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg
+type MSG struct {
+	Owner   syscall.Handle
+	Message uint32
+	WParam  uintptr
+	LParam  uintptr
+	Time    uint32
+	Pt      POINT
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
+type POINT struct {
+	x, y int32
+}
+
+//sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
+//sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
+//sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
 //sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
+//sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
+//sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
+//sys SetForegroundWindow(wnd HWND) (ok bool) = user32.SetForegroundWindow
+//sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
 //sys SetWindowText(wnd HWND, text *uint16) (err error) = user32.SetWindowTextW
-//sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam uintptr) = user32.EnumChildWindows
-//sys EnumWindows(enumFunc uintptr, lparam uintptr) (err error) = user32.EnumChildWindows
+//sys TranslateMessage(msg *MSG) (ok bool) = user32.TranslateMessage

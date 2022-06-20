@@ -3,6 +3,11 @@
 package win
 
 const (
+	BIF_RETURNONLYFSDIRS = 0x00000001
+
+	BFFM_INITIALIZED  = 1
+	BFFM_SETSELECTION = WM_USER + 103
+
 	NIM_ADD    = 0
 	NIM_DELETE = 2
 )
@@ -10,7 +15,7 @@ const (
 // https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow
 type BROWSEINFO struct {
 	Owner        HWND
-	Root         uintptr
+	Root         Pointer
 	DisplayName  *uint16
 	Title        *uint16
 	Flags        uint32
@@ -52,7 +57,7 @@ type _IShellItemVtbl struct {
 	Compare        uintptr
 }
 
-//sys SHBrowseForFolder(bi *BROWSEINFO) (ptr uintptr) = shell32.SHBrowseForFolder
+//sys SHBrowseForFolder(bi *BROWSEINFO) (ptr unsafe.Pointer) = shell32.SHBrowseForFolder
 //sys SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
-//sys SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx
+//sys SHGetPathFromIDListEx(ptr unsafe.Pointer, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) = shell32.Shell_NotifyIconW

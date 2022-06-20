@@ -128,7 +128,7 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 		}()
 	}
 
-	if err := messageLoop(dlg.wnd); err != nil {
+	if err := win.MessageLoop(win.HWND(dlg.wnd)); err != nil {
 		return "", "", err
 	}
 	if opts.ctx != nil && opts.ctx.Err() != nil {

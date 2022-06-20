@@ -25,40 +25,34 @@ var (
 	deactivateActCtx = kernel32.NewProc("DeactivateActCtx")
 	getModuleHandle  = kernel32.NewProc("GetModuleHandleW")
 
-	callNextHookEx               = user32.NewProc("CallNextHookEx")
-	createIconFromResource       = user32.NewProc("CreateIconFromResource")
-	createWindowEx               = user32.NewProc("CreateWindowExW")
-	defWindowProc                = user32.NewProc("DefWindowProcW")
-	destroyIcon                  = user32.NewProc("DestroyIcon")
-	destroyWindow                = user32.NewProc("DestroyWindow")
-	dispatchMessage              = user32.NewProc("DispatchMessageW")
-	enableWindow                 = user32.NewProc("EnableWindow")
-	getDpiForWindow              = user32.NewProc("GetDpiForWindow")
-	getMessage                   = user32.NewProc("GetMessageW")
-	getSystemMetrics             = user32.NewProc("GetSystemMetrics")
-	getWindowDC                  = user32.NewProc("GetWindowDC")
-	getWindowRect                = user32.NewProc("GetWindowRect")
-	getWindowText                = user32.NewProc("GetWindowTextW")
-	getWindowTextLength          = user32.NewProc("GetWindowTextLengthW")
-	isDialogMessage              = user32.NewProc("IsDialogMessageW")
-	loadIcon                     = user32.NewProc("LoadIconW")
-	loadImage                    = user32.NewProc("LoadImageW")
-	postQuitMessage              = user32.NewProc("PostQuitMessage")
-	registerClassEx              = user32.NewProc("RegisterClassExW")
-	releaseDC                    = user32.NewProc("ReleaseDC")
-	sendMessage                  = user32.NewProc("SendMessageW")
-	setFocus                     = user32.NewProc("SetFocus")
-	setForegroundWindow          = user32.NewProc("SetForegroundWindow")
-	setThreadDpiAwarenessContext = user32.NewProc("SetThreadDpiAwarenessContext")
-	setWindowLong                = user32.NewProc("SetWindowLongW")
-	setWindowPos                 = user32.NewProc("SetWindowPos")
-	setWindowsHookEx             = user32.NewProc("SetWindowsHookExW")
-	setWindowText                = user32.NewProc("SetWindowTextW")
-	showWindow                   = user32.NewProc("ShowWindow")
-	systemParametersInfo         = user32.NewProc("SystemParametersInfoW")
-	translateMessage             = user32.NewProc("TranslateMessage")
-	unhookWindowsHookEx          = user32.NewProc("UnhookWindowsHookEx")
-	unregisterClass              = user32.NewProc("UnregisterClassW")
+	callNextHookEx         = user32.NewProc("CallNextHookEx")
+	createIconFromResource = user32.NewProc("CreateIconFromResource")
+	createWindowEx         = user32.NewProc("CreateWindowExW")
+	defWindowProc          = user32.NewProc("DefWindowProcW")
+	destroyIcon            = user32.NewProc("DestroyIcon")
+	destroyWindow          = user32.NewProc("DestroyWindow")
+	enableWindow           = user32.NewProc("EnableWindow")
+	getDpiForWindow        = user32.NewProc("GetDpiForWindow")
+	getSystemMetrics       = user32.NewProc("GetSystemMetrics")
+	getWindowDC            = user32.NewProc("GetWindowDC")
+	getWindowRect          = user32.NewProc("GetWindowRect")
+	getWindowText          = user32.NewProc("GetWindowTextW")
+	getWindowTextLength    = user32.NewProc("GetWindowTextLengthW")
+	loadIcon               = user32.NewProc("LoadIconW")
+	loadImage              = user32.NewProc("LoadImageW")
+	postQuitMessage        = user32.NewProc("PostQuitMessage")
+	registerClassEx        = user32.NewProc("RegisterClassExW")
+	releaseDC              = user32.NewProc("ReleaseDC")
+	sendMessage            = user32.NewProc("SendMessageW")
+	setFocus               = user32.NewProc("SetFocus")
+	setWindowLong          = user32.NewProc("SetWindowLongW")
+	setWindowPos           = user32.NewProc("SetWindowPos")
+	setWindowsHookEx       = user32.NewProc("SetWindowsHookExW")
+	setWindowText          = user32.NewProc("SetWindowTextW")
+	showWindow             = user32.NewProc("ShowWindow")
+	systemParametersInfo   = user32.NewProc("SystemParametersInfoW")
+	unhookWindowsHookEx    = user32.NewProc("UnhookWindowsHookEx")
+	unregisterClass        = user32.NewProc("UnregisterClassW")
 )
 
 func intptr(i int64) uintptr {
@@ -73,28 +67,23 @@ func hwnd(i uint64) win.HWND { return win.HWND(uintptr(i)) }
 
 func setup() context.CancelFunc {
 	var wnd win.HWND
-	win.EnumWindows(syscall.NewCallback(setupEnumCallback), uintptr(unsafe.Pointer(&wnd)))
+	win.EnumWindows(syscall.NewCallback(setupEnumCallback), unsafe.Pointer(&wnd))
 	if wnd == 0 {
 		wnd = win.GetConsoleWindow()
 	}
 	if wnd != 0 {
-		setForegroundWindow.Call(uintptr(wnd))
+		win.SetForegroundWindow(wnd)
 	}
 
 	runtime.LockOSThread()
 
 	var restore uintptr
 	cookie := enableVisualStyles()
-	if setThreadDpiAwarenessContext.Find() == nil {
-		// try:
-		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
-		//   DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE
-		//   DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
-		for i := -4; i <= -2; i++ {
-			restore, _, _ = setThreadDpiAwarenessContext.Call(uintptr(i))
-			if restore != 0 {
-				break
-			}
+	for dpi := win.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2; dpi <= win.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE; dpi++ {
+		var err error
+		restore, err = win.SetThreadDpiAwarenessContext(dpi)
+		if restore != 0 || err != nil {
+			break
 		}
 	}
 
@@ -105,7 +94,7 @@ func setup() context.CancelFunc {
 
 	return func() {
 		if restore != 0 {
-			setThreadDpiAwarenessContext.Call(restore)
+			win.SetThreadDpiAwarenessContext(restore)
 		}
 		if cookie != 0 {
 			deactivateActCtx.Call(0, cookie)
@@ -391,31 +380,6 @@ func registerClass(instance, icon, proc uintptr) (uintptr, error) {
 	return atom, err
 }
 
-// https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
-func messageLoop(wnd uintptr) error {
-	getMessage := getMessage.Addr()
-	isDialogMessage := isDialogMessage.Addr()
-	translateMessage := translateMessage.Addr()
-	dispatchMessage := dispatchMessage.Addr()
-
-	for {
-		var msg _MSG
-		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
-		if int32(s) == -1 {
-			return err
-		}
-		if s == 0 {
-			return nil
-		}
-
-		s, _, _ = syscall.Syscall(isDialogMessage, 2, wnd, uintptr(unsafe.Pointer(&msg)), 0)
-		if s == 0 {
-			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
-			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
-		}
-	}
-}
-
 // https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
 func enableVisualStyles() (cookie uintptr) {
 	dir, err := win.GetSystemDirectory()
@@ -475,21 +439,6 @@ type _NONCLIENTMETRICS struct {
 	MenuFont        win.LOGFONT
 	StatusFont      win.LOGFONT
 	MessageFont     win.LOGFONT
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msg
-type _MSG struct {
-	Owner   syscall.Handle
-	Message uint32
-	WParam  uintptr
-	LParam  uintptr
-	Time    uint32
-	Pt      _POINT
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point
-type _POINT struct {
-	x, y int32
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect

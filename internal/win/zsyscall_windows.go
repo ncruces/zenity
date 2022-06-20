@@ -48,28 +48,33 @@ var (
 	moduser32   = windows.NewLazySystemDLL("user32.dll")
 	modwtsapi32 = windows.NewLazySystemDLL("wtsapi32.dll")
 
-	procInitCommonControlsEx        = modcomctl32.NewProc("InitCommonControlsEx")
-	procChooseColorW                = modcomdlg32.NewProc("ChooseColorW")
-	procCommDlgExtendedError        = modcomdlg32.NewProc("CommDlgExtendedError")
-	procGetOpenFileNameW            = modcomdlg32.NewProc("GetOpenFileNameW")
-	procGetSaveFileNameW            = modcomdlg32.NewProc("GetSaveFileNameW")
-	procCreateFontIndirectW         = modgdi32.NewProc("CreateFontIndirectW")
-	procDeleteObject                = modgdi32.NewProc("DeleteObject")
-	procGetDeviceCaps               = modgdi32.NewProc("GetDeviceCaps")
-	procGetConsoleWindow            = modkernel32.NewProc("GetConsoleWindow")
-	procGetModuleHandleW            = modkernel32.NewProc("GetModuleHandleW")
-	procRtlGetNtVersionNumbers      = modntdll.NewProc("RtlGetNtVersionNumbers")
-	procCoCreateInstance            = modole32.NewProc("CoCreateInstance")
-	procCoTaskMemFree               = modole32.NewProc("CoTaskMemFree")
-	procSHBrowseForFolder           = modshell32.NewProc("SHBrowseForFolder")
-	procSHCreateItemFromParsingName = modshell32.NewProc("SHCreateItemFromParsingName")
-	procSHGetPathFromIDListEx       = modshell32.NewProc("SHGetPathFromIDListEx")
-	procShell_NotifyIconW           = modshell32.NewProc("Shell_NotifyIconW")
-	procEnumChildWindows            = moduser32.NewProc("EnumChildWindows")
-	procGetDlgCtrlID                = moduser32.NewProc("GetDlgCtrlID")
-	procSendMessageW                = moduser32.NewProc("SendMessageW")
-	procSetWindowTextW              = moduser32.NewProc("SetWindowTextW")
-	procWTSSendMessageW             = modwtsapi32.NewProc("WTSSendMessageW")
+	procInitCommonControlsEx         = modcomctl32.NewProc("InitCommonControlsEx")
+	procChooseColorW                 = modcomdlg32.NewProc("ChooseColorW")
+	procCommDlgExtendedError         = modcomdlg32.NewProc("CommDlgExtendedError")
+	procGetOpenFileNameW             = modcomdlg32.NewProc("GetOpenFileNameW")
+	procGetSaveFileNameW             = modcomdlg32.NewProc("GetSaveFileNameW")
+	procCreateFontIndirectW          = modgdi32.NewProc("CreateFontIndirectW")
+	procDeleteObject                 = modgdi32.NewProc("DeleteObject")
+	procGetDeviceCaps                = modgdi32.NewProc("GetDeviceCaps")
+	procGetConsoleWindow             = modkernel32.NewProc("GetConsoleWindow")
+	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
+	procRtlGetNtVersionNumbers       = modntdll.NewProc("RtlGetNtVersionNumbers")
+	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
+	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
+	procSHCreateItemFromParsingName  = modshell32.NewProc("SHCreateItemFromParsingName")
+	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
+	procShell_NotifyIconW            = modshell32.NewProc("Shell_NotifyIconW")
+	procDispatchMessageW             = moduser32.NewProc("DispatchMessageW")
+	procEnumChildWindows             = moduser32.NewProc("EnumChildWindows")
+	procGetDlgCtrlID                 = moduser32.NewProc("GetDlgCtrlID")
+	procGetMessageW                  = moduser32.NewProc("GetMessageW")
+	procIsDialogMessageW             = moduser32.NewProc("IsDialogMessageW")
+	procSendMessageW                 = moduser32.NewProc("SendMessageW")
+	procSetForegroundWindow          = moduser32.NewProc("SetForegroundWindow")
+	procSetThreadDpiAwarenessContext = moduser32.NewProc("SetThreadDpiAwarenessContext")
+	procSetWindowTextW               = moduser32.NewProc("SetWindowTextW")
+	procTranslateMessage             = moduser32.NewProc("TranslateMessage")
+	procWTSSendMessageW              = modwtsapi32.NewProc("WTSSendMessageW")
 )
 
 func InitCommonControlsEx(icc *INITCOMMONCONTROLSEX) (ok bool) {
@@ -148,14 +153,9 @@ func CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, 
 	return
 }
 
-func CoTaskMemFree(address uintptr) {
-	syscall.Syscall(procCoTaskMemFree.Addr(), 1, uintptr(address), 0, 0)
-	return
-}
-
-func SHBrowseForFolder(bi *BROWSEINFO) (ptr uintptr) {
+func SHBrowseForFolder(bi *BROWSEINFO) (ptr unsafe.Pointer) {
 	r0, _, _ := syscall.Syscall(procSHBrowseForFolder.Addr(), 1, uintptr(unsafe.Pointer(bi)), 0, 0)
-	ptr = uintptr(r0)
+	ptr = unsafe.Pointer(r0)
 	return
 }
 
@@ -167,7 +167,7 @@ func SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, i
 	return
 }
 
-func SHGetPathFromIDListEx(ptr uintptr, path *uint16, pathLen int, opts int) (ok bool) {
+func SHGetPathFromIDListEx(ptr unsafe.Pointer, path *uint16, pathLen int, opts int) (ok bool) {
 	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(ptr), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
 	ok = r0 != 0
 	return
@@ -182,12 +182,18 @@ func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) 
 	return
 }
 
-func EnumChildWindows(parent HWND, enumFunc uintptr, lparam uintptr) {
+func DispatchMessage(msg *MSG) (ret uintptr) {
+	r0, _, _ := syscall.Syscall(procDispatchMessageW.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
+func EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) {
 	syscall.Syscall(procEnumChildWindows.Addr(), 3, uintptr(parent), uintptr(enumFunc), uintptr(lparam))
 	return
 }
 
-func EnumWindows(enumFunc uintptr, lparam uintptr) (err error) {
+func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
 	r1, _, e1 := syscall.Syscall(procEnumChildWindows.Addr(), 2, uintptr(enumFunc), uintptr(lparam), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
@@ -201,8 +207,32 @@ func GetDlgCtrlID(wnd HWND) (ret int) {
 	return
 }
 
+func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) {
+	r0, _, _ := syscall.Syscall6(procGetMessageW.Addr(), 4, uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
+func IsDialogMessage(wnd HWND, msg *MSG) (ok bool) {
+	r0, _, _ := syscall.Syscall(procIsDialogMessageW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(msg)), 0)
+	ok = r0 != 0
+	return
+}
+
 func SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) {
 	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
+func SetForegroundWindow(wnd HWND) (ok bool) {
+	r0, _, _ := syscall.Syscall(procSetForegroundWindow.Addr(), 1, uintptr(wnd), 0, 0)
+	ok = r0 != 0
+	return
+}
+
+func setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) {
+	r0, _, _ := syscall.Syscall(procSetThreadDpiAwarenessContext.Addr(), 1, uintptr(dpiContext), 0, 0)
 	ret = uintptr(r0)
 	return
 }
@@ -212,6 +242,12 @@ func SetWindowText(wnd HWND, text *uint16) (err error) {
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
+	return
+}
+
+func TranslateMessage(msg *MSG) (ok bool) {
+	r0, _, _ := syscall.Syscall(procTranslateMessage.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
+	ok = r0 != 0
 	return
 }
 

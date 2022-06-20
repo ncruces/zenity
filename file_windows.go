@@ -17,6 +17,8 @@ const (
 	_FOS_FORCEFILESYSTEM  = 0x00000040
 	_FOS_ALLOWMULTISELECT = 0x00000200
 	_FOS_FORCESHOWHIDDEN  = 0x10000000
+
+	_SIGDN_FILESYSPATH = 0x80058000
 )
 
 func selectFile(opts options) (string, error) {
@@ -191,7 +193,7 @@ func selectFileSave(opts options) (string, error) {
 func pickFolders(opts options, multi bool) (str string, lst []string, err error) {
 	defer setup()()
 
-	err = win.CoInitializeEx(0, 0x6) // COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE
+	err = win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
 	if err != win.RPC_E_CHANGED_MODE {
 		if err != nil {
 			return "", nil, err
@@ -201,7 +203,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 
 	var dialog *_IFileOpenDialog
 	err = win.CoCreateInstance(
-		_CLSID_FileOpenDialog, nil, 0x17, // CLSCTX_ALL
+		_CLSID_FileOpenDialog, nil, win.CLSCTX_ALL,
 		_IID_IFileOpenDialog, unsafe.Pointer(&dialog))
 	if err != nil {
 		if multi {
@@ -257,7 +259,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
-	if hr == 0x800704c7 { // ERROR_CANCELLED
+	if hr == uintptr(win.E_CANCELED) {
 		return "", nil, ErrCanceled
 	}
 	if int32(hr) < 0 {
@@ -272,10 +274,9 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		}
 		defer item.Call(item.Release)
 
-		var ptr uintptr
+		var ptr unsafe.Pointer
 		hr, _, _ = item.Call(item.GetDisplayName,
-			0x80058000, // SIGDN_FILESYSPATH
-			uintptr(unsafe.Pointer(&ptr)))
+			_SIGDN_FILESYSPATH, uintptr(unsafe.Pointer(&ptr)))
 		if int32(hr) < 0 {
 			return syscall.Errno(hr)
 		}
@@ -314,7 +315,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 func browseForFolder(opts options) (string, []string, error) {
 	var args win.BROWSEINFO
 	args.Owner, _ = opts.attach.(win.HWND)
-	args.Flags = 0x1 // BIF_RETURNONLYFSDIRS
+	args.Flags = win.BIF_RETURNONLYFSDIRS
 
 	if opts.title != nil {
 		args.Title = syscall.StringToUTF16Ptr(*opts.title)
@@ -336,7 +337,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
-	if ptr == 0 {
+	if ptr == nil {
 		return "", nil, ErrCanceled
 	}
 	defer win.CoTaskMemFree(ptr)
@@ -349,8 +350,8 @@ func browseForFolder(opts options) (string, []string, error) {
 }
 
 func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uintptr {
-	if msg == 1 { // BFFM_INITIALIZED
-		win.SendMessage(wnd, 1024+103 /* BFFM_SETSELECTIONW */, 1 /* TRUE */, data)
+	if msg == win.BFFM_INITIALIZED {
+		win.SendMessage(wnd, win.BFFM_SETSELECTION, 1, data)
 	}
 	return 0
 }

@@ -117,7 +117,7 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 		}()
 	}
 
-	if err := messageLoop(dlg.wnd); err != nil {
+	if err := win.MessageLoop(win.HWND(dlg.wnd)); err != nil {
 		return time.Time{}, err
 	}
 	if opts.ctx != nil && opts.ctx.Err() != nil {
