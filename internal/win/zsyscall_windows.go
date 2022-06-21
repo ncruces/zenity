@@ -62,10 +62,12 @@ var (
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
 	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
+	procCoTaskMemFree                = modole32.NewProc("CoTaskMemFree")
 	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
 	procSHCreateItemFromParsingName  = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
 	procShell_NotifyIconW            = modshell32.NewProc("Shell_NotifyIconW")
+	procCallNextHookEx               = moduser32.NewProc("CallNextHookEx")
 	procCreateIconFromResource       = moduser32.NewProc("CreateIconFromResource")
 	procCreateWindowExW              = moduser32.NewProc("CreateWindowExW")
 	procDefWindowProcW               = moduser32.NewProc("DefWindowProcW")
@@ -95,9 +97,11 @@ var (
 	procSetWindowLongW               = moduser32.NewProc("SetWindowLongW")
 	procSetWindowPos                 = moduser32.NewProc("SetWindowPos")
 	procSetWindowTextW               = moduser32.NewProc("SetWindowTextW")
+	procSetWindowsHookExW            = moduser32.NewProc("SetWindowsHookExW")
 	procShowWindow                   = moduser32.NewProc("ShowWindow")
 	procSystemParametersInfoW        = moduser32.NewProc("SystemParametersInfoW")
 	procTranslateMessage             = moduser32.NewProc("TranslateMessage")
+	procUnhookWindowsHookEx          = moduser32.NewProc("UnhookWindowsHookEx")
 	procUnregisterClassW             = moduser32.NewProc("UnregisterClassW")
 	procWTSSendMessageW              = modwtsapi32.NewProc("WTSSendMessageW")
 )
@@ -195,29 +199,34 @@ func ReleaseActCtx(actCtx Handle) {
 	return
 }
 
-func CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
-	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unkOuter), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
+func CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
+	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}
 	return
 }
 
-func SHBrowseForFolder(bi *BROWSEINFO) (ret unsafe.Pointer) {
+func CoTaskMemFree(address Pointer) {
+	syscall.Syscall(procCoTaskMemFree.Addr(), 1, uintptr(address), 0, 0)
+	return
+}
+
+func SHBrowseForFolder(bi *BROWSEINFO) (ret Pointer) {
 	r0, _, _ := syscall.Syscall(procSHBrowseForFolder.Addr(), 1, uintptr(unsafe.Pointer(bi)), 0, 0)
-	ret = unsafe.Pointer(r0)
+	ret = Pointer(r0)
 	return
 }
 
-func SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (res error) {
-	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(bc), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
+func SHCreateItemFromParsingName(path *uint16, bc *COMObject, iid uintptr, item **IShellItem) (res error) {
+	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}
 	return
 }
 
-func SHGetPathFromIDListEx(ptr unsafe.Pointer, path *uint16, pathLen int, opts int) (ok bool) {
+func SHGetPathFromIDListEx(ptr Pointer, path *uint16, pathLen int, opts int) (ok bool) {
 	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(ptr), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
 	ok = r0 != 0
 	return
@@ -229,6 +238,12 @@ func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) 
 	if ret == 0 {
 		err = errnoErr(e1)
 	}
+	return
+}
+
+func CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
+	r0, _, _ := syscall.Syscall6(procCallNextHookEx.Addr(), 4, uintptr(hk), uintptr(code), uintptr(wparam), uintptr(lparam), 0, 0)
+	ret = uintptr(r0)
 	return
 }
 
@@ -460,6 +475,15 @@ func SetWindowText(wnd HWND, text *uint16) (err error) {
 	return
 }
 
+func SetWindowsHookEx(idHook int, fn uintptr, mod Handle, threadID uint32) (ret Handle, err error) {
+	r0, _, e1 := syscall.Syscall6(procSetWindowsHookExW.Addr(), 4, uintptr(idHook), uintptr(fn), uintptr(mod), uintptr(threadID), 0, 0)
+	ret = Handle(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func ShowWindow(wnd HWND, cmdShow int) (ok bool) {
 	r0, _, _ := syscall.Syscall(procShowWindow.Addr(), 2, uintptr(wnd), uintptr(cmdShow), 0)
 	ok = r0 != 0
@@ -477,6 +501,14 @@ func SystemParametersInfo(action int, uiParam uintptr, pvParam unsafe.Pointer, w
 func TranslateMessage(msg *MSG) (ok bool) {
 	r0, _, _ := syscall.Syscall(procTranslateMessage.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
 	ok = r0 != 0
+	return
+}
+
+func UnhookWindowsHookEx(hk Handle) (err error) {
+	r1, _, e1 := syscall.Syscall(procUnhookWindowsHookEx.Addr(), 1, uintptr(hk), 0, 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

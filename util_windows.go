@@ -13,15 +13,6 @@ import (
 	"unsafe"
 
 	"github.com/ncruces/zenity/internal/win"
-	"golang.org/x/sys/windows"
-)
-
-var (
-	user32 = windows.NewLazySystemDLL("user32.dll")
-
-	callNextHookEx      = user32.NewProc("CallNextHookEx")
-	setWindowsHookEx    = user32.NewProc("SetWindowsHookExW")
-	unhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
 )
 
 const (
@@ -32,9 +23,14 @@ const (
 	_WS_ZEN_BUTTON    = _WS_ZEN_CONTROL
 )
 
+const nullptr win.Pointer = 0
+
 func intptr(i int64) uintptr  { return uintptr(i) }
 func strptr(s string) *uint16 { return syscall.StringToUTF16Ptr(s) }
-func hwnd(i uint64) win.HWND  { return win.HWND(uintptr(i)) }
+
+func hwnd(v reflect.Value) win.HWND {
+	return win.HWND(uintptr(v.Uint()))
+}
 
 func setup() context.CancelFunc {
 	var wnd win.HWND
@@ -99,7 +95,7 @@ type dialogHook struct {
 	ctx   context.Context
 	tid   uint32
 	wnd   uintptr
-	hook  uintptr
+	hook  win.Handle
 	done  chan struct{}
 	icon  any
 	title *string
@@ -108,8 +104,8 @@ type dialogHook struct {
 
 func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (*dialogHook, error) {
 	tid := win.GetCurrentThreadId()
-	hk, _, err := setWindowsHookEx.Call(12, // WH_CALLWNDPROCRET
-		syscall.NewCallback(dialogHookProc), 0, uintptr(tid))
+	hk, err := win.SetWindowsHookEx(win.WH_CALLWNDPROCRET,
+		syscall.NewCallback(dialogHookProc), 0, tid)
 	if hk == 0 {
 		return nil, err
 	}
@@ -154,9 +150,7 @@ func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
 			}
 		}
 	}
-	next, _, _ := callNextHookEx.Call(
-		0, uintptr(code), wparam, uintptr(unsafe.Pointer(lparam)))
-	return next
+	return win.CallNextHookEx(0, code, wparam, unsafe.Pointer(lparam))
 }
 
 func (h *dialogHook) unhook() {
@@ -164,7 +158,7 @@ func (h *dialogHook) unhook() {
 	if h.done != nil {
 		close(h.done)
 	}
-	unhookWindowsHookEx.Call(h.hook)
+	win.UnhookWindowsHookEx(h.hook)
 }
 
 func (h *dialogHook) wait() {

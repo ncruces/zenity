@@ -201,7 +201,7 @@ func Attach(id any) Option {
 	switch runtime.GOOS {
 	case "windows":
 		if v := reflect.ValueOf(id); v.Kind() == reflect.Uintptr {
-			id = hwnd(v.Uint())
+			id = hwnd(v)
 		} else {
 			panic("interface conversion: expected uintptr")
 		}

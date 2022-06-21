@@ -31,8 +31,6 @@ func CoInitializeEx(reserved uintptr, coInit uint32) error {
 
 func CoUninitialize() { windows.CoUninitialize() }
 
-func CoTaskMemFree(address unsafe.Pointer) { windows.CoTaskMemFree(address) }
-
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
 
 type IUnknownVtbl struct {
@@ -57,4 +55,5 @@ func (o *COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr er
 	}
 }
 
-//sys CoCreateInstance(clsid uintptr, unkOuter unsafe.Pointer, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
+//sys CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
+//sys CoTaskMemFree(address Pointer) = ole32.CoTaskMemFree

@@ -57,7 +57,7 @@ type _IShellItemVtbl struct {
 	Compare        uintptr
 }
 
-//sys SHBrowseForFolder(bi *BROWSEINFO) (ret unsafe.Pointer) = shell32.SHBrowseForFolder
-//sys SHCreateItemFromParsingName(path *uint16, bc unsafe.Pointer, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
+//sys SHBrowseForFolder(bi *BROWSEINFO) (ret Pointer) = shell32.SHBrowseForFolder
+//sys SHCreateItemFromParsingName(path *uint16, bc *COMObject, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) = shell32.Shell_NotifyIconW
-//sys SHGetPathFromIDListEx(ptr unsafe.Pointer, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx
+//sys SHGetPathFromIDListEx(ptr Pointer, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx

@@ -214,6 +214,9 @@ const (
 	SC_MONITORPOWER = 0xf170
 	SC_CONTEXTHELP  = 0xf180
 
+	// SetWindowsHookEx types
+	WH_CALLWNDPROCRET = 12
+
 	USER_DEFAULT_SCREEN_DPI = 96
 
 	DPI_AWARENESS_CONTEXT_UNAWARE              = ^uintptr(1) + 1
@@ -350,12 +353,13 @@ type NONCLIENTMETRICS struct {
 	MessageFont     LOGFONT
 }
 
+//sys CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.CallNextHookEx
 //sys CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
 //sys CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) = user32.CreateWindowExW
+//sys DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.DefWindowProcW
 //sys DestroyIcon(icon Handle) (err error) = user32.DestroyIcon
 //sys DestroyWindow(wnd HWND) (err error) = user32.DestroyWindow
 //sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
-//sys DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.DefWindowProcW
 //sys EnableWindow(wnd HWND, enable bool) (ok bool) = user32.EnableWindow
 //sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
@@ -379,8 +383,10 @@ type NONCLIENTMETRICS struct {
 //sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
 //sys SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) = user32.SetWindowLongW
 //sys SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, flags int) (err error) = user32.SetWindowPos
+//sys SetWindowsHookEx(idHook int, fn uintptr, mod Handle, threadID uint32) (ret Handle, err error) = user32.SetWindowsHookExW
 //sys SetWindowText(wnd HWND, text *uint16) (err error) = user32.SetWindowTextW
 //sys ShowWindow(wnd HWND, cmdShow int) (ok bool) = user32.ShowWindow
 //sys SystemParametersInfo(action int, uiParam uintptr, pvParam unsafe.Pointer, winIni int) (err error) = user32.SystemParametersInfoW
 //sys TranslateMessage(msg *MSG) (ok bool) = user32.TranslateMessage
+//sys UnhookWindowsHookEx(hk Handle) (err error) = user32.UnhookWindowsHookEx
 //sys UnregisterClass(className *uint16, instance Handle) (err error) = user32.UnregisterClassW

@@ -7,7 +7,7 @@ import "golang.org/x/sys/windows"
 
 type Handle = windows.Handle
 type HWND = windows.HWND
-type Pointer = windows.Pointer
+type Pointer uintptr
 
 func RtlGetNtVersionNumbers() (majorVersion, minorVersion, buildNumber uint32) {
 	return windows.RtlGetNtVersionNumbers()

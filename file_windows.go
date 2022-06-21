@@ -274,7 +274,7 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		}
 		defer item.Call(item.Release)
 
-		var ptr unsafe.Pointer
+		var ptr win.Pointer
 		hr, _, _ = item.Call(item.GetDisplayName,
 			_SIGDN_FILESYSPATH, uintptr(unsafe.Pointer(&ptr)))
 		if int32(hr) < 0 {
@@ -337,7 +337,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
-	if ptr == nil {
+	if ptr == nullptr {
 		return "", nil, ErrCanceled
 	}
 	defer win.CoTaskMemFree(ptr)
