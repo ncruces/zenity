@@ -234,25 +234,25 @@ func (d *progressDialog) layout(dpi dpi) {
 	}
 }
 
-func progressProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
+func progressProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *progressDialog
 	switch msg {
 	case win.WM_NCCREATE:
-		saveBackRef(wnd, *lparam)
+		saveBackRef(uintptr(wnd), *lparam)
 		dlg = (*progressDialog)(*lparam)
 	case win.WM_NCDESTROY:
-		deleteBackRef(wnd)
+		deleteBackRef(uintptr(wnd))
 	default:
-		dlg = (*progressDialog)(loadBackRef(wnd))
+		dlg = (*progressDialog)(loadBackRef(uintptr(wnd)))
 	}
 
 	switch msg {
 	case win.WM_DESTROY:
-		postQuitMessage.Call(0)
+		win.PostQuitMessage(0)
 
 	case win.WM_CLOSE:
 		dlg.err = ErrCanceled
-		destroyWindow.Call(wnd)
+		win.DestroyWindow(wnd)
 
 	case win.WM_COMMAND:
 		switch wparam {
@@ -265,14 +265,13 @@ func progressProc(wnd uintptr, msg uint32, wparam uintptr, lparam *unsafe.Pointe
 		case win.IDNO:
 			dlg.err = ErrExtraButton
 		}
-		destroyWindow.Call(wnd)
+		win.DestroyWindow(wnd)
 
 	case win.WM_DPICHANGED:
 		dlg.layout(dpi(uint32(wparam) >> 16))
 
 	default:
-		res, _, _ := defWindowProc.Call(wnd, uintptr(msg), wparam, uintptr(unsafe.Pointer(lparam)))
-		return res
+		return win.DefWindowProc(wnd, msg, wparam, unsafe.Pointer(lparam))
 	}
 
 	return 0

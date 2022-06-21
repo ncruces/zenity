@@ -68,13 +68,16 @@ var (
 	procShell_NotifyIconW            = modshell32.NewProc("Shell_NotifyIconW")
 	procCreateIconFromResource       = moduser32.NewProc("CreateIconFromResource")
 	procCreateWindowExW              = moduser32.NewProc("CreateWindowExW")
+	procDefWindowProcW               = moduser32.NewProc("DefWindowProcW")
 	procDestroyIcon                  = moduser32.NewProc("DestroyIcon")
+	procDestroyWindow                = moduser32.NewProc("DestroyWindow")
 	procDispatchMessageW             = moduser32.NewProc("DispatchMessageW")
 	procEnableWindow                 = moduser32.NewProc("EnableWindow")
 	procEnumChildWindows             = moduser32.NewProc("EnumChildWindows")
 	procGetDlgCtrlID                 = moduser32.NewProc("GetDlgCtrlID")
 	procGetDpiForWindow              = moduser32.NewProc("GetDpiForWindow")
 	procGetMessageW                  = moduser32.NewProc("GetMessageW")
+	procGetSystemMetrics             = moduser32.NewProc("GetSystemMetrics")
 	procGetWindowDC                  = moduser32.NewProc("GetWindowDC")
 	procGetWindowRect                = moduser32.NewProc("GetWindowRect")
 	procGetWindowTextLengthW         = moduser32.NewProc("GetWindowTextLengthW")
@@ -82,6 +85,7 @@ var (
 	procIsDialogMessageW             = moduser32.NewProc("IsDialogMessageW")
 	procLoadIconW                    = moduser32.NewProc("LoadIconW")
 	procLoadImageW                   = moduser32.NewProc("LoadImageW")
+	procPostQuitMessage              = moduser32.NewProc("PostQuitMessage")
 	procRegisterClassExW             = moduser32.NewProc("RegisterClassExW")
 	procReleaseDC                    = moduser32.NewProc("ReleaseDC")
 	procSendMessageW                 = moduser32.NewProc("SendMessageW")
@@ -253,8 +257,22 @@ func CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style
 	return
 }
 
+func DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
+	r0, _, _ := syscall.Syscall6(procDefWindowProcW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	ret = uintptr(r0)
+	return
+}
+
 func DestroyIcon(icon Handle) (err error) {
 	r1, _, e1 := syscall.Syscall(procDestroyIcon.Addr(), 1, uintptr(icon), 0, 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func DestroyWindow(wnd HWND) (err error) {
+	r1, _, e1 := syscall.Syscall(procDestroyWindow.Addr(), 1, uintptr(wnd), 0, 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -305,6 +323,12 @@ func getDpiForWindow(wnd HWND) (ret int) {
 func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) {
 	r0, _, _ := syscall.Syscall6(procGetMessageW.Addr(), 4, uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax), 0, 0)
 	ret = uintptr(r0)
+	return
+}
+
+func GetSystemMetrics(index int) (ret int) {
+	r0, _, _ := syscall.Syscall(procGetSystemMetrics.Addr(), 1, uintptr(index), 0, 0)
+	ret = int(r0)
 	return
 }
 
@@ -361,6 +385,11 @@ func LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int)
 	if ret == 0 {
 		err = errnoErr(e1)
 	}
+	return
+}
+
+func PostQuitMessage(exitCode int) {
+	syscall.Syscall(procPostQuitMessage.Addr(), 1, uintptr(exitCode), 0, 0)
 	return
 }
 

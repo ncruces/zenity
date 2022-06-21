@@ -20,10 +20,6 @@ var (
 	user32 = windows.NewLazySystemDLL("user32.dll")
 
 	callNextHookEx       = user32.NewProc("CallNextHookEx")
-	defWindowProc        = user32.NewProc("DefWindowProcW")
-	destroyWindow        = user32.NewProc("DestroyWindow")
-	getSystemMetrics     = user32.NewProc("GetSystemMetrics")
-	postQuitMessage      = user32.NewProc("PostQuitMessage")
 	setWindowsHookEx     = user32.NewProc("SetWindowsHookExW")
 	systemParametersInfo = user32.NewProc("SystemParametersInfoW")
 	unhookWindowsHookEx  = user32.NewProc("UnhookWindowsHookEx")
@@ -312,16 +308,11 @@ func (i *icon) delete() {
 }
 
 func centerWindow(wnd win.HWND) {
-	getMetric := func(i uintptr) int32 {
-		n, _, _ := getSystemMetrics.Call(i)
-		return int32(n)
-	}
-
 	var rect win.RECT
 	win.GetWindowRect(wnd, &rect)
-	x := (getMetric(0 /* SM_CXSCREEN */) - (rect.Right - rect.Left)) / 2
-	y := (getMetric(1 /* SM_CYSCREEN */) - (rect.Bottom - rect.Top)) / 2
-	win.SetWindowPos(wnd, 0, int(x), int(y), 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
+	x := (win.GetSystemMetrics(0 /* SM_CXSCREEN */) - int(rect.Right-rect.Left)) / 2
+	y := (win.GetSystemMetrics(1 /* SM_CYSCREEN */) - int(rect.Bottom-rect.Top)) / 2
+	win.SetWindowPos(wnd, 0, x, y, 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
 }
 
 func getWindowString(wnd win.HWND) string {

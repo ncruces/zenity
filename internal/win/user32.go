@@ -174,13 +174,16 @@ type WNDCLASSEX struct {
 //sys CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
 //sys CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) = user32.CreateWindowExW
 //sys DestroyIcon(icon Handle) (err error) = user32.DestroyIcon
+//sys DestroyWindow(wnd HWND) (err error) = user32.DestroyWindow
 //sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
+//sys DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.DefWindowProcW
 //sys EnableWindow(wnd HWND, enable bool) (ok bool) = user32.EnableWindow
 //sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
 //sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
 //sys getDpiForWindow(wnd HWND) (ret int) = user32.GetDpiForWindow
 //sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
+//sys GetSystemMetrics(index int) (ret int) = user32.GetSystemMetrics
 //sys GetWindowDC(wnd HWND) (ret Handle) = user32.GetWindowDC
 //sys GetWindowRect(wnd HWND, cmdShow *RECT) (err error) = user32.GetWindowRect
 //sys GetWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) = user32.GetWindowTextW
@@ -188,6 +191,7 @@ type WNDCLASSEX struct {
 //sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
 //sys LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) = user32.LoadIconW
 //sys LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) = user32.LoadImageW
+//sys PostQuitMessage(exitCode int) = user32.PostQuitMessage
 //sys RegisterClassEx(cls *WNDCLASSEX) (err error) = user32.RegisterClassExW
 //sys ReleaseDC(wnd HWND, dc Handle) (ok bool) = user32.ReleaseDC
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
