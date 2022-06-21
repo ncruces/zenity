@@ -3,7 +3,6 @@ package zenity
 import (
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -201,22 +200,21 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		defer win.CoUninitialize()
 	}
 
-	var dialog *_IFileOpenDialog
+	var dialog *win.IFileOpenDialog
 	err = win.CoCreateInstance(
-		_CLSID_FileOpenDialog, nil, win.CLSCTX_ALL,
-		_IID_IFileOpenDialog, unsafe.Pointer(&dialog))
+		win.CLSID_FileOpenDialog, nil, win.CLSCTX_ALL,
+		win.IID_IFileOpenDialog, unsafe.Pointer(&dialog))
 	if err != nil {
 		if multi {
 			return "", nil, fmt.Errorf("%w: multiple directory", ErrUnsupported)
 		}
 		return browseForFolder(opts)
 	}
-	defer dialog.Call(dialog.Release)
+	defer dialog.Release()
 
-	var flgs int
-	hr, _, _ := dialog.Call(dialog.GetOptions, uintptr(unsafe.Pointer(&flgs)))
-	if int32(hr) < 0 {
-		return "", nil, syscall.Errno(hr)
+	flgs, err := dialog.GetOptions()
+	if err != nil {
+		return "", nil, err
 	}
 	flgs |= _FOS_NOCHANGEDIR | _FOS_PICKFOLDERS | _FOS_FORCEFILESYSTEM
 	if multi {
@@ -225,24 +223,21 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if opts.showHidden {
 		flgs |= _FOS_FORCESHOWHIDDEN
 	}
-	hr, _, _ = dialog.Call(dialog.SetOptions, uintptr(flgs))
-	if int32(hr) < 0 {
-		return "", nil, syscall.Errno(hr)
+	err = dialog.SetOptions(flgs)
+	if err != nil {
+		return "", nil, err
 	}
 
 	if opts.title != nil {
-		ptr := strptr(*opts.title)
-		dialog.Call(dialog.SetTitle, uintptr(unsafe.Pointer(ptr)))
+		dialog.SetTitle(strptr(*opts.title))
 	}
 
 	if opts.filename != "" {
 		var item *win.IShellItem
-		ptr := strptr(opts.filename)
-		win.SHCreateItemFromParsingName(ptr, nil, _IID_IShellItem, &item)
-
-		if int32(hr) >= 0 && item != nil {
-			dialog.Call(dialog.SetFolder, uintptr(unsafe.Pointer(item)))
-			item.Call(item.Release)
+		win.SHCreateItemFromParsingName(strptr(opts.filename), nil, win.IID_IShellItem, &item)
+		if item != nil {
+			dialog.SetFolder(item)
+			item.Release()
 		}
 	}
 
@@ -255,59 +250,54 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	}
 
 	owner, _ := opts.attach.(win.HWND)
-	hr, _, _ = dialog.Call(dialog.Show, uintptr(owner))
+	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
-	if hr == uintptr(win.E_CANCELED) {
+	if err == win.E_CANCELED {
 		return "", nil, ErrCanceled
 	}
-	if int32(hr) < 0 {
-		return "", nil, syscall.Errno(hr)
+	if err != nil {
+		return "", nil, err
 	}
 
-	shellItemPath := func(obj *win.COMObject, trap uintptr, a ...uintptr) error {
-		var item *win.IShellItem
-		hr, _, _ := obj.Call(trap, append(a, uintptr(unsafe.Pointer(&item)))...)
-		if int32(hr) < 0 {
-			return syscall.Errno(hr)
+	shellItemPath := func(item *win.IShellItem) error {
+		defer item.Release()
+		str, err := item.GetDisplayName(_SIGDN_FILESYSPATH)
+		if err == nil {
+			lst = append(lst, str)
 		}
-		defer item.Call(item.Release)
-
-		var ptr win.Pointer
-		hr, _, _ = item.Call(item.GetDisplayName,
-			_SIGDN_FILESYSPATH, uintptr(unsafe.Pointer(&ptr)))
-		if int32(hr) < 0 {
-			return syscall.Errno(hr)
-		}
-		defer win.CoTaskMemFree(ptr)
-
-		var res []uint16
-		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&res))
-		hdr.Data, hdr.Len, hdr.Cap = uintptr(ptr), 32768, 32768
-		str = syscall.UTF16ToString(res)
-		lst = append(lst, str)
-		return nil
+		return err
 	}
 
 	if multi {
-		var items *_IShellItemArray
-		hr, _, _ = dialog.Call(dialog.GetResults, uintptr(unsafe.Pointer(&items)))
-		if int32(hr) < 0 {
-			return "", nil, syscall.Errno(hr)
+		items, err := dialog.GetResults()
+		if err != nil {
+			return "", nil, err
 		}
-		defer items.Call(items.Release)
+		defer items.Release()
 
-		var count uint32
-		hr, _, _ = items.Call(items.GetCount, uintptr(unsafe.Pointer(&count)))
-		if int32(hr) < 0 {
-			return "", nil, syscall.Errno(hr)
+		count, err := items.GetCount()
+		if err != nil {
+			return "", nil, err
 		}
-		for i := uintptr(0); i < uintptr(count) && err == nil; i++ {
-			err = shellItemPath(&items.COMObject, items.GetItemAt, i)
+		for i := uint32(0); i < count; i++ {
+			item, err := items.GetItemAt(i)
+			if err == nil {
+				err = shellItemPath(item)
+			}
+			if err != nil {
+				return "", nil, err
+			}
 		}
 	} else {
-		err = shellItemPath(&dialog.COMObject, dialog.GetResult)
+		item, err := dialog.GetResult()
+		if err == nil {
+			err = shellItemPath(item)
+		}
+		if err != nil {
+			return "", nil, err
+		}
 	}
 	return
 }
@@ -388,71 +378,4 @@ func initFilters(filters FileFilters) []uint16 {
 		res = append(res, 0)
 	}
 	return res
-}
-
-// https://github.com/wine-mirror/wine/blob/master/include/shobjidl.idl
-
-var (
-	_IID_IShellItem       = uuid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
-	_IID_IFileOpenDialog  = uuid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
-	_CLSID_FileOpenDialog = uuid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
-)
-
-type _IFileOpenDialog struct {
-	win.COMObject
-	*_IFileOpenDialogVtbl
-}
-
-type _IShellItemArray struct {
-	win.COMObject
-	*_IShellItemArrayVtbl
-}
-
-type _IFileOpenDialogVtbl struct {
-	_IFileDialogVtbl
-	GetResults       uintptr
-	GetSelectedItems uintptr
-}
-
-type _IFileDialogVtbl struct {
-	_IModalWindowVtbl
-	SetFileTypes        uintptr
-	SetFileTypeIndex    uintptr
-	GetFileTypeIndex    uintptr
-	Advise              uintptr
-	Unadvise            uintptr
-	SetOptions          uintptr
-	GetOptions          uintptr
-	SetDefaultFolder    uintptr
-	SetFolder           uintptr
-	GetFolder           uintptr
-	GetCurrentSelection uintptr
-	SetFileName         uintptr
-	GetFileName         uintptr
-	SetTitle            uintptr
-	SetOkButtonLabel    uintptr
-	SetFileNameLabel    uintptr
-	GetResult           uintptr
-	AddPlace            uintptr
-	SetDefaultExtension uintptr
-	Close               uintptr
-	SetClientGuid       uintptr
-	ClearClientData     uintptr
-	SetFilter           uintptr
-}
-
-type _IModalWindowVtbl struct {
-	_IUnknownVtbl
-	Show uintptr
-}
-
-type _IShellItemArrayVtbl struct {
-	_IUnknownVtbl
-	BindToHandler              uintptr
-	GetPropertyStore           uintptr
-	GetPropertyDescriptionList uintptr
-	GetAttributes              uintptr
-	GetCount                   uintptr
-	GetItemAt                  uintptr
-	EnumItems                  uintptr
 }

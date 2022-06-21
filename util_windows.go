@@ -127,7 +127,7 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 	return &hook, nil
 }
 
-func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
+func dialogHookProc(code int32, wparam uintptr, lparam *win.CWPRETSTRUCT) uintptr {
 	if lparam.Message == win.WM_INITDIALOG {
 		tid := win.GetCurrentThreadId()
 		hook := (*dialogHook)(loadBackRef(uintptr(tid)))
@@ -359,37 +359,4 @@ func enableVisualStyles() (cookie uintptr) {
 		win.ReleaseActCtx(hnd)
 	}
 	return
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
-type _CWPRETSTRUCT struct {
-	Result  uintptr
-	LParam  uintptr
-	WParam  uintptr
-	Message uint32
-	Wnd     win.HWND
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
-type _SYSTEMTIME struct {
-	year         uint16
-	month        uint16
-	dayOfWeek    uint16
-	day          uint16
-	hour         uint16
-	minute       uint16
-	second       uint16
-	milliseconds uint16
-}
-
-// https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
-
-type _IUnknownVtbl struct {
-	QueryInterface uintptr
-	AddRef         uintptr
-	Release        uintptr
-}
-
-func uuid(s string) uintptr {
-	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
 }

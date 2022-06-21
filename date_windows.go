@@ -89,11 +89,11 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	}
 
 	if opts.time != nil {
-		var date _SYSTEMTIME
+		var date win.SYSTEMTIME
 		year, month, day := opts.time.Date()
-		date.year = uint16(year)
-		date.month = uint16(month)
-		date.day = uint16(day)
+		date.Year = uint16(year)
+		date.Month = uint16(month)
+		date.Day = uint16(day)
 		win.SendMessagePointer(dlg.dateCtl, win.MCM_SETCURSEL, 0, unsafe.Pointer(&date))
 	}
 
@@ -168,9 +168,9 @@ func calendarProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Point
 		default:
 			return 1
 		case win.IDOK, win.IDYES:
-			var date _SYSTEMTIME
+			var date win.SYSTEMTIME
 			win.SendMessagePointer(dlg.dateCtl, win.MCM_GETCURSEL, 0, unsafe.Pointer(&date))
-			dlg.out = time.Date(int(date.year), time.Month(date.month), int(date.day), 0, 0, 0, 0, time.UTC)
+			dlg.out = time.Date(int(date.Year), time.Month(date.Month), int(date.Day), 0, 0, 0, 0, time.UTC)
 		case win.IDCANCEL:
 			dlg.err = ErrCanceled
 		case win.IDNO:

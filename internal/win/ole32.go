@@ -3,6 +3,7 @@
 package win
 
 import (
+	"reflect"
 	"syscall"
 	"unsafe"
 
@@ -33,10 +34,16 @@ func CoUninitialize() { windows.CoUninitialize() }
 
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
 
-type IUnknownVtbl struct {
+type _IUnknownBase struct{ COMObject }
+type _IUnknownVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr
+}
+
+func (c *_IUnknownBase) Release() {
+	vtbl := (*(**_IUnknownVtbl)(unsafe.Pointer(c)))
+	c.Call(vtbl.Release)
 }
 
 type COMObject struct{}
@@ -57,3 +64,7 @@ func (o *COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr er
 
 //sys CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
 //sys CoTaskMemFree(address Pointer) = ole32.CoTaskMemFree
+
+func uuid(s string) uintptr {
+	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
+}

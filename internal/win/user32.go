@@ -353,6 +353,15 @@ type NONCLIENTMETRICS struct {
 	MessageFont     LOGFONT
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-cwpretstruct
+type CWPRETSTRUCT struct {
+	Result  uintptr
+	LParam  uintptr
+	WParam  uintptr
+	Message uint32
+	Wnd     HWND
+}
+
 //sys CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.CallNextHookEx
 //sys CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
 //sys CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) = user32.CreateWindowExW
