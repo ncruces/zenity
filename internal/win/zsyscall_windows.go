@@ -96,6 +96,7 @@ var (
 	procSetWindowPos                 = moduser32.NewProc("SetWindowPos")
 	procSetWindowTextW               = moduser32.NewProc("SetWindowTextW")
 	procShowWindow                   = moduser32.NewProc("ShowWindow")
+	procSystemParametersInfoW        = moduser32.NewProc("SystemParametersInfoW")
 	procTranslateMessage             = moduser32.NewProc("TranslateMessage")
 	procUnregisterClassW             = moduser32.NewProc("UnregisterClassW")
 	procWTSSendMessageW              = modwtsapi32.NewProc("WTSSendMessageW")
@@ -295,16 +296,16 @@ func EnableWindow(wnd HWND, enable bool) (ok bool) {
 	return
 }
 
+func EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) {
+	syscall.Syscall(procEnumChildWindows.Addr(), 3, uintptr(parent), uintptr(enumFunc), uintptr(lparam))
+	return
+}
+
 func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
 	r1, _, e1 := syscall.Syscall(procEnumChildWindows.Addr(), 2, uintptr(enumFunc), uintptr(lparam), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
-	return
-}
-
-func EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) {
-	syscall.Syscall(procEnumChildWindows.Addr(), 3, uintptr(parent), uintptr(enumFunc), uintptr(lparam))
 	return
 }
 
@@ -462,6 +463,14 @@ func SetWindowText(wnd HWND, text *uint16) (err error) {
 func ShowWindow(wnd HWND, cmdShow int) (ok bool) {
 	r0, _, _ := syscall.Syscall(procShowWindow.Addr(), 2, uintptr(wnd), uintptr(cmdShow), 0)
 	ok = r0 != 0
+	return
+}
+
+func SystemParametersInfo(action int, uiParam uintptr, pvParam unsafe.Pointer, winIni int) (err error) {
+	r1, _, e1 := syscall.Syscall6(procSystemParametersInfoW.Addr(), 4, uintptr(action), uintptr(uiParam), uintptr(pvParam), uintptr(winIni), 0, 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

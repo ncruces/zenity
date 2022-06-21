@@ -68,52 +68,49 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 	defer win.UnregisterClass(cls, instance)
 
 	owner, _ := opts.attach.(win.HWND)
-	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
-		cls, strptr(*opts.title),
-		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
-		_CW_USEDEFAULT, _CW_USEDEFAULT,
+	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_ZEN_DIALOG,
+		cls, strptr(*opts.title), _WS_ZEN_DIALOG,
+		win.CW_USEDEFAULT, win.CW_USEDEFAULT,
 		281, 191, owner, 0, instance, unsafe.Pointer(dlg))
 
 	dlg.uTextCtl, _ = win.CreateWindowEx(0,
 		strptr("STATIC"), strptr("Username:"),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
+		_WS_ZEN_LABEL,
 		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
 
-	var flags uint32 = _WS_CHILD | _WS_VISIBLE | _WS_GROUP | _WS_TABSTOP | _ES_AUTOHSCROLL
-	dlg.uEditCtl, _ = win.CreateWindowEx(_WS_EX_CLIENTEDGE,
+	dlg.uEditCtl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
 		strptr("EDIT"), nil,
-		flags,
+		_WS_ZEN_CONTROL|win.ES_AUTOHSCROLL,
 		12, 30, 241, 24, dlg.wnd, 0, instance, nil)
 
 	dlg.pTextCtl, _ = win.CreateWindowEx(0,
-		strptr("STATIC"), strptr("Password:"),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
+		strptr("STATIC"), strptr("Password:"), _WS_ZEN_LABEL,
 		12, 60, 241, 16, dlg.wnd, 0, instance, nil)
 
-	dlg.pEditCtl, _ = win.CreateWindowEx(_WS_EX_CLIENTEDGE,
+	dlg.pEditCtl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
 		strptr("EDIT"), nil,
-		flags|_ES_PASSWORD,
+		_WS_ZEN_CONTROL|win.ES_AUTOHSCROLL|win.ES_PASSWORD,
 		12, 80, 241, 24, dlg.wnd, 0, instance, nil)
 
 	dlg.okBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
+		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON,
 		12, 116, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	dlg.cancelBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+		_WS_ZEN_BUTTON,
 		12, 116, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
-			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+			_WS_ZEN_BUTTON,
 			12, 116, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
 	win.SetFocus(dlg.uEditCtl)
-	win.ShowWindow(dlg.wnd, _SW_NORMAL)
+	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 	win.SendMessage(dlg.uEditCtl, win.EM_SETSEL, 0, intptr(-1))
 
 	if opts.ctx != nil {
@@ -122,7 +119,7 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -146,18 +143,18 @@ func (dlg *passwordDialog) layout(dpi dpi) {
 	win.SendMessage(dlg.okBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(dlg.cancelBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(dlg.extraBtn, win.WM_SETFONT, font, 1)
-	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(191), _SWP_NOZORDER|_SWP_NOMOVE)
-	win.SetWindowPos(dlg.uTextCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	win.SetWindowPos(dlg.uEditCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), _SWP_NOZORDER)
-	win.SetWindowPos(dlg.pTextCtl, 0, dpi.scale(12), dpi.scale(60), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	win.SetWindowPos(dlg.pEditCtl, 0, dpi.scale(12), dpi.scale(80), dpi.scale(241), dpi.scale(24), _SWP_NOZORDER)
+	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(191), win.SWP_NOMOVE|win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.uTextCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.uEditCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(24), win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.pTextCtl, 0, dpi.scale(12), dpi.scale(60), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.pEditCtl, 0, dpi.scale(12), dpi.scale(80), dpi.scale(241), dpi.scale(24), win.SWP_NOZORDER)
 	if dlg.extraBtn == 0 {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(95), dpi.scale(116), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(116), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(95), dpi.scale(116), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(116), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 	} else {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(12), dpi.scale(116), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(116), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(116), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(12), dpi.scale(116), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(116), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(116), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 	}
 }
 

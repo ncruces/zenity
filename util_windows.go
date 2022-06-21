@@ -19,10 +19,17 @@ import (
 var (
 	user32 = windows.NewLazySystemDLL("user32.dll")
 
-	callNextHookEx       = user32.NewProc("CallNextHookEx")
-	setWindowsHookEx     = user32.NewProc("SetWindowsHookExW")
-	systemParametersInfo = user32.NewProc("SystemParametersInfoW")
-	unhookWindowsHookEx  = user32.NewProc("UnhookWindowsHookEx")
+	callNextHookEx      = user32.NewProc("CallNextHookEx")
+	setWindowsHookEx    = user32.NewProc("SetWindowsHookExW")
+	unhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
+)
+
+const (
+	_WS_ZEN_DIALOG    = win.WS_POPUPWINDOW | win.WS_CLIPSIBLINGS | win.WS_DLGFRAME
+	_WS_EX_ZEN_DIALOG = win.WS_EX_CONTROLPARENT | win.WS_EX_WINDOWEDGE | win.WS_EX_DLGMODALFRAME
+	_WS_ZEN_LABEL     = win.WS_CHILD | win.WS_VISIBLE | win.WS_GROUP | win.SS_WORDELLIPSIS | win.SS_EDITCONTROL | win.SS_NOPREFIX
+	_WS_ZEN_CONTROL   = win.WS_CHILD | win.WS_VISIBLE | win.WS_GROUP | win.WS_TABSTOP
+	_WS_ZEN_BUTTON    = _WS_ZEN_CONTROL
 )
 
 func intptr(i int64) uintptr  { return uintptr(i) }
@@ -125,12 +132,12 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 }
 
 func dialogHookProc(code int32, wparam uintptr, lparam *_CWPRETSTRUCT) uintptr {
-	if lparam.Message == 0x0110 { // WM_INITDIALOG
+	if lparam.Message == win.WM_INITDIALOG {
 		tid := win.GetCurrentThreadId()
 		hook := (*dialogHook)(loadBackRef(uintptr(tid)))
 		atomic.StoreUintptr(&hook.wnd, uintptr(lparam.Wnd))
 		if hook.ctx != nil && hook.ctx.Err() != nil {
-			win.SendMessage(lparam.Wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+			win.SendMessage(lparam.Wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 		} else {
 			if hook.icon != nil {
 				icon := getIcon(hook.icon)
@@ -164,7 +171,7 @@ func (h *dialogHook) wait() {
 	select {
 	case <-h.ctx.Done():
 		if wnd := atomic.LoadUintptr(&h.wnd); wnd != 0 {
-			win.SendMessage(win.HWND(wnd), win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+			win.SendMessage(win.HWND(wnd), win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 		}
 	case <-h.done:
 	}
@@ -230,10 +237,10 @@ type font struct {
 }
 
 func getFont() font {
-	var metrics _NONCLIENTMETRICS
+	var metrics win.NONCLIENTMETRICS
 	metrics.Size = uint32(unsafe.Sizeof(metrics))
-	systemParametersInfo.Call(0x29, // SPI_GETNONCLIENTMETRICS
-		unsafe.Sizeof(metrics), uintptr(unsafe.Pointer(&metrics)), 0)
+	win.SystemParametersInfo(win.SPI_GETNONCLIENTMETRICS,
+		unsafe.Sizeof(metrics), unsafe.Pointer(&metrics), 0)
 	return font{logical: metrics.MessageFont}
 }
 
@@ -310,9 +317,9 @@ func (i *icon) delete() {
 func centerWindow(wnd win.HWND) {
 	var rect win.RECT
 	win.GetWindowRect(wnd, &rect)
-	x := (win.GetSystemMetrics(0 /* SM_CXSCREEN */) - int(rect.Right-rect.Left)) / 2
-	y := (win.GetSystemMetrics(1 /* SM_CYSCREEN */) - int(rect.Bottom-rect.Top)) / 2
-	win.SetWindowPos(wnd, 0, x, y, 0, 0, 0x5) // SWP_NOZORDER|SWP_NOSIZE
+	x := win.GetSystemMetrics(win.SM_CXSCREEN) - int(rect.Right-rect.Left)
+	y := win.GetSystemMetrics(win.SM_CYSCREEN) - int(rect.Bottom-rect.Top)
+	win.SetWindowPos(wnd, 0, x/2, y/2, 0, 0, win.SWP_NOZORDER|win.SWP_NOSIZE)
 }
 
 func getWindowString(wnd win.HWND) string {
@@ -367,25 +374,6 @@ type _CWPRETSTRUCT struct {
 	WParam  uintptr
 	Message uint32
 	Wnd     win.HWND
-}
-
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw
-type _NONCLIENTMETRICS struct {
-	Size            uint32
-	BorderWidth     int32
-	ScrollWidth     int32
-	ScrollHeight    int32
-	CaptionWidth    int32
-	CaptionHeight   int32
-	CaptionFont     win.LOGFONT
-	SmCaptionWidth  int32
-	SmCaptionHeight int32
-	SmCaptionFont   win.LOGFONT
-	MenuWidth       int32
-	MenuHeight      int32
-	MenuFont        win.LOGFONT
-	StatusFont      win.LOGFONT
-	MessageFont     win.LOGFONT
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime

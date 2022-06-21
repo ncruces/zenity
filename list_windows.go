@@ -75,38 +75,35 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	defer win.UnregisterClass(cls, instance)
 
 	owner, _ := opts.attach.(win.HWND)
-	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
-		cls, strptr(*opts.title),
-		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
-		_CW_USEDEFAULT, _CW_USEDEFAULT,
+	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_ZEN_DIALOG,
+		cls, strptr(*opts.title), _WS_ZEN_DIALOG,
+		win.CW_USEDEFAULT, win.CW_USEDEFAULT,
 		281, 281, owner, 0, instance, unsafe.Pointer(dlg))
 
 	dlg.textCtl, _ = win.CreateWindowEx(0,
-		strptr("STATIC"), strptr(text),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
+		strptr("STATIC"), strptr(text), _WS_ZEN_LABEL,
 		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
 
-	var flags uint32 = _WS_CHILD | _WS_VISIBLE | _WS_GROUP | _WS_TABSTOP | _WS_VSCROLL
+	var flags uint32 = _WS_ZEN_CONTROL | win.WS_VSCROLL
 	if dlg.multiple {
-		flags |= _LBS_EXTENDEDSEL
+		flags |= win.LBS_EXTENDEDSEL
 	}
-	dlg.listCtl, _ = win.CreateWindowEx(_WS_EX_CLIENTEDGE,
-		strptr("LISTBOX"), strptr(opts.entryText),
-		flags,
+	dlg.listCtl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
+		strptr("LISTBOX"), strptr(opts.entryText), flags,
 		12, 30, 241, 164, dlg.wnd, 0, instance, nil)
 
 	dlg.okBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON,
+		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON,
 		12, 206, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	dlg.cancelBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.cancelLabel),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+		_WS_ZEN_BUTTON,
 		12, 206, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
-			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+			_WS_ZEN_BUTTON,
 			12, 206, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}
 
@@ -117,7 +114,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
 	win.SetFocus(dlg.listCtl)
-	win.ShowWindow(dlg.wnd, _SW_NORMAL)
+	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 
 	if opts.ctx != nil {
 		wait := make(chan struct{})
@@ -125,7 +122,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -147,16 +144,16 @@ func (dlg *listDialog) layout(dpi dpi) {
 	win.SendMessage(dlg.okBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(dlg.cancelBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(dlg.extraBtn, win.WM_SETFONT, font, 1)
-	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), _SWP_NOZORDER|_SWP_NOMOVE)
-	win.SetWindowPos(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	win.SetWindowPos(dlg.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), _SWP_NOZORDER)
+	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), win.SWP_NOMOVE|win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), win.SWP_NOZORDER)
 	if dlg.extraBtn == 0 {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 	} else {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 	}
 }
 

@@ -92,7 +92,7 @@ func (d *progressDialog) Done() <-chan struct{} {
 func (d *progressDialog) Complete() error {
 	select {
 	default:
-		win.SetWindowLong(d.progCtl, _GWL_STYLE, _WS_CHILD|_WS_VISIBLE|_PBS_SMOOTH)
+		win.SetWindowLong(d.progCtl, win.GWL_STYLE, win.WS_CHILD|win.WS_VISIBLE|win.PBS_SMOOTH)
 		win.SendMessage(d.progCtl, win.PBM_SETRANGE32, 0, 1)
 		win.SendMessage(d.progCtl, win.PBM_SETPOS, 1, 0)
 		win.EnableWindow(d.okBtn, true)
@@ -104,7 +104,7 @@ func (d *progressDialog) Complete() error {
 }
 
 func (d *progressDialog) Close() error {
-	win.SendMessage(d.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+	win.SendMessage(d.wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 	<-d.done
 	if d.err == ErrCanceled {
 		return nil
@@ -138,46 +138,44 @@ func (dlg *progressDialog) setup(opts options) error {
 	defer win.UnregisterClass(cls, instance)
 
 	owner, _ := opts.attach.(win.HWND)
-	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_CONTROLPARENT|_WS_EX_WINDOWEDGE|_WS_EX_DLGMODALFRAME,
-		cls, strptr(*opts.title),
-		_WS_POPUPWINDOW|_WS_CLIPSIBLINGS|_WS_DLGFRAME,
-		_CW_USEDEFAULT, _CW_USEDEFAULT,
+	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_ZEN_DIALOG,
+		cls, strptr(*opts.title), _WS_ZEN_DIALOG,
+		win.CW_USEDEFAULT, win.CW_USEDEFAULT,
 		281, 133, owner, 0, instance, unsafe.Pointer(dlg))
 
 	dlg.textCtl, _ = win.CreateWindowEx(0,
-		strptr("STATIC"), nil,
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_SS_WORDELLIPSIS|_SS_EDITCONTROL|_SS_NOPREFIX,
+		strptr("STATIC"), nil, _WS_ZEN_LABEL,
 		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
 
-	var flags uint32 = _WS_CHILD | _WS_VISIBLE | _PBS_SMOOTH
+	var flags uint32 = win.WS_CHILD | win.WS_VISIBLE | win.PBS_SMOOTH
 	if opts.maxValue < 0 {
-		flags |= _PBS_MARQUEE
+		flags |= win.PBS_MARQUEE
 	}
 	dlg.progCtl, _ = win.CreateWindowEx(0,
-		strptr(_PROGRESS_CLASS),
+		strptr(win.PROGRESS_CLASS),
 		nil, flags,
 		12, 30, 241, 16, dlg.wnd, 0, instance, nil)
 
 	dlg.okBtn, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(*opts.okLabel),
-		_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP|_BS_DEFPUSHBUTTON|_WS_DISABLED,
+		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON|win.WS_DISABLED,
 		12, 58, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	if !opts.noCancel {
 		dlg.cancelBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.cancelLabel),
-			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+			_WS_ZEN_BUTTON,
 			12, 58, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	}
 	if opts.extraButton != nil {
 		dlg.extraBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(*opts.extraButton),
-			_WS_CHILD|_WS_VISIBLE|_WS_GROUP|_WS_TABSTOP,
+			_WS_ZEN_BUTTON,
 			12, 58, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}
 
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
-	win.ShowWindow(dlg.wnd, _SW_NORMAL)
+	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 	if opts.maxValue < 0 {
 		win.SendMessage(dlg.progCtl, win.PBM_SETMARQUEE, 1, 0)
 	} else {
@@ -191,7 +189,7 @@ func (dlg *progressDialog) setup(opts options) error {
 		go func() {
 			select {
 			case <-opts.ctx.Done():
-				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, _SC_CLOSE, 0)
+				win.SendMessage(dlg.wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 			case <-wait:
 			}
 		}()
@@ -212,24 +210,24 @@ func (d *progressDialog) layout(dpi dpi) {
 	win.SendMessage(d.okBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(d.cancelBtn, win.WM_SETFONT, font, 1)
 	win.SendMessage(d.extraBtn, win.WM_SETFONT, font, 1)
-	win.SetWindowPos(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), _SWP_NOZORDER|_SWP_NOMOVE)
-	win.SetWindowPos(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
-	win.SetWindowPos(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), _SWP_NOZORDER)
+	win.SetWindowPos(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), win.SWP_NOMOVE|win.SWP_NOZORDER)
+	win.SetWindowPos(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
+	win.SetWindowPos(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
 	if d.extraBtn == 0 {
 		if d.cancelBtn == 0 {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 		} else {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 		}
 	} else {
 		if d.cancelBtn == 0 {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			win.SetWindowPos(d.extraBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+			win.SetWindowPos(d.extraBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 		} else {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(12), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			win.SetWindowPos(d.extraBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
-			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), _SWP_NOZORDER)
+			win.SetWindowPos(d.okBtn, 0, dpi.scale(12), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+			win.SetWindowPos(d.extraBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
 		}
 	}
 }
