@@ -7,7 +7,7 @@ import "golang.org/x/sys/windows"
 
 type Handle = windows.Handle
 type HWND = windows.HWND
-type Pointer uintptr
+type Pointer = windows.Pointer
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
 type SYSTEMTIME struct {

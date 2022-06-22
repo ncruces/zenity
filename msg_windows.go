@@ -88,6 +88,7 @@ func message(kind messageKind, text string, opts options) error {
 }
 
 func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
+	// TODO: use GetDlgItem, SetDlgItemText instead of EnumChildWindows.
 	return hookDialog(opts.ctx, opts.windowIcon, nil, func(wnd win.HWND) {
 		win.EnumChildWindows(wnd, syscall.NewCallback(hookMessageDialogCallback),
 			unsafe.Pointer(&opts))
@@ -110,7 +111,7 @@ func hookMessageDialogCallback(wnd win.HWND, lparam *options) uintptr {
 		win.SetWindowText(wnd, strptr(*text))
 	}
 
-	if ctl == 20 /*IDC_STATIC_OK*/ {
+	if ctl == win.IDC_STATIC_OK {
 		icon := getIcon(lparam.icon)
 		if icon.handle != 0 {
 			defer icon.delete()

@@ -19,8 +19,8 @@ func notify(text string, opts options) error {
 	var args win.NOTIFYICONDATA
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.ID = rand.Uint32()
-	args.Flags = 0x00000010 // NIF_INFO
-	args.State = 0x00000001 // NIS_HIDDEN
+	args.Flags = win.NIF_INFO
+	args.State = win.NIS_HIDDEN
 
 	info := syscall.StringToUTF16(text)
 	copy(args.Info[:len(args.Info)-1], info)
@@ -32,18 +32,18 @@ func notify(text string, opts options) error {
 
 	switch opts.icon {
 	case InfoIcon, QuestionIcon:
-		args.InfoFlags |= 0x1 // NIIF_INFO
+		args.InfoFlags |= win.NIIF_INFO
 	case WarningIcon:
-		args.InfoFlags |= 0x2 // NIIF_WARNING
+		args.InfoFlags |= win.NIIF_WARNING
 	case ErrorIcon:
-		args.InfoFlags |= 0x3 // NIIF_ERROR
+		args.InfoFlags |= win.NIIF_ERROR
 	default:
 		icon := getIcon(opts.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
 			args.Icon = win.Handle(icon.handle)
-			args.Flags |= 0x00000002 // NIF_ICON
-			args.InfoFlags |= 0x4    // NIIF_USER
+			args.Flags |= win.NIF_ICON
+			args.InfoFlags |= win.NIIF_USER
 		}
 	}
 

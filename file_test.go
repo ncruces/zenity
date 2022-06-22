@@ -139,7 +139,7 @@ func TestSelectFile_script(t *testing.T) {
 			t.Skip("skipping:", err)
 		}
 		if str == "" || err != nil {
-			t.Errorf("SelectFile() = %q, %v; want [path], nil", str, err)
+			t.Fatalf("SelectFile() = %q, %v; want [path], nil", str, err)
 		}
 		if _, serr := os.Stat(str); serr != nil {
 			t.Errorf("SelectFile() = %q, %v; %v", str, err, serr)
@@ -152,7 +152,7 @@ func TestSelectFile_script(t *testing.T) {
 			t.Skip("skipping:", err)
 		}
 		if str == "" || err != nil {
-			t.Errorf("SelectFile() = %q, %v; want [path], nil", str, err)
+			t.Fatalf("SelectFile() = %q, %v; want [path], nil", str, err)
 		}
 		if s, serr := os.Stat(str); serr != nil {
 			t.Errorf("SelectFile() = %q, %v; %v", str, err, serr)
@@ -183,7 +183,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 			t.Skip("skipping:", err)
 		}
 		if lst == nil || err != nil {
-			t.Errorf("SelectFileMultiple() = %v, %v; want [path, path], nil", lst, err)
+			t.Fatalf("SelectFileMultiple() = %v, %v; want [path, path], nil", lst, err)
 		}
 		for _, str := range lst {
 			if _, serr := os.Stat(str); serr != nil {
@@ -201,7 +201,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 			t.Skip("was not unsupported:", err)
 		}
 		if lst == nil || err != nil {
-			t.Errorf("SelectFileMultiple() = %v, %v; want [path, path], nil", lst, err)
+			t.Fatalf("SelectFileMultiple() = %v, %v; want [path, path], nil", lst, err)
 		}
 		for _, str := range lst {
 			if s, serr := os.Stat(str); serr != nil {

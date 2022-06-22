@@ -19,6 +19,9 @@ const (
 	IDYES    = 6
 	IDNO     = 7
 
+	// Control IDs
+	IDC_STATIC_OK = 20
+
 	// MessageBox types
 	MB_OK                = windows.MB_OK
 	MB_OKCANCEL          = windows.MB_OKCANCEL
@@ -60,7 +63,7 @@ const (
 	STM_SETICON    = 0x0170
 
 	// CreateWindow
-	CW_USEDEFAULT = 0x80000000
+	CW_USEDEFAULT = -0x80000000
 
 	// Window classes
 	PROGRESS_CLASS = "msctls_progress32"
@@ -217,17 +220,33 @@ const (
 	// SetWindowsHookEx types
 	WH_CALLWNDPROCRET = 12
 
-	USER_DEFAULT_SCREEN_DPI = 96
+	// System colors
+	COLOR_WINDOW = 5
 
+	// DPI awareness
+	USER_DEFAULT_SCREEN_DPI                    = 96
 	DPI_AWARENESS_CONTEXT_UNAWARE              = ^uintptr(1) + 1
 	DPI_AWARENESS_CONTEXT_SYSTEM_AWARE         = ^uintptr(2) + 1
 	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE    = ^uintptr(3) + 1
 	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ^uintptr(4) + 1
 	DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED    = ^uintptr(5) + 1
 
+	// LoadImage type
 	IMAGE_BITMAP = 0
 	IMAGE_ICON   = 1
 	IMAGE_CURSOR = 2
+
+	// LoadIcon resources
+	IDI_APPLICATION = 32512
+	IDI_ERROR       = 32513
+	IDI_HAND        = 32513
+	IDI_QUESTION    = 32514
+	IDI_WARNING     = 32515
+	IDI_EXCLAMATION = 32515
+	IDI_ASTERISK    = 32516
+	IDI_INFORMATION = 32516
+	IDI_WINLOGO     = 32517
+	IDI_SHIELD      = 32518
 
 	// LoadResource (image/icon) flags
 	LR_DEFAULTCOLOR     = 0x00000000

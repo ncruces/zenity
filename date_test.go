@@ -72,7 +72,6 @@ func TestCalendar_script(t *testing.T) {
 			if skip, err := skip(err); skip {
 				t.Skip("skipping:", err)
 			}
-			got.Date()
 			if !DateEquals(got, tt.want) || err != tt.err {
 				t.Errorf("Calendar() = %v, %v; want %v, %v", got, err, tt.want, tt.err)
 			}

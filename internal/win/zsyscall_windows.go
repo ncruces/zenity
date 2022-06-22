@@ -62,7 +62,6 @@ var (
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
 	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
-	procCoTaskMemFree                = modole32.NewProc("CoTaskMemFree")
 	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
 	procSHCreateItemFromParsingName  = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
@@ -199,7 +198,7 @@ func ReleaseActCtx(actCtx Handle) {
 	return
 }
 
-func CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
+func CoCreateInstance(clsid uintptr, unkOuter *IUnknown, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
 	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
@@ -207,18 +206,13 @@ func CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid 
 	return
 }
 
-func CoTaskMemFree(address Pointer) {
-	syscall.Syscall(procCoTaskMemFree.Addr(), 1, uintptr(address), 0, 0)
-	return
-}
-
-func SHBrowseForFolder(bi *BROWSEINFO) (ret Pointer) {
+func SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) {
 	r0, _, _ := syscall.Syscall(procSHBrowseForFolder.Addr(), 1, uintptr(unsafe.Pointer(bi)), 0, 0)
-	ret = Pointer(r0)
+	ret = (*IDLIST)(unsafe.Pointer(r0))
 	return
 }
 
-func SHCreateItemFromParsingName(path *uint16, bc *COMObject, iid uintptr, item **IShellItem) (res error) {
+func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid uintptr, item **IShellItem) (res error) {
 	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
@@ -226,8 +220,8 @@ func SHCreateItemFromParsingName(path *uint16, bc *COMObject, iid uintptr, item 
 	return
 }
 
-func SHGetPathFromIDListEx(ptr Pointer, path *uint16, pathLen int, opts int) (ok bool) {
-	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(ptr), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
+func SHGetPathFromIDListEx(ptr *IDLIST, path *uint16, pathLen int, opts int) (ok bool) {
+	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(unsafe.Pointer(ptr)), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
 	ok = r0 != 0
 	return
 }

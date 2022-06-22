@@ -32,38 +32,41 @@ func CoInitializeEx(reserved uintptr, coInit uint32) error {
 
 func CoUninitialize() { windows.CoUninitialize() }
 
+func CoTaskMemFree(address unsafe.Pointer) { windows.CoTaskMemFree(address) }
+
 // https://github.com/wine-mirror/wine/blob/master/include/unknwn.idl
 
-type _IUnknownBase struct{ COMObject }
-type _IUnknownVtbl struct {
+type IUnknown struct{}
+type iUnknownVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr
 }
 
-func (c *_IUnknownBase) Release() {
-	vtbl := (*(**_IUnknownVtbl)(unsafe.Pointer(c)))
-	c.Call(vtbl.Release)
+func (u *IUnknown) Release() {
+	vtbl := *(**iUnknownVtbl)(unsafe.Pointer(u))
+	u.call(vtbl.Release)
 }
 
-type COMObject struct{}
-
 //go:uintptrescapes
-func (o *COMObject) Call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
+func (u *IUnknown) call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
 	switch nargs := uintptr(len(a)); nargs {
 	case 0:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), 0, 0)
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), 0, 0)
 	case 1:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], 0)
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), a[0], 0)
 	case 2:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(o)), a[0], a[1])
+		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), a[0], a[1])
 	default:
 		panic("COM call with too many arguments.")
 	}
 }
 
-//sys CoCreateInstance(clsid uintptr, unkOuter *COMObject, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
-//sys CoTaskMemFree(address Pointer) = ole32.CoTaskMemFree
+// https://github.com/wine-mirror/wine/blob/master/include/objidl.idl
+
+type IBindCtx struct{ IUnknown }
+
+//sys CoCreateInstance(clsid uintptr, unkOuter *IUnknown, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
 
 func uuid(s string) uintptr {
 	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data

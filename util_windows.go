@@ -23,8 +23,6 @@ const (
 	_WS_ZEN_BUTTON    = _WS_ZEN_CONTROL
 )
 
-const nullptr win.Pointer = 0
-
 func intptr(i int64) uintptr  { return uintptr(i) }
 func strptr(s string) *uint16 { return syscall.StringToUTF16Ptr(s) }
 
@@ -56,7 +54,7 @@ func setup() context.CancelFunc {
 
 	var icc win.INITCOMMONCONTROLSEX
 	icc.Size = uint32(unsafe.Sizeof(icc))
-	icc.ICC = 0x00004020 // ICC_STANDARD_CLASSES|ICC_PROGRESS_CLASS
+	icc.ICC = win.ICC_STANDARD_CLASSES | win.ICC_DATE_CLASSES | win.ICC_PROGRESS_CLASS
 	win.InitCommonControlsEx(&icc)
 
 	return func() {
@@ -264,13 +262,13 @@ func getIcon(i any) icon {
 	var resource uintptr
 	switch i {
 	case ErrorIcon:
-		resource = 32513 // IDI_ERROR
+		resource = win.IDI_ERROR
 	case QuestionIcon:
-		resource = 32514 // IDI_QUESTION
+		resource = win.IDI_QUESTION
 	case WarningIcon:
-		resource = 32515 // IDI_WARNING
+		resource = win.IDI_WARNING
 	case InfoIcon:
-		resource = 32516 // IDI_INFORMATION
+		resource = win.IDI_INFORMATION
 	}
 	if resource != 0 {
 		res.handle, _ = win.LoadIcon(0, resource)
@@ -331,7 +329,7 @@ func registerClass(instance, icon win.Handle, proc uintptr) (*uint16, error) {
 	wcx.WndProc = proc
 	wcx.Icon = icon
 	wcx.Instance = instance
-	wcx.Background = 5 // COLOR_WINDOW
+	wcx.Background = win.COLOR_WINDOW
 	wcx.ClassName = strptr(name)
 
 	if err := win.RegisterClassEx(&wcx); err != nil {

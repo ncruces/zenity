@@ -10,16 +10,6 @@ import (
 	"github.com/ncruces/zenity/internal/win"
 )
 
-const (
-	_FOS_NOCHANGEDIR      = 0x00000008
-	_FOS_PICKFOLDERS      = 0x00000020
-	_FOS_FORCEFILESYSTEM  = 0x00000040
-	_FOS_ALLOWMULTISELECT = 0x00000200
-	_FOS_FORCESHOWHIDDEN  = 0x10000000
-
-	_SIGDN_FILESYSPATH = 0x80058000
-)
-
 func selectFile(opts options) (string, error) {
 	if opts.directory {
 		res, _, err := pickFolders(opts, false)
@@ -189,10 +179,10 @@ func selectFileSave(opts options) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func pickFolders(opts options, multi bool) (str string, lst []string, err error) {
+func pickFolders(opts options, multi bool) (string, []string, error) {
 	defer setup()()
 
-	err = win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
+	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
 	if err != win.RPC_E_CHANGED_MODE {
 		if err != nil {
 			return "", nil, err
@@ -216,12 +206,12 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 	if err != nil {
 		return "", nil, err
 	}
-	flgs |= _FOS_NOCHANGEDIR | _FOS_PICKFOLDERS | _FOS_FORCEFILESYSTEM
+	flgs |= win.FOS_NOCHANGEDIR | win.FOS_PICKFOLDERS | win.FOS_FORCEFILESYSTEM
 	if multi {
-		flgs |= _FOS_ALLOWMULTISELECT
+		flgs |= win.FOS_ALLOWMULTISELECT
 	}
 	if opts.showHidden {
-		flgs |= _FOS_FORCESHOWHIDDEN
+		flgs |= win.FOS_FORCESHOWHIDDEN
 	}
 	err = dialog.SetOptions(flgs)
 	if err != nil {
@@ -236,8 +226,8 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		var item *win.IShellItem
 		win.SHCreateItemFromParsingName(strptr(opts.filename), nil, win.IID_IShellItem, &item)
 		if item != nil {
+			defer item.Release()
 			dialog.SetFolder(item)
-			item.Release()
 		}
 	}
 
@@ -261,15 +251,6 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		return "", nil, err
 	}
 
-	shellItemPath := func(item *win.IShellItem) error {
-		defer item.Release()
-		str, err := item.GetDisplayName(_SIGDN_FILESYSPATH)
-		if err == nil {
-			lst = append(lst, str)
-		}
-		return err
-	}
-
 	if multi {
 		items, err := dialog.GetResults()
 		if err != nil {
@@ -281,25 +262,31 @@ func pickFolders(opts options, multi bool) (str string, lst []string, err error)
 		if err != nil {
 			return "", nil, err
 		}
-		for i := uint32(0); i < count; i++ {
-			item, err := items.GetItemAt(i)
-			if err == nil {
-				err = shellItemPath(item)
-			}
+
+		var lst []string
+		for i := uint32(0); i < count && err == nil; i++ {
+			str, err := shellItemPath(items.GetItemAt(i))
 			if err != nil {
 				return "", nil, err
 			}
+			lst = append(lst, str)
 		}
+		return "", lst, nil
 	} else {
-		item, err := dialog.GetResult()
-		if err == nil {
-			err = shellItemPath(item)
-		}
+		str, err := shellItemPath(dialog.GetResult())
 		if err != nil {
 			return "", nil, err
 		}
+		return str, nil, nil
 	}
-	return
+}
+
+func shellItemPath(item *win.IShellItem, err error) (string, error) {
+	if err != nil {
+		return "", err
+	}
+	defer item.Release()
+	return item.GetDisplayName(win.SIGDN_FILESYSPATH)
 }
 
 func browseForFolder(opts options) (string, []string, error) {
@@ -327,10 +314,10 @@ func browseForFolder(opts options) (string, []string, error) {
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()
 	}
-	if ptr == nullptr {
+	if ptr == nil {
 		return "", nil, ErrCanceled
 	}
-	defer win.CoTaskMemFree(ptr)
+	defer win.CoTaskMemFree(unsafe.Pointer(ptr))
 
 	var res [32768]uint16
 	win.SHGetPathFromIDListEx(ptr, &res[0], len(res), 0)

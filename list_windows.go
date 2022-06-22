@@ -187,7 +187,7 @@ func listProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer) 
 					dlg.out = make([]string, len)
 					if len > 0 {
 						indices := make([]int32, len)
-						win.SendMessage(dlg.listCtl, win.LB_GETSELITEMS, len, uintptr(unsafe.Pointer(&indices[0])))
+						win.SendMessagePointer(dlg.listCtl, win.LB_GETSELITEMS, len, unsafe.Pointer(&indices[0]))
 						for i, idx := range indices {
 							dlg.out[i] = dlg.items[idx]
 						}
