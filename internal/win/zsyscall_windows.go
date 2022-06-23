@@ -75,7 +75,7 @@ var (
 	procDispatchMessageW             = moduser32.NewProc("DispatchMessageW")
 	procEnableWindow                 = moduser32.NewProc("EnableWindow")
 	procEnumChildWindows             = moduser32.NewProc("EnumChildWindows")
-	procGetDlgCtrlID                 = moduser32.NewProc("GetDlgCtrlID")
+	procGetDlgItem                   = moduser32.NewProc("GetDlgItem")
 	procGetDpiForWindow              = moduser32.NewProc("GetDpiForWindow")
 	procGetMessageW                  = moduser32.NewProc("GetMessageW")
 	procGetSystemMetrics             = moduser32.NewProc("GetSystemMetrics")
@@ -90,6 +90,7 @@ var (
 	procRegisterClassExW             = moduser32.NewProc("RegisterClassExW")
 	procReleaseDC                    = moduser32.NewProc("ReleaseDC")
 	procSendMessageW                 = moduser32.NewProc("SendMessageW")
+	procSetDlgItemTextW              = moduser32.NewProc("SetDlgItemTextW")
 	procSetFocus                     = moduser32.NewProc("SetFocus")
 	procSetForegroundWindow          = moduser32.NewProc("SetForegroundWindow")
 	procSetThreadDpiAwarenessContext = moduser32.NewProc("SetThreadDpiAwarenessContext")
@@ -305,11 +306,6 @@ func EnableWindow(wnd HWND, enable bool) (ok bool) {
 	return
 }
 
-func EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) {
-	syscall.Syscall(procEnumChildWindows.Addr(), 3, uintptr(parent), uintptr(enumFunc), uintptr(lparam))
-	return
-}
-
 func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
 	r1, _, e1 := syscall.Syscall(procEnumChildWindows.Addr(), 2, uintptr(enumFunc), uintptr(lparam), 0)
 	if r1 == 0 {
@@ -318,9 +314,12 @@ func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
 	return
 }
 
-func GetDlgCtrlID(wnd HWND) (ret int) {
-	r0, _, _ := syscall.Syscall(procGetDlgCtrlID.Addr(), 1, uintptr(wnd), 0, 0)
-	ret = int(r0)
+func GetDlgItem(dlg HWND, dlgItemID int) (ret HWND, err error) {
+	r0, _, e1 := syscall.Syscall(procGetDlgItem.Addr(), 2, uintptr(dlg), uintptr(dlgItemID), 0)
+	ret = HWND(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 
@@ -356,7 +355,7 @@ func GetWindowRect(wnd HWND, cmdShow *RECT) (err error) {
 	return
 }
 
-func GetWindowTextLength(wnd HWND) (ret int, err error) {
+func getWindowTextLength(wnd HWND) (ret int, err error) {
 	r0, _, e1 := syscall.Syscall(procGetWindowTextLengthW.Addr(), 1, uintptr(wnd), 0, 0)
 	ret = int(r0)
 	if ret == 0 {
@@ -365,7 +364,7 @@ func GetWindowTextLength(wnd HWND) (ret int, err error) {
 	return
 }
 
-func GetWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) {
+func getWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) {
 	r0, _, e1 := syscall.Syscall(procGetWindowTextW.Addr(), 3, uintptr(wnd), uintptr(unsafe.Pointer(str)), uintptr(maxCount))
 	ret = int(r0)
 	if ret == 0 {
@@ -420,6 +419,14 @@ func ReleaseDC(wnd HWND, dc Handle) (ok bool) {
 func SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) {
 	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
 	ret = uintptr(r0)
+	return
+}
+
+func SetDlgItemText(dlg HWND, dlgItemID int, str *uint16) (err error) {
+	r1, _, e1 := syscall.Syscall(procSetDlgItemTextW.Addr(), 3, uintptr(dlg), uintptr(dlgItemID), uintptr(unsafe.Pointer(str)))
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

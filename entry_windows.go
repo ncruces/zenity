@@ -163,7 +163,7 @@ func entryProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer)
 		default:
 			return 1
 		case win.IDOK, win.IDYES:
-			dlg.out = getWindowString(dlg.editCtl)
+			dlg.out = win.GetWindowText(dlg.editCtl)
 		case win.IDCANCEL:
 			dlg.err = ErrCanceled
 		case win.IDNO:

@@ -183,8 +183,8 @@ func passwordProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Point
 		default:
 			return 1
 		case win.IDOK, win.IDYES:
-			dlg.usr = getWindowString(dlg.uEditCtl)
-			dlg.pwd = getWindowString(dlg.pEditCtl)
+			dlg.usr = win.GetWindowText(dlg.uEditCtl)
+			dlg.pwd = win.GetWindowText(dlg.pEditCtl)
 		case win.IDCANCEL:
 			dlg.err = ErrCanceled
 		case win.IDNO:

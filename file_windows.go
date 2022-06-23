@@ -37,14 +37,11 @@ func selectFile(opts options) (string, error) {
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	defer setup()()
-
-	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
-		if err != nil {
-			return "", err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return "", err
 	}
+	defer unhook()
 
 	ok := win.GetOpenFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -83,14 +80,11 @@ func selectFileMultiple(opts options) ([]string, error) {
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	defer setup()()
-
-	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
-		if err != nil {
-			return nil, err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return nil, err
 	}
+	defer unhook()
 
 	ok := win.GetOpenFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -160,14 +154,11 @@ func selectFileSave(opts options) (string, error) {
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
 	defer setup()()
-
-	if opts.ctx != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
-		if err != nil {
-			return "", err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return "", err
 	}
+	defer unhook()
 
 	ok := win.GetSaveFileName(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -231,7 +222,7 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 		}
 	}
 
-	if opts.ctx != nil {
+	if opts.ctx != nil || opts.windowIcon != nil {
 		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", nil, err
@@ -302,7 +293,7 @@ func browseForFolder(opts options) (string, []string, error) {
 		args.CallbackFunc = syscall.NewCallback(browseForFolderCallback)
 	}
 
-	if opts.ctx != nil {
+	if opts.ctx != nil || opts.windowIcon != nil {
 		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 		if err != nil {
 			return "", nil, err

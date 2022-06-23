@@ -79,6 +79,9 @@ func setupEnumCallback(wnd win.HWND, lparam *win.HWND) uintptr {
 }
 
 func hookDialog(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (unhook context.CancelFunc, err error) {
+	if ctx == nil && icon == nil && init == nil {
+		return func() {}, nil
+	}
 	if ctx != nil && ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -312,13 +315,6 @@ func centerWindow(wnd win.HWND) {
 	x := win.GetSystemMetrics(win.SM_CXSCREEN) - int(rect.Right-rect.Left)
 	y := win.GetSystemMetrics(win.SM_CYSCREEN) - int(rect.Bottom-rect.Top)
 	win.SetWindowPos(wnd, 0, x/2, y/2, 0, 0, win.SWP_NOZORDER|win.SWP_NOSIZE)
-}
-
-func getWindowString(wnd win.HWND) string {
-	len, _ := win.GetWindowTextLength(wnd)
-	buf := make([]uint16, len+1)
-	win.GetWindowText(wnd, &buf[0], len+1)
-	return syscall.UTF16ToString(buf)
 }
 
 func registerClass(instance, icon win.Handle, proc uintptr) (*uint16, error) {

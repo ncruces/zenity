@@ -42,14 +42,11 @@ func selectColor(opts options) (color.Color, error) {
 	}
 
 	defer setup()()
-
-	if opts.ctx != nil || opts.title != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, opts.title, nil)
-		if err != nil {
-			return nil, err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, opts.title, nil)
+	if err != nil {
+		return nil, err
 	}
+	defer unhook()
 
 	ok := win.ChooseColor(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {

@@ -268,6 +268,13 @@ func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
 	return windows.GetWindowThreadProcessId(hwnd, pid)
 }
 
+func GetWindowText(wnd HWND) string {
+	len, _ := getWindowTextLength(wnd)
+	buf := make([]uint16, len+1)
+	getWindowText(wnd, &buf[0], len+1)
+	return syscall.UTF16ToString(buf)
+}
+
 func SendMessagePointer(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
 	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
 	ret = uintptr(r0)
@@ -389,16 +396,15 @@ type CWPRETSTRUCT struct {
 //sys DestroyWindow(wnd HWND) (err error) = user32.DestroyWindow
 //sys DispatchMessage(msg *MSG) (ret uintptr) = user32.DispatchMessageW
 //sys EnableWindow(wnd HWND, enable bool) (ok bool) = user32.EnableWindow
-//sys EnumChildWindows(parent HWND, enumFunc uintptr, lparam unsafe.Pointer) = user32.EnumChildWindows
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
-//sys GetDlgCtrlID(wnd HWND) (ret int) = user32.GetDlgCtrlID
+//sys GetDlgItem(dlg HWND, dlgItemID int) (ret HWND, err error) = user32.GetDlgItem
 //sys getDpiForWindow(wnd HWND) (ret int) = user32.GetDpiForWindow
 //sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
 //sys GetSystemMetrics(index int) (ret int) = user32.GetSystemMetrics
 //sys GetWindowDC(wnd HWND) (ret Handle) = user32.GetWindowDC
 //sys GetWindowRect(wnd HWND, cmdShow *RECT) (err error) = user32.GetWindowRect
-//sys GetWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) = user32.GetWindowTextW
-//sys GetWindowTextLength(wnd HWND) (ret int, err error) = user32.GetWindowTextLengthW
+//sys getWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) = user32.GetWindowTextW
+//sys getWindowTextLength(wnd HWND) (ret int, err error) = user32.GetWindowTextLengthW
 //sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
 //sys LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) = user32.LoadIconW
 //sys LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) = user32.LoadImageW
@@ -406,6 +412,7 @@ type CWPRETSTRUCT struct {
 //sys RegisterClassEx(cls *WNDCLASSEX) (err error) = user32.RegisterClassExW
 //sys ReleaseDC(wnd HWND, dc Handle) (ok bool) = user32.ReleaseDC
 //sys SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) = user32.SendMessageW
+//sys SetDlgItemText(dlg HWND, dlgItemID int, str *uint16) (err error) = user32.SetDlgItemTextW
 //sys SetFocus(wnd HWND) (ret HWND, err error) = user32.SetFocus
 //sys SetForegroundWindow(wnd HWND) (ok bool) = user32.SetForegroundWindow
 //sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
