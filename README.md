@@ -5,10 +5,11 @@
 [![Go Cover](https://gocover.io/_badge/github.com/ncruces/zenity)](https://gocover.io/github.com/ncruces/zenity)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
-This repo includes both a cross-platform Go package providing
+This repo includes:
+- a cross-platform [Go](https://go.dev/) package providing
 [Zenity](https://help.gnome.org/users/zenity/stable/)-like dialogs
-(simple dialogs that interact graphically with the user),
-as well as a *“port”* of the `zenity` command to both Windows and macOS based on that library.
+(simple dialogs that interact graphically with the user)
+- a *“port”* of the `zenity` command to both Windows and macOS based on that library.
 
 Implemented dialogs:
 * [message](https://github.com/ncruces/zenity/wiki/Message-dialog) (error, info, question, warning)
@@ -39,18 +40,24 @@ The `zenity` command on Windows using [Scoop](https://scoop.sh/) 🍨:
 
     scoop install https://ncruces.github.io/scoop/zenity.json
 
-The `zenity` command on macOS/Windows if you have Go:
+The `zenity` command on macOS/Windows, if you have [Go](https://go.dev/):
 
     go install github.com/ncruces/zenity/cmd/zenity@latest
 
 Or download the [latest release](https://github.com/ncruces/zenity/releases/latest).
 
+## Using
+
+For the Go package, consult the [documentation](https://pkg.go.dev/github.com/ncruces/zenity#section-documentation)
+and [examples](https://pkg.go.dev/github.com/ncruces/zenity#pkg-examples).
+
+The `zenity` command does its best to be compatible with the GNOME version.\
+Consult the [documentation](https://help.gnome.org/users/zenity/stable/)
+and [man page](https://linux.die.net/man/1/zenity) of that command.
+
 ## Why?
 
-There are a bunch of other dialog packages for Go.\
-Why reinvent this particular wheel?
-
-#### Benefits:
+#### Benefits of the Go package:
 
 * no `cgo` (see [benefits](https://dave.cheney.net/2016/01/18/cgo-is-not-go), mostly cross-compilation)
 * no main loop (or any other threading or initialization requirements)
