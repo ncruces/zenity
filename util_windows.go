@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"os"
-	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
@@ -26,13 +25,10 @@ const (
 func intptr(i int64) uintptr  { return uintptr(i) }
 func strptr(s string) *uint16 { return syscall.StringToUTF16Ptr(s) }
 
-func hwnd(v reflect.Value) win.HWND {
-	return win.HWND(uintptr(v.Uint()))
-}
-
-func setup() context.CancelFunc {
-	var wnd win.HWND
-	win.EnumWindows(syscall.NewCallback(setupEnumCallback), unsafe.Pointer(&wnd))
+func setup(wnd win.HWND) context.CancelFunc {
+	if wnd == 0 {
+		win.EnumWindows(syscall.NewCallback(setupEnumCallback), unsafe.Pointer(&wnd))
+	}
 	if wnd == 0 {
 		wnd = win.GetConsoleWindow()
 	}

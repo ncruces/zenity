@@ -3,6 +3,7 @@ package zencmd
 import (
 	"strconv"
 
+	"github.com/ncruces/zenity/internal/win"
 	"golang.org/x/sys/windows"
 )
 
@@ -13,6 +14,6 @@ func ParseWindowId(id string) windows.HWND {
 }
 
 // GetParentWindowId is internal.
-func GetParentWindowId(pid int) int {
-	return 0
+func GetParentWindowId(pid int) windows.HWND {
+	return win.GetConsoleWindow()
 }

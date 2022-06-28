@@ -116,7 +116,8 @@ func (dlg *progressDialog) setup(opts options) error {
 	var once sync.Once
 	defer once.Do(dlg.init.Done)
 
-	defer setup()()
+	owner, _ := opts.attach.(win.HWND)
+	defer setup(owner)()
 	dlg.font = getFont()
 	defer dlg.font.delete()
 	icon := getIcon(opts.windowIcon)
@@ -137,7 +138,6 @@ func (dlg *progressDialog) setup(opts options) error {
 	}
 	defer win.UnregisterClass(cls, instance)
 
-	owner, _ := opts.attach.(win.HWND)
 	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_ZEN_DIALOG,
 		cls, strptr(*opts.title), _WS_ZEN_DIALOG,
 		win.CW_USEDEFAULT, win.CW_USEDEFAULT,

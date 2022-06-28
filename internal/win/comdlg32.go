@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// ChooseColor flags
 	CC_RGBINIT         = 0x00000001
 	CC_FULLOPEN        = 0x00000002
 	CC_PREVENTFULLOPEN = 0x00000004

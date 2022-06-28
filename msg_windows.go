@@ -52,7 +52,8 @@ func message(kind messageKind, text string, opts options) error {
 		}
 	}
 
-	defer setup()()
+	owner, _ := opts.attach.(win.HWND)
+	defer setup(owner)()
 	unhook, err := hookMessageDialog(opts)
 	if err != nil {
 		return err
@@ -64,7 +65,6 @@ func message(kind messageKind, text string, opts options) error {
 		title = strptr(*opts.title)
 	}
 
-	owner, _ := opts.attach.(win.HWND)
 	s, err := win.MessageBox(owner, strptr(text), title, flags)
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {

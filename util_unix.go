@@ -5,7 +5,6 @@ package zenity
 import (
 	"bytes"
 	"os/exec"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -97,10 +96,6 @@ func pwdResult(sep string, opts options, out []byte, err error) (string, string,
 		return usr, pwd, err
 	}
 	return "", str, err
-}
-
-func hwnd(v reflect.Value) uintptr {
-	return uintptr(v.Uint())
 }
 
 // Replace with strings.Cut after 1.18.

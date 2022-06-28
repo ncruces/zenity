@@ -13,8 +13,6 @@ package zenity
 import (
 	"context"
 	"image/color"
-	"reflect"
-	"runtime"
 	"time"
 
 	"github.com/ncruces/zenity/internal/zenutil"
@@ -189,38 +187,6 @@ func WindowIcon(icon any) Option {
 // Deprecated: use Icon instead.
 func CustomIcon(path string) Option {
 	return Icon(path)
-}
-
-// Attach returns an Option to set the parent window to attach to.
-//
-// Attach accepts:
-//  - a window id (int) on Unix
-//  - a window handle (~uintptr) on Windows
-//  - an application name (string) or process id (int) on macOS
-func Attach(id any) Option {
-	switch runtime.GOOS {
-	case "windows":
-		if v := reflect.ValueOf(id); v.Kind() == reflect.Uintptr {
-			id = hwnd(v)
-		} else {
-			panic("interface conversion: expected uintptr")
-		}
-
-	case "darwin":
-		switch id.(type) {
-		case int, string:
-		default:
-			panic("interface conversion: expected int or string")
-		}
-
-	default:
-		switch id.(type) {
-		case int:
-		default:
-			panic("interface conversion: expected int")
-		}
-	}
-	return funcOption(func(o *options) { o.attach = id })
 }
 
 // Modal returns an Option to set the modal hint.

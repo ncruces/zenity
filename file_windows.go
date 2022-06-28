@@ -36,7 +36,7 @@ func selectFile(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	defer setup()()
+	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
 		return "", err
@@ -79,7 +79,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	defer setup()()
+	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func selectFileSave(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	defer setup()()
+	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
 		return "", err
@@ -171,7 +171,8 @@ func selectFileSave(opts options) (string, error) {
 }
 
 func pickFolders(opts options, multi bool) (string, []string, error) {
-	defer setup()()
+	owner, _ := opts.attach.(win.HWND)
+	defer setup(owner)()
 
 	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
 	if err != win.RPC_E_CHANGED_MODE {
@@ -230,7 +231,6 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 		defer unhook()
 	}
 
-	owner, _ := opts.attach.(win.HWND)
 	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, opts.ctx.Err()

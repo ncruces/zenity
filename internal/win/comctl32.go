@@ -3,6 +3,7 @@
 package win
 
 const (
+	// InitCommonControlsEx flags
 	ICC_LISTVIEW_CLASSES   = 0x00000001
 	ICC_TREEVIEW_CLASSES   = 0x00000002
 	ICC_BAR_CLASSES        = 0x00000004

@@ -53,7 +53,8 @@ type listDialog struct {
 }
 
 func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
-	defer setup()()
+	owner, _ := opts.attach.(win.HWND)
+	defer setup(owner)()
 	dlg.font = getFont()
 	defer dlg.font.delete()
 	icon := getIcon(opts.windowIcon)
@@ -74,7 +75,6 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	}
 	defer win.UnregisterClass(cls, instance)
 
-	owner, _ := opts.attach.(win.HWND)
 	dlg.wnd, _ = win.CreateWindowEx(_WS_EX_ZEN_DIALOG,
 		cls, strptr(*opts.title), _WS_ZEN_DIALOG,
 		win.CW_USEDEFAULT, win.CW_USEDEFAULT,

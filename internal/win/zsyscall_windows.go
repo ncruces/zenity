@@ -58,6 +58,7 @@ var (
 	procActivateActCtx               = modkernel32.NewProc("ActivateActCtx")
 	procCreateActCtxW                = modkernel32.NewProc("CreateActCtxW")
 	procDeactivateActCtx             = modkernel32.NewProc("DeactivateActCtx")
+	procGenerateConsoleCtrlEvent     = modkernel32.NewProc("GenerateConsoleCtrlEvent")
 	procGetConsoleWindow             = modkernel32.NewProc("GetConsoleWindow")
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
@@ -173,6 +174,14 @@ func CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) {
 
 func DeactivateActCtx(flags uint32, cookie uintptr) (err error) {
 	r1, _, e1 := syscall.Syscall(procDeactivateActCtx.Addr(), 2, uintptr(flags), uintptr(cookie), 0)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupId int) (err error) {
+	r1, _, e1 := syscall.Syscall(procGenerateConsoleCtrlEvent.Addr(), 2, uintptr(ctrlEvent), uintptr(processGroupId), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}

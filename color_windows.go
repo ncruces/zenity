@@ -41,7 +41,7 @@ func selectColor(opts options) (color.Color, error) {
 		args.Flags |= win.CC_FULLOPEN
 	}
 
-	defer setup()()
+	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, opts.title, nil)
 	if err != nil {
 		return nil, err
