@@ -1,10 +1,12 @@
-package zenutil
+package zencmd
 
 import (
 	"strconv"
 
 	"golang.org/x/sys/unix"
 )
+
+type any = interface{}
 
 // ParseWindowId is internal.
 func ParseWindowId(id string) any {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/zenity"
+	"github.com/ncruces/zenity/internal/zencmd"
 )
 
 func progress(opts ...zenity.Option) (err error) {
@@ -21,7 +22,7 @@ func progress(opts ...zenity.Option) (err error) {
 	if autoKill {
 		defer func() {
 			if err == zenity.ErrCanceled {
-				killParent()
+				zencmd.KillParent()
 			}
 		}()
 	}

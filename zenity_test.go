@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncruces/zenity/internal/zenutil"
+	"github.com/ncruces/zenity/internal/zencmd"
 )
 
 func Test_applyOptions(t *testing.T) {
@@ -30,7 +30,7 @@ func Test_applyOptions(t *testing.T) {
 		{name: "Icon", args: Icon(ErrorIcon), want: options{icon: ErrorIcon}},
 		{name: "Icon", args: Icon("error"), want: options{icon: "error"}},
 		{name: "Modal", args: Modal(), want: options{modal: true}},
-		{name: "Attach", args: Attach(zenutil.ParseWindowId("12345")), want: options{attach: zenutil.ParseWindowId("12345")}},
+		{name: "Attach", args: Attach(zencmd.ParseWindowId("12345")), want: options{attach: zencmd.ParseWindowId("12345")}},
 
 		// Message options
 		{name: "NoWrap", args: NoWrap(), want: options{noWrap: true}},

@@ -1,6 +1,6 @@
 //go:build !windows && !darwin
 
-package zenutil
+package zencmd
 
 import (
 	"bytes"

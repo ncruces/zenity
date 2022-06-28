@@ -1,12 +1,13 @@
 //go:build darwin || dev
 
-package main
+package zencmd
 
 import (
 	"os"
 	"syscall"
 )
 
-func killParent() {
+// KillParent is internal.
+func KillParent() {
 	syscall.Kill(os.Getppid(), syscall.SIGHUP)
 }
