@@ -30,7 +30,7 @@ other bits are unfortunate limitations.
 
 The Go package:
 
-    go get github.com/ncruces/zenity
+    go get github.com/ncruces/zenity@latest
 
 The `zenity` command on macOS/WSL using [Homebrew](https://brew.sh/) 🍺:
 
@@ -74,3 +74,10 @@ and [man page](https://linux.die.net/man/1/zenity) of that command.
   * only dependency is `osascript`
 * on other Unixes:
   * wraps either one of `zenity`, `qarma`, `matedialog`
+
+## Credits
+
+I'd like to thank all [contributors](https://github.com/ncruces/zenity/graphs/contributors),
+but [@gen2brain](https://github.com/gen2brain) in particular
+for [`dlgs`](https://github.com/gen2brain/dlgs),
+which was instrumental to the Windows port of `zenity`.
