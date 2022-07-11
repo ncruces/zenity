@@ -281,30 +281,21 @@ func SendMessagePointer(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Poin
 	return
 }
 
-func GetDpiForWindow(wnd HWND) (ret int, err error) {
-	if err := procGetDpiForWindow.Find(); err != nil {
-		return 0, err
-	}
-	return getDpiForWindow(wnd), nil
-}
-
-func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
-	if err := procSetThreadDpiAwarenessContext.Find(); err != nil {
-		return 0, err
-	}
-	return setThreadDpiAwarenessContext(dpiContext), nil
-}
-
 // https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues
 func MessageLoop(wnd HWND) error {
+	msg, err := GlobalAlloc(0, unsafe.Sizeof(MSG{}))
+	if err != nil {
+		return err
+	}
+	defer GlobalFree(msg)
+
 	getMessage := procGetMessageW.Addr()
 	translateMessage := procTranslateMessage.Addr()
 	dispatchMessage := procDispatchMessageW.Addr()
 	isDialogMessage := procIsDialogMessageW.Addr()
 
 	for {
-		var msg MSG
-		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(unsafe.Pointer(&msg)), 0, 0, 0, 0, 0)
+		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(msg), 0, 0, 0, 0, 0)
 		if int32(s) == -1 {
 			return err
 		}
@@ -312,10 +303,10 @@ func MessageLoop(wnd HWND) error {
 			return nil
 		}
 
-		s, _, _ = syscall.Syscall(isDialogMessage, 2, uintptr(wnd), uintptr(unsafe.Pointer(&msg)), 0)
+		s, _, _ = syscall.Syscall(isDialogMessage, 2, uintptr(wnd), uintptr(msg), 0)
 		if s == 0 {
-			syscall.Syscall(translateMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
-			syscall.Syscall(dispatchMessage, 1, uintptr(unsafe.Pointer(&msg)), 0, 0)
+			syscall.Syscall(translateMessage, 1, uintptr(msg), 0, 0)
+			syscall.Syscall(dispatchMessage, 1, uintptr(msg), 0, 0)
 		}
 	}
 }
@@ -398,8 +389,8 @@ type CWPRETSTRUCT struct {
 //sys EnableWindow(wnd HWND, enable bool) (ok bool) = user32.EnableWindow
 //sys EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) = user32.EnumChildWindows
 //sys GetDlgItem(dlg HWND, dlgItemID int) (ret HWND, err error) = user32.GetDlgItem
-//sys getDpiForWindow(wnd HWND) (ret int) = user32.GetDpiForWindow
-//sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) = user32.GetMessageW
+//sys GetDpiForWindow(wnd HWND) (ret int, err error) [false] = user32.GetDpiForWindow?
+//sys GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr, err error) [int32(failretval)==-1] = user32.GetMessageW
 //sys GetSystemMetrics(index int) (ret int) = user32.GetSystemMetrics
 //sys GetWindowDC(wnd HWND) (ret Handle) = user32.GetWindowDC
 //sys GetWindowRect(wnd HWND, cmdShow *RECT) (err error) = user32.GetWindowRect
@@ -415,7 +406,7 @@ type CWPRETSTRUCT struct {
 //sys SetDlgItemText(dlg HWND, dlgItemID int, str *uint16) (err error) = user32.SetDlgItemTextW
 //sys SetFocus(wnd HWND) (ret HWND, err error) = user32.SetFocus
 //sys SetForegroundWindow(wnd HWND) (ok bool) = user32.SetForegroundWindow
-//sys setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) = user32.SetThreadDpiAwarenessContext
+//sys SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) [false] = user32.SetThreadDpiAwarenessContext?
 //sys SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) = user32.SetWindowLongW
 //sys SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, flags int) (err error) = user32.SetWindowPos
 //sys SetWindowsHookEx(idHook int, fn uintptr, mod Handle, threadID uint32) (ret Handle, err error) = user32.SetWindowsHookExW

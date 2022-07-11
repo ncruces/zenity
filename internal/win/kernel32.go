@@ -44,4 +44,6 @@ func GetSystemDirectory() (string, error) { return windows.GetSystemDirectory() 
 //sys GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupId int) (err error) = kernel32.GenerateConsoleCtrlEvent
 //sys GetConsoleWindow() (ret HWND) = kernel32.GetConsoleWindow
 //sys GetModuleHandle(moduleName *uint16) (ret Handle, err error) = kernel32.GetModuleHandleW
+//sys GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error) = kernel32.GlobalAlloc
+//sys GlobalFree(mem Handle) (err error) [failretval!=0] = kernel32.GlobalFree
 //sys ReleaseActCtx(actCtx Handle) = kernel32.ReleaseActCtx

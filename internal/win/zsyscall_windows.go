@@ -61,6 +61,8 @@ var (
 	procGenerateConsoleCtrlEvent     = modkernel32.NewProc("GenerateConsoleCtrlEvent")
 	procGetConsoleWindow             = modkernel32.NewProc("GetConsoleWindow")
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
+	procGlobalAlloc                  = modkernel32.NewProc("GlobalAlloc")
+	procGlobalFree                   = modkernel32.NewProc("GlobalFree")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
 	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
 	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
@@ -203,6 +205,23 @@ func GetModuleHandle(moduleName *uint16) (ret Handle, err error) {
 	return
 }
 
+func GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error) {
+	r0, _, e1 := syscall.Syscall(procGlobalAlloc.Addr(), 2, uintptr(flags), uintptr(bytes), 0)
+	ret = Handle(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GlobalFree(mem Handle) (err error) {
+	r1, _, e1 := syscall.Syscall(procGlobalFree.Addr(), 1, uintptr(mem), 0, 0)
+	if r1 != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
 func ReleaseActCtx(actCtx Handle) {
 	syscall.Syscall(procReleaseActCtx.Addr(), 1, uintptr(actCtx), 0, 0)
 	return
@@ -332,15 +351,25 @@ func GetDlgItem(dlg HWND, dlgItemID int) (ret HWND, err error) {
 	return
 }
 
-func getDpiForWindow(wnd HWND) (ret int) {
-	r0, _, _ := syscall.Syscall(procGetDpiForWindow.Addr(), 1, uintptr(wnd), 0, 0)
+func GetDpiForWindow(wnd HWND) (ret int, err error) {
+	err = procGetDpiForWindow.Find()
+	if err != nil {
+		return
+	}
+	r0, _, e1 := syscall.Syscall(procGetDpiForWindow.Addr(), 1, uintptr(wnd), 0, 0)
 	ret = int(r0)
+	if false {
+		err = errnoErr(e1)
+	}
 	return
 }
 
-func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr) {
-	r0, _, _ := syscall.Syscall6(procGetMessageW.Addr(), 4, uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax), 0, 0)
+func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr, err error) {
+	r0, _, e1 := syscall.Syscall6(procGetMessageW.Addr(), 4, uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax), 0, 0)
 	ret = uintptr(r0)
+	if int32(ret) == -1 {
+		err = errnoErr(e1)
+	}
 	return
 }
 
@@ -454,9 +483,16 @@ func SetForegroundWindow(wnd HWND) (ok bool) {
 	return
 }
 
-func setThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr) {
-	r0, _, _ := syscall.Syscall(procSetThreadDpiAwarenessContext.Addr(), 1, uintptr(dpiContext), 0, 0)
+func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
+	err = procSetThreadDpiAwarenessContext.Find()
+	if err != nil {
+		return
+	}
+	r0, _, e1 := syscall.Syscall(procSetThreadDpiAwarenessContext.Addr(), 1, uintptr(dpiContext), 0, 0)
 	ret = uintptr(r0)
+	if false {
+		err = errnoErr(e1)
+	}
 	return
 }
 
