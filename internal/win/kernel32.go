@@ -38,12 +38,12 @@ type ACTCTX struct {
 func GetCurrentThreadId() (id uint32)     { return windows.GetCurrentThreadId() }
 func GetSystemDirectory() (string, error) { return windows.GetSystemDirectory() }
 
-//sys ActivateActCtx(actCtx Handle, cookie *uintptr) (err error) = kernel32.ActivateActCtx
-//sys CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) = kernel32.CreateActCtxW
-//sys DeactivateActCtx(flags uint32, cookie uintptr) (err error) = kernel32.DeactivateActCtx
-//sys GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupId int) (err error) = kernel32.GenerateConsoleCtrlEvent
-//sys GetConsoleWindow() (ret HWND) = kernel32.GetConsoleWindow
-//sys GetModuleHandle(moduleName *uint16) (ret Handle, err error) = kernel32.GetModuleHandleW
-//sys GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error) = kernel32.GlobalAlloc
-//sys GlobalFree(mem Handle) (err error) [failretval!=0] = kernel32.GlobalFree
-//sys ReleaseActCtx(actCtx Handle) = kernel32.ReleaseActCtx
+//sys ActivateActCtx(actCtx Handle, cookie *uintptr) (err error)
+//sys CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) [failretval==^Handle(0)] = CreateActCtxW
+//sys DeactivateActCtx(flags uint32, cookie uintptr) (err error)
+//sys GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupId int) (err error)
+//sys GetConsoleWindow() (ret HWND)
+//sys GetModuleHandle(moduleName *uint16) (ret Handle, err error) = GetModuleHandleW
+//sys GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error)
+//sys GlobalFree(mem Handle) (err error) [failretval!=0]
+//sys ReleaseActCtx(actCtx Handle)

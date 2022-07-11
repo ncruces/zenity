@@ -50,12 +50,8 @@ func notify(text string, opts options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	s, err := win.ShellNotifyIcon(win.NIM_ADD, &args)
-	if s == 0 {
-		if errno, ok := err.(syscall.Errno); ok && errno == 0 {
-			return wtsMessage(text, opts)
-		}
-		return err
+	if !win.ShellNotifyIcon(win.NIM_ADD, &args) {
+		return wtsMessage(text, opts)
 	}
 
 	major, minor, _ := win.RtlGetNtVersionNumbers()

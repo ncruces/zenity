@@ -168,7 +168,7 @@ func ActivateActCtx(actCtx Handle, cookie *uintptr) (err error) {
 func CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) {
 	r0, _, e1 := syscall.Syscall(procCreateActCtxW.Addr(), 1, uintptr(unsafe.Pointer(actCtx)), 0, 0)
 	ret = Handle(r0)
-	if ret == 0 {
+	if ret == ^Handle(0) {
 		err = errnoErr(e1)
 	}
 	return
@@ -255,12 +255,9 @@ func SHGetPathFromIDListEx(ptr *IDLIST, path *uint16, pathLen int, opts int) (ok
 	return
 }
 
-func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ret int, err error) {
-	r0, _, e1 := syscall.Syscall(procShell_NotifyIconW.Addr(), 2, uintptr(message), uintptr(unsafe.Pointer(data)), 0)
-	ret = int(r0)
-	if ret == 0 {
-		err = errnoErr(e1)
-	}
+func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ok bool) {
+	r0, _, _ := syscall.Syscall(procShell_NotifyIconW.Addr(), 2, uintptr(message), uintptr(unsafe.Pointer(data)), 0)
+	ok = r0 != 0
 	return
 }
 
