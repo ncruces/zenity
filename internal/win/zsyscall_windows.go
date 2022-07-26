@@ -70,7 +70,7 @@ var (
 	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
 	procShell_NotifyIconW            = modshell32.NewProc("Shell_NotifyIconW")
 	procCallNextHookEx               = moduser32.NewProc("CallNextHookEx")
-	procCreateIconFromResource       = moduser32.NewProc("CreateIconFromResource")
+	procCreateIconFromResourceEx     = moduser32.NewProc("CreateIconFromResourceEx")
 	procCreateWindowExW              = moduser32.NewProc("CreateWindowExW")
 	procDefWindowProcW               = moduser32.NewProc("DefWindowProcW")
 	procDestroyIcon                  = moduser32.NewProc("DestroyIcon")
@@ -267,7 +267,7 @@ func CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer
 	return
 }
 
-func CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) {
+func CreateIconFromResourceEx(resBits []byte, icon bool, ver uint32, cx int, cy int, flags int) (ret Handle, err error) {
 	var _p0 *byte
 	if len(resBits) > 0 {
 		_p0 = &resBits[0]
@@ -276,7 +276,7 @@ func CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, 
 	if icon {
 		_p1 = 1
 	}
-	r0, _, e1 := syscall.Syscall6(procCreateIconFromResource.Addr(), 4, uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(_p1), uintptr(ver), 0, 0)
+	r0, _, e1 := syscall.Syscall9(procCreateIconFromResourceEx.Addr(), 7, uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(_p1), uintptr(ver), uintptr(cx), uintptr(cy), uintptr(flags), 0, 0)
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)

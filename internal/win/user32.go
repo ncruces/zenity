@@ -380,7 +380,7 @@ type CWPRETSTRUCT struct {
 }
 
 //sys CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.CallNextHookEx
-//sys CreateIconFromResource(resBits []byte, icon bool, ver uint32) (ret Handle, err error) = user32.CreateIconFromResource
+//sys CreateIconFromResourceEx(resBits []byte, icon bool, ver uint32, cx int, cy int, flags int) (ret Handle, err error) = user32.CreateIconFromResourceEx
 //sys CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) = user32.CreateWindowExW
 //sys DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) = user32.DefWindowProcW
 //sys DestroyIcon(icon Handle) (err error) = user32.DestroyIcon

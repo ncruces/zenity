@@ -75,7 +75,7 @@ func setupEnumCallback(wnd win.HWND, lparam *win.HWND) uintptr {
 }
 
 func hookDialog(ctx context.Context, icon any, title *string, init func(wnd win.HWND)) (unhook context.CancelFunc, err error) {
-	if ctx == nil && icon == nil && init == nil {
+	if ctx == nil && icon == nil && title == nil && init == nil {
 		return func() {}, nil
 	}
 	if ctx != nil && ctx.Err() != nil {
@@ -94,7 +94,7 @@ type dialogHook struct {
 	wnd   uintptr
 	hook  win.Handle
 	done  chan struct{}
-	icon  any
+	icon  icon
 	title *string
 	init  func(wnd win.HWND)
 }
@@ -111,7 +111,7 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 		ctx:   ctx,
 		tid:   tid,
 		hook:  hk,
-		icon:  icon,
+		icon:  getIcon(icon),
 		title: title,
 		init:  init,
 	}
@@ -132,12 +132,8 @@ func dialogHookProc(code int32, wparam uintptr, lparam *win.CWPRETSTRUCT) uintpt
 		if hook.ctx != nil && hook.ctx.Err() != nil {
 			win.SendMessage(lparam.Wnd, win.WM_SYSCOMMAND, win.SC_CLOSE, 0)
 		} else {
-			if hook.icon != nil {
-				icon := getIcon(hook.icon)
-				if icon.handle != 0 {
-					defer icon.delete()
-					win.SendMessage(lparam.Wnd, win.WM_SETICON, 0, uintptr(icon.handle))
-				}
+			if hook.icon.handle != 0 {
+				win.SendMessage(lparam.Wnd, win.WM_SETICON, 0, uintptr(hook.icon.handle))
 			}
 			if hook.title != nil {
 				win.SetWindowText(lparam.Wnd, strptr(*hook.title))
@@ -155,6 +151,7 @@ func (h *dialogHook) unhook() {
 	if h.done != nil {
 		close(h.done)
 	}
+	h.icon.delete()
 	win.UnhookWindowsHookEx(h.hook)
 }
 
@@ -289,17 +286,19 @@ func getIcon(i any) icon {
 		res.handle, _ = win.LoadImage(0,
 			strptr(path),
 			win.IMAGE_ICON, 0, 0,
-			win.LR_LOADFROMFILE|win.LR_DEFAULTSIZE|win.LR_SHARED)
+			win.LR_LOADFROMFILE|win.LR_DEFAULTSIZE)
+		res.destroy = true
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-		res.handle, err = win.CreateIconFromResource(
-			data, true, 0x00030000)
+		res.handle, _ = win.CreateIconFromResourceEx(
+			data, true, 0x00030000, 0, 0,
+			win.LR_DEFAULTSIZE)
 		res.destroy = true
 	}
 	return res
 }
 
 func (i *icon) delete() {
-	if i.handle != 0 {
+	if i.destroy && i.handle != 0 {
 		win.DestroyIcon(i.handle)
 		i.handle = 0
 	}

@@ -223,13 +223,11 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 		}
 	}
 
-	if opts.ctx != nil || opts.windowIcon != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
-		if err != nil {
-			return "", nil, err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return "", nil, err
 	}
+	defer unhook()
 
 	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
@@ -293,13 +291,11 @@ func browseForFolder(opts options) (string, []string, error) {
 		args.CallbackFunc = syscall.NewCallback(browseForFolderCallback)
 	}
 
-	if opts.ctx != nil || opts.windowIcon != nil {
-		unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
-		if err != nil {
-			return "", nil, err
-		}
-		defer unhook()
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return "", nil, err
 	}
+	defer unhook()
 
 	ptr := win.SHBrowseForFolder(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {

@@ -82,8 +82,9 @@ func message(kind messageKind, text string, opts options) error {
 	}
 }
 
-func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
+func hookMessageDialog(opts options) (context.CancelFunc, error) {
 	var init func(wnd win.HWND)
+	var icon icon
 	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || opts.icon != nil {
 		init = func(wnd win.HWND) {
 			if opts.okLabel != nil {
@@ -97,13 +98,19 @@ func hookMessageDialog(opts options) (unhook context.CancelFunc, err error) {
 				win.SetDlgItemText(wnd, win.IDNO, strptr(*opts.extraButton))
 			}
 
-			icon := getIcon(opts.icon)
 			if icon.handle != 0 {
-				defer icon.delete()
 				ctl, _ := win.GetDlgItem(wnd, win.IDC_STATIC_OK)
 				win.SendMessage(ctl, win.STM_SETICON, uintptr(icon.handle), 0)
 			}
 		}
 	}
-	return hookDialog(opts.ctx, opts.windowIcon, nil, init)
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, init)
+	if err != nil || opts.icon == nil {
+		return unhook, err
+	}
+	icon = getIcon(opts.icon)
+	return func() {
+		icon.delete()
+		unhook()
+	}, nil
 }

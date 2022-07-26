@@ -41,7 +41,7 @@ func notify(text string, opts options) error {
 		icon := getIcon(opts.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
-			args.Icon = win.Handle(icon.handle)
+			args.Icon = icon.handle
 			args.Flags |= win.NIF_ICON
 			args.InfoFlags |= win.NIIF_USER
 		}
