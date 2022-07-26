@@ -160,7 +160,8 @@ const (
 // Icon returns an Option to set the dialog icon.
 //
 // Icon accepts a DialogIcon, or a string.
-// The string can be a GTK icon name (Unix), or a path (Windows and macOS).
+// The string can be a GTK icon name (Unix), or a file path (Windows and macOS).
+// Supported file formats depend on the plaftorm, but PNG should be cross-platform.
 func Icon(icon any) Option {
 	switch icon.(type) {
 	case DialogIcon, string:
@@ -172,7 +173,8 @@ func Icon(icon any) Option {
 
 // WindowIcon returns an Option to set the window icon.
 //
-// WindowIcon accepts a DialogIcon, or a string path.
+// WindowIcon accepts a DialogIcon, or a string file path.
+// Supported file formats depend on the plaftorm, but PNG should be cross-platform.
 func WindowIcon(icon any) Option {
 	switch icon.(type) {
 	case DialogIcon, string:
