@@ -104,11 +104,15 @@ func hookMessageDialog(opts options) (context.CancelFunc, error) {
 			}
 		}
 	}
-	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, init)
-	if err != nil || opts.icon == nil {
-		return unhook, err
+	icon, err := getIcon(opts.icon)
+	if err != nil {
+		return nil, err
 	}
-	icon = getIcon(opts.icon)
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, init)
+	if err != nil {
+		icon.delete()
+		return nil, err
+	}
 	return func() {
 		icon.delete()
 		unhook()

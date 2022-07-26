@@ -38,7 +38,7 @@ func notify(text string, opts options) error {
 	case ErrorIcon:
 		args.InfoFlags |= win.NIIF_ERROR
 	default:
-		icon := getIcon(opts.icon)
+		icon, _ := getIcon(opts.icon)
 		if icon.handle != 0 {
 			defer icon.delete()
 			args.Icon = icon.handle

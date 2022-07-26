@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/ncruces/zenity/internal/win"
+	"golang.org/x/sys/windows"
 )
 
 const (
@@ -106,12 +108,13 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 	if hk == 0 {
 		return nil, err
 	}
+	ico, _ := getIcon(icon)
 
 	hook := dialogHook{
 		ctx:   ctx,
 		tid:   tid,
 		hook:  hk,
-		icon:  getIcon(icon),
+		icon:  ico,
 		title: title,
 		init:  init,
 	}
@@ -253,8 +256,7 @@ type icon struct {
 	destroy bool
 }
 
-func getIcon(i any) icon {
-	var res icon
+func getIcon(i any) (icon icon, err error) {
 	var resource uintptr
 	switch i {
 	case ErrorIcon:
@@ -267,38 +269,52 @@ func getIcon(i any) icon {
 		resource = win.IDI_INFORMATION
 	}
 	if resource != 0 {
-		res.handle, _ = win.LoadIcon(0, resource)
-		return res
+		icon.handle, err = win.LoadIcon(0, resource)
+		return icon, err
 	}
 
 	path, ok := i.(string)
 	if !ok {
-		return res
+		return icon, nil
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return res
+		return icon, err
 	}
 
 	switch {
 	case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
-		res.handle, _ = win.LoadImage(0,
+		icon.handle, err = win.LoadImage(0,
 			strptr(path),
 			win.IMAGE_ICON, 0, 0,
 			win.LR_LOADFROMFILE|win.LR_DEFAULTSIZE)
-		res.destroy = true
+		icon.destroy = true
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-		res.handle, _ = win.CreateIconFromResourceEx(
+		icon.handle, err = win.CreateIconFromResourceEx(
 			data, true, 0x00030000, 0, 0,
 			win.LR_DEFAULTSIZE)
-		res.destroy = true
+		icon.destroy = true
+	case bytes.HasPrefix(data, []byte("MZ")):
+		var instance windows.Handle
+		instance, err = win.GetModuleHandle(nil)
+		if err != nil {
+			break
+		}
+		path, err = filepath.Abs(path)
+		if err != nil {
+			break
+		}
+		var i uint16
+		icon.handle, err = win.ExtractAssociatedIcon(
+			instance, strptr(path), &i)
+		icon.destroy = true
 	}
-	return res
+	return icon, err
 }
 
 func (i *icon) delete() {
-	if i.destroy && i.handle != 0 {
+	if i.handle != 0 && i.destroy {
 		win.DestroyIcon(i.handle)
 		i.handle = 0
 	}

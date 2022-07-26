@@ -65,6 +65,7 @@ var (
 	procGlobalFree                   = modkernel32.NewProc("GlobalFree")
 	procReleaseActCtx                = modkernel32.NewProc("ReleaseActCtx")
 	procCoCreateInstance             = modole32.NewProc("CoCreateInstance")
+	procExtractAssociatedIconW       = modshell32.NewProc("ExtractAssociatedIconW")
 	procSHBrowseForFolder            = modshell32.NewProc("SHBrowseForFolder")
 	procSHCreateItemFromParsingName  = modshell32.NewProc("SHCreateItemFromParsingName")
 	procSHGetPathFromIDListEx        = modshell32.NewProc("SHGetPathFromIDListEx")
@@ -231,6 +232,15 @@ func CoCreateInstance(clsid uintptr, unkOuter *IUnknown, clsContext int32, iid u
 	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
+	}
+	return
+}
+
+func ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Handle, err error) {
+	r0, _, e1 := syscall.Syscall(procExtractAssociatedIconW.Addr(), 3, uintptr(instance), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(icon)))
+	ret = Handle(r0)
+	if ret == 0 {
+		err = errnoErr(e1)
 	}
 	return
 }

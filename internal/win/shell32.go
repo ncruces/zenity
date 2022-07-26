@@ -284,6 +284,7 @@ func (u *IShellItemArray) GetItemAt(index uint32) (item *IShellItem, err error) 
 	return
 }
 
+//sys ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Handle, err error) = shell32.ExtractAssociatedIconW
 //sys SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) = shell32.SHBrowseForFolder
 //sys SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ok bool) = shell32.Shell_NotifyIconW

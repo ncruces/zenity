@@ -41,7 +41,7 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	defer setup(owner)()
 	dlg.font = getFont()
 	defer dlg.font.delete()
-	icon := getIcon(opts.windowIcon)
+	icon, _ := getIcon(opts.windowIcon)
 	defer icon.delete()
 
 	if opts.ctx != nil && opts.ctx.Err() != nil {
