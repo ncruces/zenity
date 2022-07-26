@@ -231,11 +231,6 @@ const (
 	DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ^uintptr(4) + 1
 	DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED    = ^uintptr(5) + 1
 
-	// LoadImage type
-	IMAGE_BITMAP = 0
-	IMAGE_ICON   = 1
-	IMAGE_CURSOR = 2
-
 	// LoadIcon resources
 	IDI_APPLICATION = 32512
 	IDI_ERROR       = 32513
@@ -398,7 +393,6 @@ type CWPRETSTRUCT struct {
 //sys getWindowTextLength(wnd HWND) (ret int, err error) = user32.GetWindowTextLengthW
 //sys IsDialogMessage(wnd HWND, msg *MSG) (ok bool) = user32.IsDialogMessageW
 //sys LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) = user32.LoadIconW
-//sys LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) = user32.LoadImageW
 //sys PostQuitMessage(exitCode int) = user32.PostQuitMessage
 //sys RegisterClassEx(cls *WNDCLASSEX) (err error) = user32.RegisterClassExW
 //sys ReleaseDC(wnd HWND, dc Handle) (ok bool) = user32.ReleaseDC

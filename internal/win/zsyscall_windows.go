@@ -89,7 +89,6 @@ var (
 	procGetWindowTextW               = moduser32.NewProc("GetWindowTextW")
 	procIsDialogMessageW             = moduser32.NewProc("IsDialogMessageW")
 	procLoadIconW                    = moduser32.NewProc("LoadIconW")
-	procLoadImageW                   = moduser32.NewProc("LoadImageW")
 	procPostQuitMessage              = moduser32.NewProc("PostQuitMessage")
 	procRegisterClassExW             = moduser32.NewProc("RegisterClassExW")
 	procReleaseDC                    = moduser32.NewProc("ReleaseDC")
@@ -426,15 +425,6 @@ func IsDialogMessage(wnd HWND, msg *MSG) (ok bool) {
 
 func LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) {
 	r0, _, e1 := syscall.Syscall(procLoadIconW.Addr(), 2, uintptr(instance), uintptr(resource), 0)
-	ret = Handle(r0)
-	if ret == 0 {
-		err = errnoErr(e1)
-	}
-	return
-}
-
-func LoadImage(instance Handle, name *uint16, typ int, cx int, cy int, load int) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall6(procLoadImageW.Addr(), 6, uintptr(instance), uintptr(unsafe.Pointer(name)), uintptr(typ), uintptr(cx), uintptr(cy), uintptr(load))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)

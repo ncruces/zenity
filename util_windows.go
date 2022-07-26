@@ -3,6 +3,7 @@ package zenity
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/ncruces/zenity/internal/win"
-	"golang.org/x/sys/windows"
 )
 
 const (
@@ -278,39 +278,47 @@ func getIcon(i any) (icon icon, err error) {
 		return icon, nil
 	}
 
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return icon, err
+	}
+	defer file.Close()
+
+	var peek [8]byte
+	_, err = file.ReadAt(peek[:], 0)
 	if err != nil {
 		return icon, err
 	}
 
-	switch {
-	case bytes.HasPrefix(data, []byte("\x00\x00\x01\x00")):
-		icon.handle, err = win.LoadImage(0,
-			strptr(path),
-			win.IMAGE_ICON, 0, 0,
-			win.LR_LOADFROMFILE|win.LR_DEFAULTSIZE)
-		icon.destroy = true
-	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
+	if bytes.Equal(peek[:], []byte("\x89PNG\r\n\x1a\n")) {
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return icon, err
+		}
 		icon.handle, err = win.CreateIconFromResourceEx(
 			data, true, 0x00030000, 0, 0,
 			win.LR_DEFAULTSIZE)
-		icon.destroy = true
-	case bytes.HasPrefix(data, []byte("MZ")):
-		var instance windows.Handle
-		instance, err = win.GetModuleHandle(nil)
 		if err != nil {
-			break
+			return icon, err
+		}
+	} else {
+		instance, err := win.GetModuleHandle(nil)
+		if err != nil {
+			return icon, err
 		}
 		path, err = filepath.Abs(path)
 		if err != nil {
-			break
+			return icon, err
 		}
 		var i uint16
 		icon.handle, err = win.ExtractAssociatedIcon(
 			instance, strptr(path), &i)
-		icon.destroy = true
+		if err != nil {
+			return icon, err
+		}
 	}
-	return icon, err
+	icon.destroy = true
+	return icon, nil
 }
 
 func (i *icon) delete() {
