@@ -4,6 +4,7 @@ package zenity
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -66,11 +67,14 @@ func appendWindowIcon(args []string, opts options) []string {
 
 func strResult(opts options, out []byte, err error) (string, error) {
 	out = bytes.TrimSuffix(out, []byte{'\n'})
-	if err, ok := err.(*exec.ExitError); ok && err.ExitCode() == 1 {
-		if opts.extraButton != nil && *opts.extraButton == string(out) {
-			return "", ErrExtraButton
+	if eerr, ok := err.(*exec.ExitError); ok {
+		if eerr.ExitCode() == 1 {
+			if opts.extraButton != nil && *opts.extraButton == string(out) {
+				return "", ErrExtraButton
+			}
+			return "", ErrCanceled
 		}
-		return "", ErrCanceled
+		return "", fmt.Errorf("%w: %s", eerr, eerr.Stderr)
 	}
 	if err != nil {
 		return "", err

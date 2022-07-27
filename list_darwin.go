@@ -13,6 +13,9 @@ func list(text string, items []string, opts options) (string, error) {
 	if opts.extraButton != nil {
 		return "", fmt.Errorf("%w: extra button", ErrUnsupported)
 	}
+	if len(opts.defaultItems) > 1 {
+		return "", fmt.Errorf("%w: multiple default items", ErrUnsupported)
+	}
 
 	var data zenutil.List
 	data.Items = items

@@ -5,6 +5,7 @@ package zenutil
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -77,11 +78,14 @@ func (d *progressDialog) wait(extra *string, out *bytes.Buffer) {
 		case eerr.ExitCode() == -1 && atomic.LoadInt32(&d.closed) != 0:
 			err = nil
 		case eerr.ExitCode() == 1:
-			if extra != nil && *extra+"\n" == string(out.Bytes()) {
+			out := bytes.TrimSuffix(out.Bytes(), []byte{'\n'})
+			if extra != nil && *extra == string(out) {
 				err = ErrExtraButton
 			} else {
 				err = ErrCanceled
 			}
+		default:
+			err = fmt.Errorf("%w: %s", eerr, eerr.Stderr)
 		}
 	}
 	d.err = err
