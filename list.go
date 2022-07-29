@@ -3,7 +3,7 @@ package zenity
 // List displays the list dialog.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// WindowIcon, Attach, Modal, DefaultItems, DisallowEmpty.
+// WindowIcon, Attach, Modal, RadioList, DefaultItems, DisallowEmpty.
 //
 // May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func List(text string, items []string, options ...Option) (string, error) {
@@ -20,7 +20,7 @@ func ListItems(text string, items ...string) (string, error) {
 // ListMultiple displays the list dialog, allowing multiple items to be selected.
 //
 // Valid options: Title, Width, Height, OKLabel, CancelLabel, ExtraButton,
-// WindowIcon, Attach, Modal, DefaultItems, DisallowEmpty.
+// WindowIcon, Attach, Modal, CheckList, DefaultItems, DisallowEmpty.
 //
 // May return: ErrCanceled, ErrExtraButton, ErrUnsupported.
 func ListMultiple(text string, items []string, options ...Option) ([]string, error) {
@@ -33,6 +33,24 @@ func ListMultiple(text string, items []string, options ...Option) ([]string, err
 func ListMultipleItems(text string, items ...string) ([]string, error) {
 	return ListMultiple(text, items)
 }
+
+// CheckList returns an Option to show check boxes (Unix only).
+func CheckList() Option {
+	return funcOption(func(o *options) { o.listKind = checkListKind })
+}
+
+// RadioList returns an Option to show radio boxes (Unix only).
+func RadioList() Option {
+	return funcOption(func(o *options) { o.listKind = radioListKind })
+}
+
+type listKind int
+
+const (
+	basicListKind listKind = iota
+	checkListKind
+	radioListKind
+)
 
 // DefaultItems returns an Option to set the items to initially select (macOS only).
 func DefaultItems(items ...string) Option {

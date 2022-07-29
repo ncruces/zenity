@@ -57,6 +57,7 @@ type options struct {
 	username  bool
 
 	// List options
+	listKind      listKind
 	disallowEmpty bool
 	defaultItems  []string
 
