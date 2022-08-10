@@ -20,9 +20,6 @@ var (
 	DateParse  = func(s string) (time.Time, error) { return time.Parse("2006-01-02", s) }
 )
 
-// Remove after 1.18.
-type any = interface{}
-
 type stringErr string
 
 func (e stringErr) Error() string { return string(e) }

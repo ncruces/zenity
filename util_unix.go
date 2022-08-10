@@ -96,16 +96,8 @@ func lstResult(opts options, out []byte, err error) ([]string, error) {
 func pwdResult(sep string, opts options, out []byte, err error) (string, string, error) {
 	str, err := strResult(opts, out, err)
 	if opts.username {
-		usr, pwd, _ := cut(str, sep)
+		usr, pwd, _ := strings.Cut(str, sep)
 		return usr, pwd, err
 	}
 	return "", str, err
-}
-
-// Replace with strings.Cut after 1.18.
-func cut(s, sep string) (before, after string, found bool) {
-	if i := strings.Index(s, sep); i >= 0 {
-		return s[:i], s[i+len(sep):], true
-	}
-	return s, "", false
 }

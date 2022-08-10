@@ -18,9 +18,6 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-// Remove after 1.18.
-type any = interface{}
-
 func stringPtr(s string) *string { return &s }
 
 // ErrCanceled is returned when the cancel button is pressed,
