@@ -271,7 +271,7 @@ func GetWindowText(wnd HWND) string {
 }
 
 func SendMessagePointer(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
-	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSendMessageW.Addr(), uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam))
 	ret = uintptr(r0)
 	return
 }
@@ -290,7 +290,7 @@ func MessageLoop(wnd HWND) error {
 	isDialogMessage := procIsDialogMessageW.Addr()
 
 	for {
-		s, _, err := syscall.Syscall6(getMessage, 4, uintptr(msg), 0, 0, 0, 0, 0)
+		s, _, err := syscall.SyscallN(getMessage, uintptr(msg), 0, 0, 0)
 		if int32(s) == -1 {
 			return err
 		}
@@ -298,10 +298,10 @@ func MessageLoop(wnd HWND) error {
 			return nil
 		}
 
-		s, _, _ = syscall.Syscall(isDialogMessage, 2, uintptr(wnd), uintptr(msg), 0)
+		s, _, _ = syscall.SyscallN(isDialogMessage, uintptr(wnd), uintptr(msg))
 		if s == 0 {
-			syscall.Syscall(translateMessage, 1, uintptr(msg), 0, 0)
-			syscall.Syscall(dispatchMessage, 1, uintptr(msg), 0, 0)
+			syscall.SyscallN(translateMessage, uintptr(msg))
+			syscall.SyscallN(dispatchMessage, uintptr(msg))
 		}
 	}
 }

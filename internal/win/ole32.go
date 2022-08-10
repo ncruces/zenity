@@ -50,16 +50,12 @@ func (u *IUnknown) Release() {
 
 //go:uintptrescapes
 func (u *IUnknown) call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	switch nargs := uintptr(len(a)); nargs {
-	case 0:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), 0, 0)
-	case 1:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), a[0], 0)
-	case 2:
-		return syscall.Syscall(trap, nargs+1, uintptr(unsafe.Pointer(u)), a[0], a[1])
-	default:
-		panic("COM call with too many arguments.")
-	}
+	return unkcall(uintptr(unsafe.Pointer(u)), trap, a...)
+}
+
+//go:uintptrescapes
+func unkcall(self, trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
+	return syscall.SyscallN(trap, append([]uintptr{self}, a...)...)
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/objidl.idl
