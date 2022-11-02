@@ -58,7 +58,6 @@ var (
 	procActivateActCtx               = modkernel32.NewProc("ActivateActCtx")
 	procCreateActCtxW                = modkernel32.NewProc("CreateActCtxW")
 	procDeactivateActCtx             = modkernel32.NewProc("DeactivateActCtx")
-	procGenerateConsoleCtrlEvent     = modkernel32.NewProc("GenerateConsoleCtrlEvent")
 	procGetConsoleWindow             = modkernel32.NewProc("GetConsoleWindow")
 	procGetModuleHandleW             = modkernel32.NewProc("GetModuleHandleW")
 	procGlobalAlloc                  = modkernel32.NewProc("GlobalAlloc")
@@ -182,14 +181,6 @@ func DeactivateActCtx(flags uint32, cookie uintptr) (err error) {
 	return
 }
 
-func GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupId int) (err error) {
-	r1, _, e1 := syscall.Syscall(procGenerateConsoleCtrlEvent.Addr(), 2, uintptr(ctrlEvent), uintptr(processGroupId), 0)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-	return
-}
-
 func GetConsoleWindow() (ret HWND) {
 	r0, _, _ := syscall.Syscall(procGetConsoleWindow.Addr(), 0, 0, 0, 0)
 	ret = HWND(r0)
@@ -227,8 +218,8 @@ func ReleaseActCtx(actCtx Handle) {
 	return
 }
 
-func CoCreateInstance(clsid uintptr, unkOuter *IUnknown, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) {
-	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(clsid), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(iid), uintptr(address), 0)
+func CoCreateInstance(clsid *GUID, unkOuter *IUnknown, clsContext int32, iid *GUID, address unsafe.Pointer) (res error) {
+	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(unsafe.Pointer(clsid)), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(unsafe.Pointer(iid)), uintptr(address), 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}
@@ -250,8 +241,8 @@ func SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) {
 	return
 }
 
-func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid uintptr, item **IShellItem) (res error) {
-	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(iid), uintptr(unsafe.Pointer(item)), 0, 0)
+func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **IShellItem) (res error) {
+	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(item)), 0, 0)
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}

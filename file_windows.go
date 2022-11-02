@@ -327,10 +327,10 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 		copy(name, syscall.StringToUTF16(n))
 	}
 	if d != "" {
-		dir = strptr(d)
+		dir = syscall.StringToUTF16Ptr(d)
 	}
 	if len(e) > 1 {
-		ext = strptr(e[1:])
+		ext = syscall.StringToUTF16Ptr(e[1:])
 	}
 	return
 }

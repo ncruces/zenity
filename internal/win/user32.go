@@ -265,9 +265,12 @@ func GetWindowThreadProcessId(hwnd HWND, pid *uint32) (tid uint32, err error) {
 
 func GetWindowText(wnd HWND) string {
 	len, _ := getWindowTextLength(wnd)
+	if len == 0 {
+		return ""
+	}
 	buf := make([]uint16, len+1)
 	getWindowText(wnd, &buf[0], len+1)
-	return syscall.UTF16ToString(buf)
+	return windows.UTF16ToString(buf)
 }
 
 func SendMessagePointer(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {

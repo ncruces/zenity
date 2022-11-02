@@ -3,9 +3,10 @@
 package win
 
 import (
-	"reflect"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 const (
@@ -120,9 +121,9 @@ type IDLIST struct{}
 // https://github.com/wine-mirror/wine/blob/master/include/shobjidl.idl
 
 var (
-	IID_IShellItem       = uuid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
-	IID_IFileOpenDialog  = uuid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
-	CLSID_FileOpenDialog = uuid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
+	IID_IShellItem       = guid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
+	IID_IFileOpenDialog  = guid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
+	CLSID_FileOpenDialog = guid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
 )
 
 type IFileOpenDialog struct{ IFileDialog }
@@ -240,16 +241,14 @@ type iShellItemVtbl struct {
 }
 
 func (u *IShellItem) GetDisplayName(name int) (res string, err error) {
-	var ptr uintptr
+	var ptr *uint16
 	vtbl := *(**iShellItemVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.GetDisplayName, uintptr(name), uintptr(unsafe.Pointer(&ptr)))
 	if hr != 0 {
 		err = syscall.Errno(hr)
 	} else {
-		var buf []uint16
-		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&buf))
-		hdr.Data, hdr.Len, hdr.Cap = uintptr(ptr), 32768, 32768
-		res = syscall.UTF16ToString(buf)
+		res = windows.UTF16PtrToString(ptr)
+		CoTaskMemFree(unsafe.Pointer(ptr))
 	}
 	return
 }
@@ -286,6 +285,6 @@ func (u *IShellItemArray) GetItemAt(index uint32) (item *IShellItem, err error) 
 
 //sys ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Handle, err error) = shell32.ExtractAssociatedIconW
 //sys SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) = shell32.SHBrowseForFolder
-//sys SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid uintptr, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
+//sys SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ok bool) = shell32.Shell_NotifyIconW
 //sys SHGetPathFromIDListEx(ptr *IDLIST, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx

@@ -71,7 +71,7 @@ func CommDlgError() error {
 	if code := commDlgExtendedError(); code == 0 {
 		return zenutil.ErrCanceled
 	} else {
-		return fmt.Errorf("Common Dialog error: %x", code)
+		return fmt.Errorf("common dialog error: %x", code)
 	}
 }
 

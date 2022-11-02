@@ -62,8 +62,8 @@ func unkcall(self, trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
 
 type IBindCtx struct{ IUnknown }
 
-//sys CoCreateInstance(clsid uintptr, unkOuter *IUnknown, clsContext int32, iid uintptr, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
+//sys CoCreateInstance(clsid *GUID, unkOuter *IUnknown, clsContext int32, iid *GUID, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
 
-func uuid(s string) uintptr {
-	return (*reflect.StringHeader)(unsafe.Pointer(&s)).Data
+func guid(s string) *GUID {
+	return (*GUID)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data))
 }

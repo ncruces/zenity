@@ -5,9 +5,12 @@ package win
 
 import "golang.org/x/sys/windows"
 
-type Handle = windows.Handle
-type HWND = windows.HWND
-type Pointer = windows.Pointer
+type (
+	Handle  = windows.Handle
+	HWND    = windows.HWND
+	Pointer = windows.Pointer
+	GUID    = windows.GUID
+)
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-systemtime
 type SYSTEMTIME struct {
