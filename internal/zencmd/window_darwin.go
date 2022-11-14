@@ -1,6 +1,7 @@
 package zencmd
 
 import (
+	"math"
 	"strconv"
 
 	"golang.org/x/sys/unix"
@@ -11,7 +12,7 @@ type any = interface{}
 // ParseWindowId is internal.
 func ParseWindowId(id string) any {
 	if pid, err := strconv.ParseUint(id, 0, 64); err == nil {
-		return int(pid)
+		return int(pid & math.MaxInt)
 	}
 	return id
 }

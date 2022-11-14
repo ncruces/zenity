@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -14,7 +15,7 @@ import (
 // ParseWindowId is internal.
 func ParseWindowId(id string) int {
 	wid, _ := strconv.ParseUint(id, 0, 64)
-	return int(wid)
+	return int(wid & math.MaxInt)
 }
 
 // GetParentWindowId is internal.
