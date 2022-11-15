@@ -5,8 +5,8 @@ cd "${BASH_SOURCE%/*}"
 
 go generate ../../...
 
-TAG=$(git tag --points-at HEAD)
-echo 'package main; const tag = "'$TAG'"' > tag.go
+TAG=$(git diff --quiet && git tag --points-at HEAD || true)
+echo 'package main; const tag = "'$TAG'"' | gofmt > tag.go
 
 printf '#!/bin/sh\nexec zenity.exe --unixeol --cygpath "$@"' > zenity
 go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo "-product-version=$TAG"
