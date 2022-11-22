@@ -31,7 +31,7 @@ type ProgressDialog interface {
 	Done() <-chan struct{}
 }
 
-// MaxValue returns an Option to set the maximum value (Windows and macOS only).
+// MaxValue returns an Option to set the maximum value.
 // The default maximum value is 100.
 func MaxValue(value int) Option {
 	return funcOption(func(o *options) { o.maxValue = value })

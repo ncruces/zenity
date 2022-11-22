@@ -71,6 +71,8 @@ var (
 
 	// List options
 	columns    int
+	checklist  bool
+	radiolist  bool
 	allowEmpty bool
 
 	// Calendar options
@@ -92,11 +94,12 @@ var (
 	showPalette  bool
 
 	// Progress options
-	percentage float64
-	pulsate    bool
-	autoClose  bool
-	autoKill   bool
-	noCancel   bool
+	percentage    float64
+	pulsate       bool
+	autoClose     bool
+	autoKill      bool
+	noCancel      bool
+	timeRemaining bool
 
 	// Notify options
 	listen bool
@@ -110,19 +113,11 @@ var (
 	version bool
 )
 
-func init() {
-	usage := flag.Usage
-	flag.Usage = func() {
-		usage()
-		os.Exit(-1)
-	}
-}
-
 func main() {
-	setupFlags()
-	flag.Parse()
-	validateFlags()
+	args := parseFlags()
 	opts := loadFlags()
+	validateFlags()
+
 	zenutil.Command = true
 	zenutil.DateUTS35 = func() (string, error) { return strftime.UTS35(zenutil.DateFormat) }
 	zenutil.DateParse = func(s string) (time.Time, error) { return strftime.Parse(zenutil.DateFormat, s) }
@@ -153,10 +148,19 @@ func main() {
 		strResult(zenity.Entry(text, opts...))
 
 	case listDlg:
+		if columns > 1 {
+			var n int
+			for i := 1; i < len(args); {
+				args[n] = args[i]
+				i += columns
+				n += 1
+			}
+			args = args[:n:n]
+		}
 		if multiple {
-			lstResult(zenity.ListMultiple(text, flag.Args(), opts...))
+			lstResult(zenity.ListMultiple(text, args, opts...))
 		} else {
-			strResult(zenity.List(text, flag.Args(), opts...))
+			strResult(zenity.List(text, args, opts...))
 		}
 
 	case calendarDlg:
@@ -185,97 +189,102 @@ func main() {
 		errResult(notify(opts...))
 
 	default:
-		flag.Usage()
+		panic("unreachable")
 	}
 }
 
-func setupFlags() {
+func parseFlags() []string {
+	fset := flag.NewFlagSet("zenity", flag.ContinueOnError)
+
 	// Application Options
-	flag.BoolVar(&errorDlg, "error", false, "Display error dialog")
-	flag.BoolVar(&infoDlg, "info", false, "Display info dialog")
-	flag.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
-	flag.BoolVar(&questionDlg, "question", false, "Display question dialog")
-	flag.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
-	flag.BoolVar(&listDlg, "list", false, "Display list dialog")
-	flag.BoolVar(&calendarDlg, "calendar", false, "Display calendar dialog")
-	flag.BoolVar(&passwordDlg, "password", false, "Display password dialog")
-	flag.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
-	flag.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
-	flag.BoolVar(&progressDlg, "progress", false, "Display progress indication dialog")
-	flag.BoolVar(&notification, "notification", false, "Display notification")
+	fset.BoolVar(&errorDlg, "error", false, "Display error dialog")
+	fset.BoolVar(&infoDlg, "info", false, "Display info dialog")
+	fset.BoolVar(&warningDlg, "warning", false, "Display warning dialog")
+	fset.BoolVar(&questionDlg, "question", false, "Display question dialog")
+	fset.BoolVar(&entryDlg, "entry", false, "Display text entry dialog")
+	fset.BoolVar(&listDlg, "list", false, "Display list dialog")
+	fset.BoolVar(&calendarDlg, "calendar", false, "Display calendar dialog")
+	fset.BoolVar(&passwordDlg, "password", false, "Display password dialog")
+	fset.BoolVar(&fileSelectionDlg, "file-selection", false, "Display file selection dialog")
+	fset.BoolVar(&colorSelectionDlg, "color-selection", false, "Display color selection dialog")
+	fset.BoolVar(&progressDlg, "progress", false, "Display progress indication dialog")
+	fset.BoolVar(&notification, "notification", false, "Display notification")
 
 	// General options
-	flag.StringVar(&title, "title", "", "Set the dialog `title`")
-	flag.UintVar(&width, "width", 0, "Set the `width`")
-	flag.UintVar(&height, "height", 0, "Set the `height`")
-	flag.StringVar(&okLabel, "ok-label", "", "Set the `label` of the OK button")
-	flag.StringVar(&cancelLabel, "cancel-label", "", "Set the `label` of the Cancel button")
-	flag.Func("extra-button", "Add an extra `button`", setExtraButton)
-	flag.StringVar(&text, "text", "", "Set the dialog `text`")
-	flag.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
-	flag.StringVar(&attach, "attach", "", "Set the parent `window` to attach to")
-	flag.BoolVar(&modal, "modal", runtime.GOOS == "darwin", "Set the modal hint")
-	flag.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
-	flag.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
+	fset.StringVar(&title, "title", "", "Set the dialog `title`")
+	fset.UintVar(&width, "width", 0, "Set the `width` (Unix only)")
+	fset.UintVar(&height, "height", 0, "Set the `height` (Unix only)")
+	fset.StringVar(&okLabel, "ok-label", "", "Set the `label` of the OK button")
+	fset.StringVar(&cancelLabel, "cancel-label", "", "Set the `label` of the Cancel button")
+	fset.Func("extra-button", "Add an extra `button`", setExtraButton)
+	fset.StringVar(&text, "text", "", "Set the dialog `text`")
+	fset.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
+	fset.StringVar(&attach, "attach", "", "Set the parent `window` to attach to")
+	fset.BoolVar(&modal, "modal", runtime.GOOS == "darwin", "Set the modal hint")
+	fset.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
+	fset.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
 	// Message options
-	flag.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
-	flag.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping")
-	flag.BoolVar(&noMarkup, "no-markup", false, "Do not enable Pango markup")
-	flag.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text")
+	fset.StringVar(&icon, "icon-name", "", "Set the dialog `icon` (dialog-error, dialog-information, dialog-question, dialog-warning)")
+	fset.BoolVar(&noWrap, "no-wrap", false, "Do not enable text wrapping (Unix only)")
+	fset.BoolVar(&noMarkup, "no-markup", false, "Do not enable Pango markup")
+	fset.BoolVar(&ellipsize, "ellipsize", false, "Enable ellipsizing in the dialog text (Unix only)")
 
 	// Entry options
-	flag.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
-	flag.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
+	fset.StringVar(&entryText, "entry-text", "", "Set the entry `text`")
+	fset.BoolVar(&hideText, "hide-text", false, "Hide the entry text")
 
 	// Password options
-	flag.BoolVar(&username, "username", false, "Display the username option")
+	fset.BoolVar(&username, "username", false, "Display the username option")
 
 	// List options
-	flag.Func("column", "Set the column `header`", addColumn)
-	flag.Bool("hide-header", true, "Hide the column headers")
-	flag.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
+	fset.Func("column", "Set the column `header`", addColumn)
+	fset.Bool("hide-header", true, "Hide the column headers")
+	fset.BoolVar(&checklist, "checklist", false, "Use check boxes for the first column (Unix only)")
+	fset.BoolVar(&radiolist, "radiolist", false, "Use radio buttons for the first column (Unix only)")
+	fset.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
 
 	// Calendar options
-	flag.UintVar(&year, "year", 0, "Set the calendar `year`")
-	flag.UintVar(&month, "month", 0, "Set the calendar `month`")
-	flag.UintVar(&day, "day", 0, "Set the calendar `day`")
-	flag.StringVar(&zenutil.DateFormat, "date-format", "%m/%d/%Y", "Set the `format` for the returned date")
+	fset.UintVar(&year, "year", 0, "Set the calendar `year`")
+	fset.UintVar(&month, "month", 0, "Set the calendar `month`")
+	fset.UintVar(&day, "day", 0, "Set the calendar `day`")
+	fset.StringVar(&zenutil.DateFormat, "date-format", "%m/%d/%Y", "Set the `format` for the returned date")
 
 	// File selection options
-	flag.BoolVar(&save, "save", false, "Activate save mode")
-	flag.BoolVar(&directory, "directory", false, "Activate directory-only selection")
-	flag.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
-	flag.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
-	flag.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
-	flag.StringVar(&filename, "filename", "", "Set the `filename`")
-	flag.Func("file-filter", "Set a filename `filter` (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
+	fset.BoolVar(&save, "save", false, "Activate save mode")
+	fset.BoolVar(&directory, "directory", false, "Activate directory-only selection")
+	fset.BoolVar(&confirmOverwrite, "confirm-overwrite", false, "Confirm file selection if filename already exists")
+	fset.BoolVar(&confirmCreate, "confirm-create", false, "Confirm file selection if filename does not yet exist (Windows only)")
+	fset.BoolVar(&showHidden, "show-hidden", false, "Show hidden files (Windows and macOS only)")
+	fset.StringVar(&filename, "filename", "", "Set the `filename`")
+	fset.Func("file-filter", "Set a filename `filter` (NAME | PATTERN1 PATTERN2 ...)", addFileFilter)
 
 	// Color selection options
-	flag.StringVar(&defaultColor, "color", "", "Set the `color`")
-	flag.BoolVar(&showPalette, "show-palette", false, "Show the palette")
+	fset.StringVar(&defaultColor, "color", "", "Set the `color`")
+	fset.BoolVar(&showPalette, "show-palette", false, "Show the palette")
 
 	// Progress options
-	flag.Float64Var(&percentage, "percentage", 0, "Set initial `percentage`")
-	flag.BoolVar(&pulsate, "pulsate", false, "Pulsate progress bar")
-	flag.BoolVar(&noCancel, "no-cancel", false, "Hide Cancel button (Windows and Unix only)")
-	flag.BoolVar(&autoClose, "auto-close", false, "Dismiss the dialog when 100% has been reached")
-	flag.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
+	fset.Float64Var(&percentage, "percentage", 0, "Set initial `percentage`")
+	fset.BoolVar(&pulsate, "pulsate", false, "Pulsate progress bar")
+	fset.BoolVar(&autoClose, "auto-close", false, "Dismiss the dialog when 100% has been reached")
+	fset.BoolVar(&autoKill, "auto-kill", false, "Kill parent process if Cancel button is pressed (macOS and Unix only)")
+	fset.BoolVar(&noCancel, "no-cancel", false, "Hide Cancel button (Windows and Unix only)")
+	fset.BoolVar(&timeRemaining, "time-remaining", false, "Estimate when progress will reach 100% (Unix only)")
 
 	// Notify options
-	flag.BoolVar(&listen, "listen", false, "Listen for commands on stdin")
+	fset.BoolVar(&listen, "listen", false, "Listen for commands on stdin")
 
 	// Windows specific options
 	if runtime.GOOS == "windows" {
-		flag.BoolVar(&unixeol, "unixeol", false, "Use Unix line endings (Windows only)")
-		flag.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
-		flag.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
+		fset.BoolVar(&unixeol, "unixeol", false, "Use Unix line endings (Windows only)")
+		fset.BoolVar(&cygpath, "cygpath", false, "Use cygpath for path translation (Windows only)")
+		fset.BoolVar(&wslpath, "wslpath", false, "Use wslpath for path translation (Windows only)")
 	}
 
 	// Command options
-	flag.BoolVar(&version, "version", false, "Show version of program")
-	flag.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog `timeout` in seconds")
-	flag.StringVar(&zenutil.Separator, "separator", "|", "Set output `separator` character")
+	fset.BoolVar(&version, "version", false, "Show version of program")
+	fset.IntVar(&zenutil.Timeout, "timeout", 0, "Set dialog `timeout` in seconds")
+	fset.StringVar(&zenutil.Separator, "separator", "|", "Set output `separator` character")
 
 	// Detect unspecified values
 	title = unspecified
@@ -285,15 +294,28 @@ func setupFlags() {
 	text = unspecified
 	icon = unspecified
 	windowIcon = unspecified
+
+	fset.Usage = func() {}
+	err := fset.Parse(os.Args[1:])
+	if err == flag.ErrHelp {
+		fmt.Println("usage: zenity [options...]")
+		fset.PrintDefaults()
+		os.Exit(0)
+	}
+	if err != nil {
+		os.Exit(-1)
+	}
+	return fset.Args()
 }
 
 func validateFlags() {
-	var n int
 	if version {
 		fmt.Printf("zenity %s %s/%s\n", getVersion(), runtime.GOOS, runtime.GOARCH)
 		fmt.Println("https://github.com/ncruces/zenity")
 		os.Exit(0)
 	}
+
+	var n int
 	if errorDlg {
 		n++
 	}
@@ -330,8 +352,28 @@ func validateFlags() {
 	if notification {
 		n++
 	}
-	if n != 1 {
-		flag.Usage()
+	if n == 0 {
+		os.Stderr.WriteString("no dialog type specified; try 'zenity --help'\n")
+		os.Exit(-1)
+	}
+	if n >= 2 {
+		os.Stderr.WriteString("two or more dialogs types specified\n")
+		os.Exit(-1)
+	}
+
+	if checklist {
+		multiple = true
+	}
+	if radiolist {
+		multiple = false
+	}
+	if checklist && radiolist {
+		os.Stderr.WriteString("two or more list dialog types specified\n")
+		os.Exit(-1)
+	}
+	if !checklist && !radiolist && columns > 1 || columns > 2 {
+		os.Stderr.WriteString("multiple columns not supported\n")
+		os.Exit(-1)
 	}
 }
 
@@ -468,7 +510,7 @@ func loadFlags() []zenity.Option {
 	if ellipsize {
 		opts = append(opts, zenity.Ellipsize())
 	}
-	if noMarkup == false {
+	if !noMarkup {
 		switch {
 		case errorDlg, infoDlg, warningDlg, questionDlg:
 			text = zencmd.StripMarkup(text)
@@ -490,9 +532,17 @@ func loadFlags() []zenity.Option {
 
 	// List options
 
+	if checklist {
+		opts = append(opts, zenity.CheckList())
+	}
+	if radiolist {
+		opts = append(opts, zenity.RadioList())
+	}
 	if !allowEmpty {
 		opts = append(opts, zenity.DisallowEmpty())
 	}
+
+	// Calendar options
 
 	y, m, d := time.Now().Date()
 	if month != 0 {
@@ -541,6 +591,9 @@ func loadFlags() []zenity.Option {
 	}
 	if noCancel {
 		opts = append(opts, zenity.NoCancel())
+	}
+	if timeRemaining {
+		opts = append(opts, zenity.TimeRemaining())
 	}
 
 	return opts
@@ -665,9 +718,6 @@ func setExtraButton(s string) error {
 
 func addColumn(s string) error {
 	columns++
-	if columns > 1 {
-		return errors.New("multiple columns not supported")
-	}
 	return nil
 }
 

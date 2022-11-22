@@ -30,7 +30,8 @@ func notify(opts ...zenity.Option) error {
 			cmd = strings.TrimSpace(line[:n])
 			msg = strings.TrimSpace(zencmd.Unescape(line[n+1:]))
 		} else {
-			fmt.Fprint(os.Stderr, "Could not parse command from stdin")
+			os.Stderr.WriteString("Could not parse command from stdin\n")
+			continue
 		}
 		switch cmd {
 		case "icon":
@@ -60,7 +61,7 @@ func notify(opts ...zenity.Option) error {
 		case "visible", "hints":
 			// ignored
 		default:
-			fmt.Fprintf(os.Stderr, "Unknown command %q", cmd)
+			fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
 		}
 	}
 	return nil
