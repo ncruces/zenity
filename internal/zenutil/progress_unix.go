@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -78,8 +79,7 @@ func (d *progressDialog) wait(extra *string, out *bytes.Buffer) {
 		case eerr.ExitCode() == -1 && atomic.LoadInt32(&d.closed) != 0:
 			err = nil
 		case eerr.ExitCode() == 1:
-			out := bytes.TrimSuffix(out.Bytes(), []byte{'\n'})
-			if extra != nil && *extra == string(out) {
+			if extra != nil && *extra == strings.TrimSuffix(out.String(), "\n") {
 				err = ErrExtraButton
 			} else {
 				err = ErrCanceled
