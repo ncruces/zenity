@@ -182,13 +182,6 @@ func WindowIcon(icon any) Option {
 	return funcOption(func(o *options) { o.windowIcon = icon })
 }
 
-// CustomIcon returns an Option to set a custom dialog icon.
-//
-// Deprecated: use Icon instead.
-func CustomIcon(path string) Option {
-	return Icon(path)
-}
-
 // Modal returns an Option to set the modal hint.
 func Modal() Option {
 	return funcOption(func(o *options) { o.modal = true })

@@ -26,11 +26,6 @@ func SelectFileMultiple(options ...Option) ([]string, error) {
 	return selectFileMultiple(applyOptions(options))
 }
 
-// Deprecated: use SelectFileMultiple.
-func SelectFileMutiple(options ...Option) ([]string, error) {
-	return SelectFileMultiple(options...)
-}
-
 // SelectFileSave displays the save file selection dialog.
 //
 // Valid options: Title, WindowIcon, Attach, Modal, Filename,
