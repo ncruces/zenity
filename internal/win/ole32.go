@@ -50,12 +50,7 @@ func (u *IUnknown) Release() {
 
 //go:uintptrescapes
 func (u *IUnknown) call(trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	return unkcall(uintptr(unsafe.Pointer(u)), trap, a...)
-}
-
-//go:uintptrescapes
-func unkcall(self, trap uintptr, a ...uintptr) (r1, r2 uintptr, lastErr error) {
-	return syscall.SyscallN(trap, append([]uintptr{self}, a...)...)
+	return syscall.SyscallN(trap, append([]uintptr{uintptr(unsafe.Pointer(u))}, a...)...)
 }
 
 // https://github.com/wine-mirror/wine/blob/master/include/objidl.idl
