@@ -68,7 +68,6 @@ const (
 	// Window classes
 	PROGRESS_CLASS = "msctls_progress32"
 	MONTHCAL_CLASS = "SysMonthCal32"
-	WC_LISTVIEW    = "SysListView32"
 
 	// Window styles
 	WS_OVERLAPPED       = 0x00000000
