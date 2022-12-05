@@ -49,7 +49,7 @@ const (
 	errorKind
 )
 
-// NoWrap returns an Option to disable enable text wrapping (Unix only).
+// NoWrap returns an Option to disable text wrapping (Unix only).
 func NoWrap() Option {
 	return funcOption(func(o *options) { o.noWrap = true })
 }
