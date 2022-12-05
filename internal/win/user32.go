@@ -142,6 +142,7 @@ const (
 	ES_AUTOHSCROLL = 0x0080
 
 	// List box control styles
+	LBS_NOTIFY      = 0x0001
 	LBS_EXTENDEDSEL = 0x0800
 
 	// Month calendar control styles

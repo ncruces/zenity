@@ -31,17 +31,19 @@ func listDlg(text string, items []string, multiple bool, opts options) ([]string
 	}
 
 	dlg := &listDialog{
-		items:    items,
-		multiple: multiple,
+		items:         items,
+		multiple:      multiple,
+		disallowEmpty: opts.disallowEmpty,
 	}
 	return dlg.setup(text, opts)
 }
 
 type listDialog struct {
-	items    []string
-	multiple bool
-	out      []string
-	err      error
+	items         []string
+	multiple      bool
+	disallowEmpty bool
+	out           []string
+	err           error
 
 	wnd       win.HWND
 	textCtl   win.HWND
@@ -84,7 +86,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		strptr("STATIC"), strptr(text), _WS_ZEN_LABEL,
 		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
 
-	var flags uint32 = _WS_ZEN_CONTROL | win.WS_VSCROLL
+	var flags uint32 = _WS_ZEN_CONTROL | win.WS_VSCROLL | win.LBS_NOTIFY
 	if dlg.multiple {
 		flags |= win.LBS_EXTENDEDSEL
 	}
@@ -120,6 +122,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 		}
 	}
 
+	dlg.update()
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
 	win.SetFocus(dlg.listCtl)
@@ -166,6 +169,20 @@ func (dlg *listDialog) layout(dpi dpi) {
 	}
 }
 
+func (dlg *listDialog) update() {
+	if dlg.disallowEmpty {
+		var enable bool
+		if dlg.multiple {
+			len := win.SendMessage(dlg.listCtl, win.LB_GETSELCOUNT, 0, 0)
+			enable = int32(len) > 0
+		} else {
+			idx := win.SendMessage(dlg.listCtl, win.LB_GETCURSEL, 0, 0)
+			enable = int32(idx) >= 0
+		}
+		win.EnableWindow(dlg.okBtn, enable)
+	}
+}
+
 func listProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer) uintptr {
 	var dlg *listDialog
 	switch msg {
@@ -189,6 +206,7 @@ func listProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer) 
 	case win.WM_COMMAND:
 		switch wparam {
 		default:
+			dlg.update()
 			return 1
 		case win.IDOK, win.IDYES:
 			if dlg.multiple {
