@@ -57,7 +57,7 @@ func DefaultItems(items ...string) Option {
 	return funcOption(func(o *options) { o.defaultItems = items })
 }
 
-// DisallowEmpty returns an Option to not allow zero items to be selected (macOS only).
+// DisallowEmpty returns an Option to not allow zero items to be selected (Windows and macOS only).
 func DisallowEmpty() Option {
 	return funcOption(func(o *options) { o.disallowEmpty = true })
 }
