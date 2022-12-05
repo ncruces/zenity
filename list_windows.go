@@ -107,8 +107,17 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 			12, 206, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}
 
-	for _, item := range dlg.items {
+	for i, item := range dlg.items {
 		win.SendMessagePointer(dlg.listCtl, win.LB_ADDSTRING, 0, unsafe.Pointer(strptr(item)))
+		for _, def := range opts.defaultItems {
+			if def == item {
+				if dlg.multiple {
+					win.SendMessage(dlg.listCtl, win.LB_SETSEL, 1, uintptr(i))
+				} else {
+					win.SendMessage(dlg.listCtl, win.LB_SETCURSEL, uintptr(i), 0)
+				}
+			}
+		}
 	}
 
 	dlg.layout(getDPI(dlg.wnd))

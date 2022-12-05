@@ -52,7 +52,7 @@ const (
 	radioListKind
 )
 
-// DefaultItems returns an Option to set the items to initially select (macOS only).
+// DefaultItems returns an Option to set the items to initially select (Windows and macOS only).
 func DefaultItems(items ...string) Option {
 	return funcOption(func(o *options) { o.defaultItems = items })
 }
