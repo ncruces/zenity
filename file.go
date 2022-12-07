@@ -226,6 +226,7 @@ func removeClasses(pattern string) string {
 	}
 }
 
+// Find a character class in the pattern.
 func findClass(pattern string) (start, end int) {
 	start = -1
 	escape := false

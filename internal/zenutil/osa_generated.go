@@ -40,9 +40,9 @@ app.activate()
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')
-{{template "common" .}}
 var nsapp=$.NSApplication.sharedApplication
 nsapp.setActivationPolicy($.NSApplicationActivationPolicyAccessory)
+{{template "common" .}}
 var date=$.NSDatePicker.alloc.init
 date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
 date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
