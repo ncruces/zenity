@@ -157,18 +157,18 @@ func (dlg *progressDialog) setup(opts options) error {
 		12, 30, 241, 16, dlg.wnd, 0, instance, nil)
 
 	dlg.okBtn, _ = win.CreateWindowEx(0,
-		strptr("BUTTON"), strptr(*opts.okLabel),
+		strptr("BUTTON"), strptr(quoteAccelerators(*opts.okLabel)),
 		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON|win.WS_DISABLED,
 		12, 58, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	if !opts.noCancel {
 		dlg.cancelBtn, _ = win.CreateWindowEx(0,
-			strptr("BUTTON"), strptr(*opts.cancelLabel),
+			strptr("BUTTON"), strptr(quoteAccelerators(*opts.cancelLabel)),
 			_WS_ZEN_BUTTON,
 			12, 58, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	}
 	if opts.extraButton != nil {
 		dlg.extraBtn, _ = win.CreateWindowEx(0,
-			strptr("BUTTON"), strptr(*opts.extraButton),
+			strptr("BUTTON"), strptr(quoteAccelerators(*opts.extraButton)),
 			_WS_ZEN_BUTTON,
 			12, 58, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}

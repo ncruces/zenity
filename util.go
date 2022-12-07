@@ -1,5 +1,3 @@
-//go:build !windows
-
 package zenity
 
 import (
@@ -11,6 +9,10 @@ import (
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
+
+func quoteAccelerators(text string) string {
+	return strings.ReplaceAll(text, "&", "&&")
+}
 
 func appendGeneral(args []string, opts options) []string {
 	if opts.title != nil {

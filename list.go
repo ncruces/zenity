@@ -31,7 +31,7 @@ func ListMultiple(text string, items []string, options ...Option) ([]string, err
 //
 // May return: ErrCanceled, ErrUnsupported.
 func ListMultipleItems(text string, items ...string) ([]string, error) {
-	return ListMultiple(text, items)
+	return ListMultiple(text, items, CheckList())
 }
 
 // CheckList returns an Option to show check boxes (Unix only).

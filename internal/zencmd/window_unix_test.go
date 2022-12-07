@@ -7,6 +7,27 @@ import (
 	"testing"
 )
 
+func TestParseWindowId(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want int
+	}{
+		{name: "Zero", text: "0", want: 0},
+		{name: "Dec", text: "10", want: 10},
+		{name: "Hex", text: "0700", want: 0700},
+		{name: "Oct", text: "0xFF", want: 0xff},
+		{name: "Error", text: "a", want: 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ParseWindowId(tt.text); got != tt.want {
+				t.Errorf("ParseWindowId(%q) = %v; want %v", tt.text, got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_getPidToPpidMap(t *testing.T) {
 	got, err := getPidToPpidMap()
 	if err != nil {

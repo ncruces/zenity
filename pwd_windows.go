@@ -93,16 +93,16 @@ func (dlg *passwordDialog) setup(opts options) (string, string, error) {
 		12, 80, 241, 24, dlg.wnd, 0, instance, nil)
 
 	dlg.okBtn, _ = win.CreateWindowEx(0,
-		strptr("BUTTON"), strptr(*opts.okLabel),
+		strptr("BUTTON"), strptr(quoteAccelerators(*opts.okLabel)),
 		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON,
 		12, 116, 75, 24, dlg.wnd, win.IDOK, instance, nil)
 	dlg.cancelBtn, _ = win.CreateWindowEx(0,
-		strptr("BUTTON"), strptr(*opts.cancelLabel),
+		strptr("BUTTON"), strptr(quoteAccelerators(*opts.cancelLabel)),
 		_WS_ZEN_BUTTON,
 		12, 116, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
 	if opts.extraButton != nil {
 		dlg.extraBtn, _ = win.CreateWindowEx(0,
-			strptr("BUTTON"), strptr(*opts.extraButton),
+			strptr("BUTTON"), strptr(quoteAccelerators(*opts.extraButton)),
 			_WS_ZEN_BUTTON,
 			12, 116, 75, 24, dlg.wnd, win.IDNO, instance, nil)
 	}

@@ -1,15 +1,34 @@
-//go:build !windows
-
 package zenity
 
 import (
 	"errors"
 	"os/exec"
 	"reflect"
+	"runtime"
 	"testing"
 
 	"github.com/ncruces/zenity/internal/zenutil"
 )
+
+func Test_quoteAccelerators(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{name: "None", text: "abc", want: "abc"},
+		{name: "One", text: "&abc", want: "&&abc"},
+		{name: "Two", text: "&a&bc", want: "&&a&&bc"},
+		{name: "Three", text: "ab&&c", want: "ab&&&&c"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := quoteAccelerators(tt.text); got != tt.want {
+				t.Errorf("quoteAccelerators(%q) = %q; want %q", tt.text, got, tt.want)
+			}
+		})
+	}
+}
 
 func Test_appendGeneral(t *testing.T) {
 	got := appendGeneral(nil, options{
@@ -85,7 +104,7 @@ func Test_appendWindowIcon(t *testing.T) {
 
 func Test_strResult(t *testing.T) {
 	sentinel := errors.New("sentinel")
-	cancel := exec.Command("false").Run()
+	cancel := exit1Cmd().Run()
 
 	if out, err := strResult(options{}, []byte("out"), nil); out != "out" || err != nil {
 		t.Errorf(`strResult("out", nil) = %q, %v`, out, err)
@@ -101,10 +120,10 @@ func Test_strResult(t *testing.T) {
 func Test_lstResult(t *testing.T) {
 	zenutil.Separator = "|"
 	sentinel := errors.New("sentinel")
-	cancel := exec.Command("false").Run()
+	cancel := exit1Cmd().Run()
 
 	if out, err := lstResult(options{}, []byte(""), nil); !reflect.DeepEqual(out, []string{}) || err != nil {
-		t.Errorf(`lstResult("out", nil) = %v, %v`, out, err)
+		t.Errorf(`lstResult("", nil) = %v, %v`, out, err)
 	}
 	if out, err := lstResult(options{}, []byte("out"), nil); !reflect.DeepEqual(out, []string{"out"}) || err != nil {
 		t.Errorf(`lstResult("out", nil) = %v, %v`, out, err)
@@ -118,4 +137,36 @@ func Test_lstResult(t *testing.T) {
 	if out, err := lstResult(options{}, []byte("out"), cancel); out != nil || err != ErrCanceled {
 		t.Errorf(`lstResult("out", cancel) = %v, %v`, out, err)
 	}
+}
+
+func Test_pwdResult(t *testing.T) {
+	username := options{username: true}
+	sentinel := errors.New("sentinel")
+	cancel := exit1Cmd().Run()
+
+	if usr, pwd, err := pwdResult("|", options{}, []byte(""), nil); usr != "" || pwd != "" || err != nil {
+		t.Errorf(`pwdResult("", nil) = %v, %q, %q`, usr, pwd, err)
+	}
+	if usr, pwd, err := pwdResult("|", options{}, []byte("out"), nil); usr != "" || pwd != "out" || err != nil {
+		t.Errorf(`pwdResult("out", nil) = %v, %q, %q`, usr, pwd, err)
+	}
+	if usr, pwd, err := pwdResult("|", username, []byte("one|two"), nil); usr != "one" || pwd != "two" || err != nil {
+		t.Errorf(`pwdResult("one|two", nil) = %v, %q, %q`, usr, pwd, err)
+	}
+	if usr, pwd, err := pwdResult("|", options{}, []byte("one|two"), nil); usr != "" || pwd != "one|two" || err != nil {
+		t.Errorf(`pwdResult("one|two", nil) = %v, %q, %q`, usr, pwd, err)
+	}
+	if usr, pwd, err := pwdResult("|", options{}, []byte("out"), sentinel); usr != "" || pwd != "" || err != sentinel {
+		t.Errorf(`pwdResult("out", error) = %v, %q, %q`, usr, pwd, err)
+	}
+	if usr, pwd, err := pwdResult("|", options{}, []byte("out"), cancel); usr != "" || pwd != "" || err != ErrCanceled {
+		t.Errorf(`pwdResult("out", cancel) = %v, %q, %q`, usr, pwd, err)
+	}
+}
+
+func exit1Cmd() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/k", "exit", "1")
+	}
+	return exec.Command("false")
 }

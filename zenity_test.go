@@ -42,6 +42,8 @@ func Test_applyOptions(t *testing.T) {
 		{name: "Username", args: Username(), want: options{username: true}},
 
 		// List options
+		{name: "CheckList", args: CheckList(), want: options{listKind: checkListKind}},
+		{name: "RadioList", args: RadioList(), want: options{listKind: radioListKind}},
 		{name: "DisallowEmpty", args: DisallowEmpty(), want: options{disallowEmpty: true}},
 		{name: "DefaultItems", args: DefaultItems("a", "b"), want: options{defaultItems: []string{"a", "b"}}},
 
