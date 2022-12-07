@@ -70,10 +70,10 @@ var (
 	username bool
 
 	// List options
-	columns    int
-	checklist  bool
-	radiolist  bool
-	allowEmpty bool
+	columns       int
+	checklist     bool
+	radiolist     bool
+	disallowEmpty bool
 
 	// Calendar options
 	year  uint
@@ -242,7 +242,7 @@ func parseFlags() []string {
 	fset.Bool("hide-header", true, "Hide the column headers")
 	fset.BoolVar(&checklist, "checklist", false, "Use check boxes for the first column (Unix only)")
 	fset.BoolVar(&radiolist, "radiolist", false, "Use radio buttons for the first column (Unix only)")
-	fset.BoolVar(&allowEmpty, "allow-empty", true, "Allow empty selection (macOS only)")
+	fset.BoolVar(&disallowEmpty, "disallow-empty", false, "Disallow empty selection (Windows and macOS only)")
 
 	// Calendar options
 	fset.UintVar(&year, "year", 0, "Set the calendar `year`")
@@ -538,7 +538,7 @@ func loadFlags() []zenity.Option {
 	if radiolist {
 		opts = append(opts, zenity.RadioList())
 	}
-	if !allowEmpty {
+	if disallowEmpty {
 		opts = append(opts, zenity.DisallowEmpty())
 	}
 

@@ -25,9 +25,6 @@ func calendar(text string, opts options) (t time.Time, err error) {
 	} else {
 		data.Text = text
 	}
-	if opts.attach != nil {
-		data.Application = opts.attach
-	}
 	if i, ok := opts.windowIcon.(string); ok {
 		data.WindowIcon = i
 	}

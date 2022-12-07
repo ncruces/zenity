@@ -1,3 +1,11 @@
+{{if .WindowIcon}}{
+  ObjC.import('Cocoa')
+  let nsapp = $.NSApplication.sharedApplication
+  let nsimg = $.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
+  nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
+  nsapp.setApplicationIconImage(nsimg)
+}{{end}}
+
 {{- if .Application}}
   try {
     var app = Application({{json .Application}})
@@ -8,11 +16,4 @@
   var app = Application.currentApplication()
 {{- end}}
 app.includeStandardAdditions = true
-
-{{if .WindowIcon}}{
-  ObjC.import('Cocoa')
-  let nsapp = $.NSApplication.sharedApplication
-  let nsimg = $.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
-  nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
-  nsapp.setApplicationIconImage(nsimg)
-}{{end}}
+app.activate()

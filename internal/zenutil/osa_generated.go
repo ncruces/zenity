@@ -23,23 +23,26 @@ $.exit(-1)}
 {'rgb('+res.map(x=>Math.round(x*255))+')'}
 {{- end}}
 {{define "common" -}}
+{{if .WindowIcon}}{ObjC.import('Cocoa')
+let nsapp=$.NSApplication.sharedApplication
+let nsimg=$.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
+nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
+nsapp.setApplicationIconImage(nsimg)}{{end}}
 {{- if .Application}}
 try{var app=Application({{json .Application}})}catch{var app=Application.currentApplication()}
 {{- else}}
 var app=Application.currentApplication()
 {{- end}}
 app.includeStandardAdditions=true
-{{if .WindowIcon}}{ObjC.import('Cocoa')
-let nsapp=$.NSApplication.sharedApplication
-let nsimg=$.NSImage.alloc.initWithContentsOfFile({{json .WindowIcon}})
-nsapp.setActivationPolicy($.NSApplicationActivationPolicyRegular)
-nsapp.setApplicationIconImage(nsimg)}{{end}}
+app.activate()
 {{- end}}
 {{define "date" -}}
 ObjC.import('Cocoa')
 ObjC.import('stdio')
 ObjC.import('stdlib')
 {{template "common" .}}
+var nsapp=$.NSApplication.sharedApplication
+nsapp.setActivationPolicy($.NSApplicationActivationPolicyAccessory)
 var date=$.NSDatePicker.alloc.init
 date.setDatePickerStyle($.NSDatePickerStyleClockAndCalendar)
 date.setDatePickerElements($.NSDatePickerElementFlagYearMonthDay)
