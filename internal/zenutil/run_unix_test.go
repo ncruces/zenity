@@ -41,7 +41,7 @@ func TestRunProgress(t *testing.T) {
 }
 
 func skip(err error) (bool, error) {
-	if _, ok := err.(*exec.Error); ok {
+	if _, ok := err.(*exec.Error); ok && !IsAvailable() {
 		// zenity was not found in path
 		return true, err
 	}

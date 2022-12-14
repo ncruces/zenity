@@ -30,6 +30,12 @@ const ErrExtraButton = zenutil.ErrExtraButton
 // ErrUnsupported is returned when a combination of options is not supported.
 const ErrUnsupported = zenutil.ErrUnsupported
 
+// IsAvailable reports whether dependencies of the package are installed.
+// It always returns true on Windows and macOS.
+func IsAvailable() bool {
+	return isAvailable()
+}
+
 type options struct {
 	// General options
 	title         *string
@@ -180,6 +186,16 @@ func WindowIcon(icon any) Option {
 		panic("interface conversion: expected string or DialogIcon")
 	}
 	return funcOption(func(o *options) { o.windowIcon = icon })
+}
+
+// Attach returns an Option to set the parent window to attach to.
+//
+// Attach accepts:
+//   - a window id (int) on Unix
+//   - a window handle (~uintptr) on Windows
+//   - an application name (string) or process id (int) on macOS
+func Attach(id any) Option {
+	return attach(id)
 }
 
 // Modal returns an Option to set the modal hint.

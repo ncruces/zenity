@@ -6,13 +6,9 @@ import (
 	"github.com/ncruces/zenity/internal/win"
 )
 
-// Attach returns an Option to set the parent window to attach to.
-//
-// Attach accepts:
-//   - a window id (int) on Unix
-//   - a window handle (~uintptr) on Windows
-//   - an application name (string) or process id (int) on macOS
-func Attach(id any) Option {
+func isAvailable() bool { return true }
+
+func attach(id any) Option {
 	if v := reflect.ValueOf(id); v.Kind() == reflect.Uintptr {
 		id = win.HWND(uintptr(v.Uint()))
 	} else {

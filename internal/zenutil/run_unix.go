@@ -8,12 +8,16 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"syscall"
 )
 
-var tool, path string
+var (
+	tool, path string
+	pathOnce   sync.Once
+)
 
-func init() {
+func initPath() {
 	for _, tool = range [3]string{"qarma", "zenity", "matedialog"} {
 		path, _ = exec.LookPath(tool)
 		if path != "" {
@@ -23,8 +27,15 @@ func init() {
 	tool = "zenity"
 }
 
+// IsAvailable is internal.
+func IsAvailable() bool {
+	pathOnce.Do(initPath)
+	return path != ""
+}
+
 // Run is internal.
 func Run(ctx context.Context, args []string) ([]byte, error) {
+	pathOnce.Do(initPath)
 	if Command && path != "" {
 		if Timeout > 0 {
 			args = append(args, "--timeout", strconv.Itoa(Timeout))
@@ -44,6 +55,7 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 
 // RunProgress is internal.
 func RunProgress(ctx context.Context, max int, extra *string, args []string) (*progressDialog, error) {
+	pathOnce.Do(initPath)
 	if Command && path != "" {
 		if Timeout > 0 {
 			args = append(args, "--timeout", strconv.Itoa(Timeout))
