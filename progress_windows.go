@@ -11,13 +11,13 @@ import (
 
 func progress(opts options) (ProgressDialog, error) {
 	if opts.title == nil {
-		opts.title = stringPtr("")
+		opts.title = ptr("")
 	}
 	if opts.okLabel == nil {
-		opts.okLabel = stringPtr("OK")
+		opts.okLabel = ptr("OK")
 	}
 	if opts.cancelLabel == nil {
-		opts.cancelLabel = stringPtr("Cancel")
+		opts.cancelLabel = ptr("Cancel")
 	}
 	if opts.maxValue == 0 {
 		opts.maxValue = 100

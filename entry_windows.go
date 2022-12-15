@@ -9,13 +9,13 @@ import (
 
 func entry(text string, opts options) (string, error) {
 	if opts.title == nil {
-		opts.title = stringPtr("")
+		opts.title = ptr("")
 	}
 	if opts.okLabel == nil {
-		opts.okLabel = stringPtr("OK")
+		opts.okLabel = ptr("OK")
 	}
 	if opts.cancelLabel == nil {
-		opts.cancelLabel = stringPtr("Cancel")
+		opts.cancelLabel = ptr("Cancel")
 	}
 
 	dlg := &entryDialog{}

@@ -15,8 +15,7 @@ func calendar(text string, opts options) (t time.Time, err error) {
 		return
 	}
 	if opts.time != nil {
-		unix := opts.time.Unix()
-		data.Date = &unix
+		data.Date = ptr(opts.time.Unix())
 	}
 
 	if opts.title != nil {

@@ -87,7 +87,7 @@ func wtsMessage(text string, opts options) error {
 
 	title := opts.title
 	if title == nil {
-		title = stringPtr("Notification")
+		title = ptr("Notification")
 	}
 
 	timeout := zenutil.Timeout

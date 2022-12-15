@@ -32,7 +32,7 @@ func Test_quoteAccelerators(t *testing.T) {
 
 func Test_appendGeneral(t *testing.T) {
 	got := appendGeneral(nil, options{
-		title:  stringPtr("Title"),
+		title:  ptr("Title"),
 		attach: 12345,
 		modal:  true,
 	})
@@ -48,9 +48,9 @@ func Test_appendButtons(t *testing.T) {
 		opts options
 		want []string
 	}{
-		{name: "OK", opts: options{okLabel: stringPtr("OK")}, want: []string{"--ok-label", "OK"}},
-		{name: "Cancel", opts: options{cancelLabel: stringPtr("Cancel")}, want: []string{"--cancel-label", "Cancel"}},
-		{name: "Extra", opts: options{extraButton: stringPtr("Extra")}, want: []string{"--extra-button", "Extra"}},
+		{name: "OK", opts: options{okLabel: ptr("OK")}, want: []string{"--ok-label", "OK"}},
+		{name: "Cancel", opts: options{cancelLabel: ptr("Cancel")}, want: []string{"--cancel-label", "Cancel"}},
+		{name: "Extra", opts: options{extraButton: ptr("Extra")}, want: []string{"--extra-button", "Extra"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -18,7 +18,7 @@ import (
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
-func stringPtr(s string) *string { return &s }
+func ptr[T any](v T) *T { return &v }
 
 // ErrCanceled is returned when the cancel button is pressed,
 // or window functions are used to close the dialog.

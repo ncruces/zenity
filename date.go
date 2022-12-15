@@ -15,7 +15,6 @@ func Calendar(text string, options ...Option) (time.Time, error) {
 // DefaultDate returns an Option to set the date.
 func DefaultDate(year int, month time.Month, day int) Option {
 	return funcOption(func(o *options) {
-		t := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-		o.time = &t
+		o.time = ptr(time.Date(year, month, day, 0, 0, 0, 0, time.Local))
 	})
 }

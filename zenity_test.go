@@ -18,12 +18,12 @@ func Test_applyOptions(t *testing.T) {
 		want options
 	}{
 		// General options
-		{name: "Title", args: Title("Title"), want: options{title: stringPtr("Title")}},
+		{name: "Title", args: Title("Title"), want: options{title: ptr("Title")}},
 		{name: "Width", args: Width(100), want: options{width: 100}},
 		{name: "Height", args: Height(100), want: options{height: 100}},
-		{name: "OKLabel", args: OKLabel("OK"), want: options{okLabel: stringPtr("OK")}},
-		{name: "CancelLabel", args: CancelLabel("Cancel"), want: options{cancelLabel: stringPtr("Cancel")}},
-		{name: "ExtraButton", args: ExtraButton("Extra"), want: options{extraButton: stringPtr("Extra")}},
+		{name: "OKLabel", args: OKLabel("OK"), want: options{okLabel: ptr("OK")}},
+		{name: "CancelLabel", args: CancelLabel("Cancel"), want: options{cancelLabel: ptr("Cancel")}},
+		{name: "ExtraButton", args: ExtraButton("Extra"), want: options{extraButton: ptr("Extra")}},
 		{name: "DefaultCancel", args: DefaultCancel(), want: options{defaultCancel: true}},
 		{name: "WindowIcon", args: WindowIcon(ErrorIcon), want: options{windowIcon: ErrorIcon}},
 		{name: "WindowIcon", args: WindowIcon("error"), want: options{windowIcon: "error"}},

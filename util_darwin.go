@@ -10,11 +10,11 @@ func getButtons(dialog, okcancel bool, opts options) (btns zenutil.DialogButtons
 
 	if opts.okLabel != nil || opts.cancelLabel != nil || opts.extraButton != nil || dialog != okcancel {
 		if opts.okLabel == nil {
-			opts.okLabel = stringPtr("OK")
+			opts.okLabel = ptr("OK")
 		}
 		if okcancel {
 			if opts.cancelLabel == nil {
-				opts.cancelLabel = stringPtr("Cancel")
+				opts.cancelLabel = ptr("Cancel")
 			}
 			if opts.extraButton == nil {
 				btns.Buttons = []string{*opts.cancelLabel, *opts.okLabel}
@@ -50,10 +50,10 @@ func getButtons(dialog, okcancel bool, opts options) (btns zenutil.DialogButtons
 
 func getAlertButtons(opts options) (ok, cancel string, extra *string) {
 	if opts.okLabel == nil {
-		opts.okLabel = stringPtr("OK")
+		opts.okLabel = ptr("OK")
 	}
 	if opts.cancelLabel == nil {
-		opts.cancelLabel = stringPtr("Cancel")
+		opts.cancelLabel = ptr("Cancel")
 	}
 	return *opts.okLabel, *opts.cancelLabel, opts.extraButton
 }
