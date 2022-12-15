@@ -340,6 +340,9 @@ func initFilters(filters FileFilters) []uint16 {
 	filters.name()
 	var res []uint16
 	for _, f := range filters {
+		if f.Name == "" || len(f.Patterns) == 0 {
+			continue
+		}
 		res = append(res, utf16.Encode([]rune(f.Name))...)
 		res = append(res, 0)
 		for _, p := range f.Patterns {

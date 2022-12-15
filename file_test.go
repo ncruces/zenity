@@ -20,9 +20,9 @@ func ExampleSelectFile() {
 	zenity.SelectFile(
 		zenity.Filename(defaultPath),
 		zenity.FileFilters{
-			{"Go files", []string{"*.go"}},
-			{"Web files", []string{"*.html", "*.js", "*.css"}},
-			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+			{"Go files", []string{"*.go"}, true},
+			{"Web files", []string{"*.html", "*.js", "*.css"}, true},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}, true},
 		})
 }
 
@@ -30,9 +30,9 @@ func ExampleSelectFileMultiple() {
 	zenity.SelectFileMultiple(
 		zenity.Filename(defaultPath),
 		zenity.FileFilters{
-			{"Go files", []string{"*.go"}},
-			{"Web files", []string{"*.html", "*.js", "*.css"}},
-			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+			{"Go files", []string{"*.go"}, true},
+			{"Web files", []string{"*.html", "*.js", "*.css"}, true},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}, true},
 		})
 }
 
@@ -41,9 +41,9 @@ func ExampleSelectFileSave() {
 		zenity.ConfirmOverwrite(),
 		zenity.Filename(defaultName),
 		zenity.FileFilters{
-			{"Go files", []string{"*.go"}},
-			{"Web files", []string{"*.html", "*.js", "*.css"}},
-			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}},
+			{"Go files", []string{"*.go"}, true},
+			{"Web files", []string{"*.html", "*.js", "*.css"}, true},
+			{"Image files", []string{"*.png", "*.gif", "*.ico", "*.jpg", "*.webp"}, true},
 		})
 }
 
@@ -232,7 +232,7 @@ func TestSelectFileSave_script(t *testing.T) {
 		str, err := zenity.SelectFileSave(
 			zenity.ConfirmOverwrite(),
 			zenity.Filename("Χρτο.go"),
-			zenity.FileFilter{"Go files", []string{"*.go"}},
+			zenity.FileFilter{"Go files", []string{"*.go"}, true},
 		)
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)

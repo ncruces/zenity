@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // SelectFile displays the file selection dialog.
@@ -69,6 +70,8 @@ func Filename(filename string) Option {
 
 // FileFilter is an Option that sets a filename filter.
 //
+// On Windows and macOS filtering is always case-insensitive.
+//
 // macOS hides filename filters from the user,
 // and only supports filtering by extension
 // (or "uniform type identifiers").
@@ -78,6 +81,7 @@ func Filename(filename string) Option {
 type FileFilter struct {
 	Name     string   // display string that describes the filter (optional)
 	Patterns []string // filter patterns for the display string
+	CaseFold bool     // if set patterns are matched case-insensitively
 }
 
 func (f FileFilter) apply(o *options) {
@@ -91,7 +95,7 @@ func (f FileFilters) apply(o *options) {
 	o.fileFilters = append(o.fileFilters, f...)
 }
 
-// Windows' patterns need a name.
+// Windows patterns need a name.
 func (f FileFilters) name() {
 	for i, filter := range f {
 		if filter.Name == "" {
@@ -100,46 +104,41 @@ func (f FileFilters) name() {
 	}
 }
 
-// Windows' patterns are case insensitive, don't support character classes or escaping.
+// Windows patterns are case-insensitive, don't support character classes or escaping.
 //
 // First we remove character classes, then escaping. Patterns with literal wildcards are invalid.
 // The semicolon is a separator, so we replace it with the single character wildcard.
-// Empty and invalid filters/patterns are ignored.
 func (f FileFilters) simplify() {
-	var i = 0
-	for _, filter := range f {
+	for i := range f {
 		var j = 0
-		for _, pattern := range filter.Patterns {
+		for _, pattern := range f[i].Patterns {
 			var escape, invalid bool
 			var buf strings.Builder
-			for _, r := range removeClasses(pattern) {
-				if !escape && r == '\\' {
+			for _, b := range []byte(removeClasses(pattern)) {
+				if !escape && b == '\\' {
 					escape = true
 					continue
 				}
-				if escape && (r == '*' || r == '?') {
+				if escape && (b == '*' || b == '?') {
 					invalid = true
 					break
 				}
-				if r == ';' {
-					r = '?'
+				if b == ';' {
+					b = '?'
 				}
-				buf.WriteRune(r)
+				buf.WriteByte(b)
 				escape = false
 			}
 			if buf.Len() > 0 && !invalid {
-				filter.Patterns[j] = buf.String()
+				f[i].Patterns[j] = buf.String()
 				j++
 			}
 		}
-		if j > 0 {
-			filter.Patterns = filter.Patterns[:j]
-			f[i] = filter
-			i++
+		if j != 0 {
+			f[i].Patterns = f[i].Patterns[:j]
+		} else {
+			f[i].Patterns = nil
 		}
-	}
-	for ; i < len(f); i++ {
-		f[i] = FileFilter{}
 	}
 }
 
@@ -163,17 +162,17 @@ func (f FileFilters) types() []string {
 
 			var escape bool
 			var buf strings.Builder
-			for _, r := range removeClasses(ext) {
+			for _, b := range []byte(removeClasses(ext)) {
 				switch {
 				case escape:
 					escape = false
-				case r == '\\':
+				case b == '\\':
 					escape = true
 					continue
-				case r == '*' || r == '?':
+				case b == '*' || b == '?':
 					return nil
 				}
-				buf.WriteRune(r)
+				buf.WriteByte(b)
 			}
 			if buf.Len() > 0 {
 				res = append(res, buf.String())
@@ -187,8 +186,57 @@ func (f FileFilters) types() []string {
 	return append([]string{""}, res...)
 }
 
+// Unix patterns are case-sensitive. Fold them if requested.
+func (f FileFilters) casefold() {
+	for i := range f {
+		if !f[i].CaseFold {
+			continue
+		}
+		for j, pattern := range f[i].Patterns {
+			var class = -1
+			var escape bool
+			var buf strings.Builder
+			for i, r := range pattern {
+				switch {
+				case escape:
+					escape = false
+				case r == '\\':
+					escape = true
+				case class < 0:
+					if r == '[' {
+						class = i
+					}
+				case class < i-1:
+					if r == ']' {
+						class = -1
+					}
+				}
+
+				nr := unicode.SimpleFold(r)
+				if r == nr {
+					buf.WriteRune(r)
+					continue
+				}
+
+				if class < 0 {
+					buf.WriteByte('[')
+				}
+				buf.WriteRune(r)
+				for r != nr {
+					buf.WriteRune(nr)
+					nr = unicode.SimpleFold(nr)
+				}
+				if class < 0 {
+					buf.WriteByte(']')
+				}
+			}
+			f[i].Patterns[j] = buf.String()
+		}
+	}
+}
+
 // Remove character classes from pattern, assuming case insensitivity.
-// Classes of one character (case insensitive) are replaced by the character.
+// Classes of one character (case-insensitive) are replaced by the character.
 // Others are replaced by the single character wildcard.
 func removeClasses(pattern string) string {
 	var res strings.Builder
@@ -229,7 +277,7 @@ func removeClasses(pattern string) string {
 // Find a character class in the pattern.
 func findClass(pattern string) (start, end int) {
 	start = -1
-	escape := false
+	var escape bool
 	for i, b := range []byte(pattern) {
 		switch {
 		case escape:
@@ -240,7 +288,7 @@ func findClass(pattern string) (start, end int) {
 			if b == '[' {
 				start = i
 			}
-		case 0 <= start && start < i-1:
+		case start < i-1:
 			if b == ']' {
 				return start, i + 1
 			}
