@@ -7,6 +7,8 @@ import (
 )
 
 func Test_splitDirAndName(t *testing.T) {
+	t.Parallel()
+
 	tempDir := os.TempDir()
 	tests := []struct {
 		path     string

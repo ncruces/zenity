@@ -11,6 +11,7 @@ import (
 )
 
 func Test_quoteAccelerators(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		text string
@@ -31,6 +32,7 @@ func Test_quoteAccelerators(t *testing.T) {
 }
 
 func Test_appendGeneral(t *testing.T) {
+	t.Parallel()
 	got := appendGeneral(nil, options{
 		title:  ptr("Title"),
 		attach: 12345,
@@ -43,6 +45,7 @@ func Test_appendGeneral(t *testing.T) {
 }
 
 func Test_appendButtons(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		opts options
@@ -62,6 +65,7 @@ func Test_appendButtons(t *testing.T) {
 }
 
 func Test_appendWidthHeight(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		opts options
@@ -80,6 +84,7 @@ func Test_appendWidthHeight(t *testing.T) {
 }
 
 func Test_appendWindowIcon(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		opts options
@@ -105,6 +110,7 @@ func Test_appendWindowIcon(t *testing.T) {
 func Test_strResult(t *testing.T) {
 	sentinel := errors.New("sentinel")
 	cancel := exit1Cmd().Run()
+	t.Parallel()
 
 	if out, err := strResult(options{}, []byte("out"), nil); out != "out" || err != nil {
 		t.Errorf(`strResult("out", nil) = %q, %v`, out, err)
@@ -118,9 +124,10 @@ func Test_strResult(t *testing.T) {
 }
 
 func Test_lstResult(t *testing.T) {
-	zenutil.Separator = "|"
 	sentinel := errors.New("sentinel")
 	cancel := exit1Cmd().Run()
+	zenutil.Separator = "|"
+	t.Parallel()
 
 	if out, err := lstResult(options{}, []byte(""), nil); !reflect.DeepEqual(out, []string{}) || err != nil {
 		t.Errorf(`lstResult("", nil) = %v, %v`, out, err)
@@ -143,6 +150,7 @@ func Test_pwdResult(t *testing.T) {
 	username := options{username: true}
 	sentinel := errors.New("sentinel")
 	cancel := exit1Cmd().Run()
+	t.Parallel()
 
 	if usr, pwd, err := pwdResult("|", options{}, []byte(""), nil); usr != "" || pwd != "" || err != nil {
 		t.Errorf(`pwdResult("", nil) = %v, %q, %q`, usr, pwd, err)

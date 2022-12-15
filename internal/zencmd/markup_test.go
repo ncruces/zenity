@@ -28,6 +28,7 @@ var markupTests = []struct {
 }
 
 func TestStripMarkup(t *testing.T) {
+	t.Parallel()
 	for _, test := range markupTests {
 		if got := StripMarkup(test.data); got != test.want {
 			t.Errorf("StripMarkup(%q) = %q; want %q", test.data, got, test.want)

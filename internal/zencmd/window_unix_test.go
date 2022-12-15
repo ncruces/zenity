@@ -8,6 +8,7 @@ import (
 )
 
 func TestParseWindowId(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		text string

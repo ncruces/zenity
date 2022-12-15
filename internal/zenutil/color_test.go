@@ -8,6 +8,7 @@ import (
 )
 
 func TestColorEquals(t *testing.T) {
+	t.Parallel()
 	if ColorEquals(nil, nil) == false {
 		t.Error("ColorEquals(nil, nil) == false")
 	}
@@ -38,6 +39,7 @@ func TestColorEquals(t *testing.T) {
 }
 
 func TestColor_names(t *testing.T) {
+	t.Parallel()
 	for _, name := range colornames.Names {
 		c1 := colornames.Map[name]
 		c2 := ParseColor(name)
@@ -52,6 +54,7 @@ func TestColor_names(t *testing.T) {
 }
 
 func TestColor_colors(t *testing.T) {
+	t.Parallel()
 	colors := []color.Color{
 		color.Black,
 		color.White,
@@ -112,6 +115,7 @@ var colorTests = []struct {
 }
 
 func TestParseColor(t *testing.T) {
+	t.Parallel()
 	for _, test := range colorTests {
 		c := ParseColor(test.data)
 		if !ColorEquals(c, test.want) {

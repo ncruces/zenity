@@ -6,6 +6,7 @@ import (
 )
 
 func TestFileFilters_name(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		data FileFilters
 		want string
@@ -23,6 +24,7 @@ func TestFileFilters_name(t *testing.T) {
 }
 
 func TestFileFilters_simplify(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		data []string
 		want []string
@@ -53,6 +55,7 @@ func TestFileFilters_simplify(t *testing.T) {
 }
 
 func TestFileFilters_casefold(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		data []string
 		want []string
@@ -82,6 +85,7 @@ func TestFileFilters_casefold(t *testing.T) {
 }
 
 func TestFileFilters_types(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		data []string
 		want []string

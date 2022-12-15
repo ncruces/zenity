@@ -44,6 +44,7 @@ var unescapeTests = []struct {
 }
 
 func TestUnescape(t *testing.T) {
+	t.Parallel()
 	for _, test := range unescapeTests {
 		if got := Unescape(test.data); got != test.want {
 			t.Errorf("Unescape(%q) = %q; want %q", test.data, got, test.want)

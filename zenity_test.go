@@ -11,6 +11,7 @@ import (
 )
 
 func Test_applyOptions(t *testing.T) {
+	t.Parallel()
 	date := time.Date(2006, 1, 1, 0, 0, 0, 0, time.Local)
 	tests := []struct {
 		name string

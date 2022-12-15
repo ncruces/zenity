@@ -122,6 +122,7 @@ func TestSelectFile_script(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
 		str, err := zenity.SelectFile()
@@ -166,6 +167,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
 		lst, err := zenity.SelectFileMultiple()
@@ -217,6 +219,7 @@ func TestSelectFileSave_script(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	t.Run("Cancel", func(t *testing.T) {
 		zenity.Info(fmt.Sprintf("In the file save dialog, cancel."))
 		str, err := zenity.SelectFileSave()
