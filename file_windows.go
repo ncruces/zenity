@@ -28,7 +28,7 @@ func selectFile(opts options) (string, error) {
 		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
-		args.Filter = &initFilters(opts.fileFilters)[0]
+		args.Filter = initFilters(opts.fileFilters)
 	}
 
 	var res [32768]uint16
@@ -71,7 +71,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
-		args.Filter = &initFilters(opts.fileFilters)[0]
+		args.Filter = initFilters(opts.fileFilters)
 	}
 
 	var res [32768 + 1024*256]uint16
@@ -145,7 +145,7 @@ func selectFileSave(opts options) (string, error) {
 		args.Flags |= win.OFN_FORCESHOWHIDDEN
 	}
 	if opts.fileFilters != nil {
-		args.Filter = &initFilters(opts.fileFilters)[0]
+		args.Filter = initFilters(opts.fileFilters)
 	}
 
 	var res [32768]uint16
@@ -335,12 +335,12 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	return
 }
 
-func initFilters(filters FileFilters) []uint16 {
+func initFilters(filters FileFilters) *uint16 {
 	filters.simplify()
 	filters.name()
 	var res []uint16
 	for _, f := range filters {
-		if f.Name == "" || len(f.Patterns) == 0 {
+		if len(f.Patterns) == 0 {
 			continue
 		}
 		res = append(res, utf16.Encode([]rune(f.Name))...)
@@ -353,6 +353,7 @@ func initFilters(filters FileFilters) []uint16 {
 	}
 	if res != nil {
 		res = append(res, 0)
+		return &res[0]
 	}
-	return res
+	return nil
 }

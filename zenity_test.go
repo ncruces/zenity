@@ -56,8 +56,8 @@ func Test_applyOptions(t *testing.T) {
 		{name: "ConfirmCreate", args: ConfirmCreate(), want: options{confirmCreate: true}},
 		{name: "ShowHidden", args: ShowHidden(), want: options{showHidden: true}},
 		{name: "Filename", args: Filename("file.go"), want: options{filename: "file.go"}},
-		{name: "FileFilter", args: FileFilter{"Go files", []string{"*.go"}, true}, want: options{
-			fileFilters: FileFilters{{"Go files", []string{"*.go"}, true}},
+		{name: "FileFilter", args: FileFilter{"All files", []string{"*.*"}, true}, want: options{
+			fileFilters: FileFilters{{"All files", []string{"*.*"}, true}},
 		}},
 		{name: "FileFilters", args: FileFilters{{"Go files", []string{"*.go"}, true}}, want: options{
 			fileFilters: FileFilters{{"Go files", []string{"*.go"}, true}},
