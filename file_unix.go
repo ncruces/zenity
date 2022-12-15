@@ -35,8 +35,9 @@ func selectFileSave(opts options) (string, error) {
 	return strResult(opts, out, err)
 }
 
-func initFilters(filters []FileFilter) []string {
+func initFilters(filters FileFilters) []string {
 	var res []string
+	filters.casefold()
 	for _, f := range filters {
 		var buf strings.Builder
 		buf.WriteString("--file-filter=")
