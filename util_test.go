@@ -34,11 +34,21 @@ func Test_quoteAccelerators(t *testing.T) {
 func Test_appendGeneral(t *testing.T) {
 	t.Parallel()
 	got := appendGeneral(nil, options{
-		title:  ptr("Title"),
-		attach: 12345,
-		modal:  true,
+		title:   ptr("Title"),
+		attach:  12345,
+		modal:   true,
+		display: ":1",
+		class:   "Class",
+		name:    "Name",
 	})
-	want := []string{"--title", "Title", "--attach", "12345", "--modal"}
+	want := []string{
+		"--title", "Title",
+		"--attach", "12345",
+		"--modal",
+		"--display", ":1",
+		"--class", "Class",
+		"--name", "Name",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("appendTitle() = %v; want %v", got, want)
 	}

@@ -19,6 +19,9 @@ func list(text string, items []string, opts options) (string, error) {
 		args = append(args, "--column=")
 		args = append(args, items...)
 	}
+	if opts.midSearch {
+		args = append(args, "--mid-search")
+	}
 
 	out, err := zenutil.Run(opts.ctx, args)
 	return strResult(opts, out, err)

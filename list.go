@@ -52,6 +52,12 @@ const (
 	radioListKind
 )
 
+// MidSearch returns an Option to change list search to find text in the middle,
+// not on the beginning (Unix only).
+func MidSearch() Option {
+	return funcOption(func(o *options) { o.midSearch = true })
+}
+
 // DefaultItems returns an Option to set the items to initially select (Windows and macOS only).
 func DefaultItems(items ...string) Option {
 	return funcOption(func(o *options) { o.defaultItems = items })

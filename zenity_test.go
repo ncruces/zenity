@@ -32,6 +32,8 @@ func Test_applyOptions(t *testing.T) {
 		{name: "Icon", args: Icon("error"), want: options{icon: "error"}},
 		{name: "Modal", args: Modal(), want: options{modal: true}},
 		{name: "Attach", args: Attach(zencmd.ParseWindowId("12345")), want: options{attach: zencmd.ParseWindowId("12345")}},
+		{name: "Display", args: Display(":1"), want: options{display: ":1"}},
+		{name: "ClassHint", args: ClassHint("Name", "Class"), want: options{name: "Name", class: "Class"}},
 
 		// Message options
 		{name: "NoWrap", args: NoWrap(), want: options{noWrap: true}},
@@ -45,6 +47,7 @@ func Test_applyOptions(t *testing.T) {
 		// List options
 		{name: "CheckList", args: CheckList(), want: options{listKind: checkListKind}},
 		{name: "RadioList", args: RadioList(), want: options{listKind: radioListKind}},
+		{name: "MidSearch", args: MidSearch(), want: options{midSearch: true}},
 		{name: "DisallowEmpty", args: DisallowEmpty(), want: options{disallowEmpty: true}},
 		{name: "DefaultItems", args: DefaultItems("a", "b"), want: options{defaultItems: []string{"a", "b"}}},
 

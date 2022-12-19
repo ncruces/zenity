@@ -24,6 +24,15 @@ func appendGeneral(args []string, opts options) []string {
 	if opts.modal {
 		args = append(args, "--modal")
 	}
+	if opts.display != "" {
+		args = append(args, "--display", opts.display)
+	}
+	if opts.class != "" {
+		args = append(args, "--class", opts.class)
+	}
+	if opts.name != "" {
+		args = append(args, "--name", opts.name)
+	}
 	return args
 }
 

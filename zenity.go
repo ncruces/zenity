@@ -49,6 +49,9 @@ type options struct {
 	windowIcon    any
 	attach        any
 	modal         bool
+	display       string
+	class         string
+	name          string
 
 	// Message options
 	noWrap    bool
@@ -61,6 +64,7 @@ type options struct {
 
 	// List options
 	listKind      listKind
+	midSearch     bool
 	disallowEmpty bool
 	defaultItems  []string
 
@@ -201,6 +205,24 @@ func Attach(id any) Option {
 // Modal returns an Option to set the modal hint.
 func Modal() Option {
 	return funcOption(func(o *options) { o.modal = true })
+}
+
+// Display returns an Option to set the X display to use (Unix only).
+func Display(display string) Option {
+	return funcOption(func(o *options) { o.display = display })
+}
+
+// ClassHint returns an Option to set the program name and class
+// as used by the window manager (Unix only).
+func ClassHint(name, class string) Option {
+	return funcOption(func(o *options) {
+		if name != "" {
+			o.name = name
+		}
+		if class != "" {
+			o.class = class
+		}
+	})
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.

@@ -54,6 +54,9 @@ var (
 	windowIcon    string
 	attach        string
 	modal         bool
+	display       string
+	class         string
+	name          string
 	multiple      bool
 	defaultCancel bool
 
@@ -73,6 +76,7 @@ var (
 	columns       int
 	checklist     bool
 	radiolist     bool
+	midSearch     bool
 	disallowEmpty bool
 
 	// Calendar options
@@ -221,6 +225,9 @@ func parseFlags() []string {
 	fset.StringVar(&windowIcon, "window-icon", "", "Set the window `icon` (error, info, question, warning)")
 	fset.StringVar(&attach, "attach", "", "Set the parent `window` to attach to")
 	fset.BoolVar(&modal, "modal", runtime.GOOS == "darwin", "Set the modal hint")
+	fset.StringVar(&display, "display", "", "X `display` to use (Unix only)")
+	fset.StringVar(&class, "class", "", "Program `class` as used by the window manager (Unix only)")
+	fset.StringVar(&name, "name", "", "Program `name` as used by the window manager (Unix only)")
 	fset.BoolVar(&multiple, "multiple", false, "Allow multiple items to be selected")
 	fset.BoolVar(&defaultCancel, "default-cancel", false, "Give Cancel button focus by default")
 
@@ -242,6 +249,7 @@ func parseFlags() []string {
 	fset.Bool("hide-header", true, "Hide the column headers")
 	fset.BoolVar(&checklist, "checklist", false, "Use check boxes for the first column (Unix only)")
 	fset.BoolVar(&radiolist, "radiolist", false, "Use radio buttons for the first column (Unix only)")
+	fset.BoolVar(&midSearch, "mid-search", false, "Change list search to find text in the middle, not on the beginning (Unix only)")
 	fset.BoolVar(&disallowEmpty, "disallow-empty", false, "Disallow empty selection (Windows and macOS only)")
 
 	// Calendar options
@@ -501,6 +509,8 @@ func loadFlags() []zenity.Option {
 	if modal {
 		opts = append(opts, zenity.Modal())
 	}
+	opts = append(opts, zenity.Display(display))
+	opts = append(opts, zenity.ClassHint(name, class))
 
 	// Message options
 
@@ -537,6 +547,9 @@ func loadFlags() []zenity.Option {
 	}
 	if radiolist {
 		opts = append(opts, zenity.RadioList())
+	}
+	if midSearch {
+		opts = append(opts, zenity.MidSearch())
 	}
 	if disallowEmpty {
 		opts = append(opts, zenity.DisallowEmpty())
