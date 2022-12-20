@@ -1,8 +1,6 @@
 package zencmd
 
-import (
-	"testing"
-)
+import "testing"
 
 var markupTests = []struct {
 	data string

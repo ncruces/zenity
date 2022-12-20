@@ -31,6 +31,49 @@ func Test_quoteAccelerators(t *testing.T) {
 	}
 }
 
+func Test_quoteMnemonics(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{name: "None", text: "abc", want: "abc"},
+		{name: "One", text: "_abc", want: "__abc"},
+		{name: "Two", text: "_a_bc", want: "__a__bc"},
+		{name: "Three", text: "ab__c", want: "ab____c"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := quoteMnemonics(tt.text); got != tt.want {
+				t.Errorf("quoteMnemonics(%q) = %q; want %q", tt.text, got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_quoteMarkup(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{name: "None", text: `abc`, want: "abc"},
+		{name: "LT", text: `<`, want: "&lt;"},
+		{name: "Amp", text: `&`, want: "&amp;"},
+		{name: "Quot", text: `"`, want: "&#34;"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := quoteMarkup(tt.text); got != tt.want {
+				t.Errorf("quoteMarkup(%q) = %q; want %q", tt.text, got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_appendGeneral(t *testing.T) {
 	t.Parallel()
 	got := appendGeneral(nil, options{

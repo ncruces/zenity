@@ -520,9 +520,13 @@ func loadFlags() []zenity.Option {
 	if ellipsize {
 		opts = append(opts, zenity.Ellipsize())
 	}
-	if !noMarkup {
-		switch {
-		case errorDlg, infoDlg, warningDlg, questionDlg:
+	switch {
+	case entryDlg:
+		text = zencmd.StripMnemonic(text)
+	case calendarDlg, progressDlg:
+		text = zencmd.StripMarkup(text)
+	case errorDlg, infoDlg, warningDlg, questionDlg:
+		if !noMarkup {
 			text = zencmd.StripMarkup(text)
 		}
 	}

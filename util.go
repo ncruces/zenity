@@ -2,6 +2,7 @@ package zenity
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -12,6 +13,19 @@ import (
 
 func quoteAccelerators(text string) string {
 	return strings.ReplaceAll(text, "&", "&&")
+}
+
+func quoteMnemonics(text string) string {
+	return strings.ReplaceAll(text, "_", "__")
+}
+
+func quoteMarkup(text string) string {
+	var res strings.Builder
+	err := xml.EscapeText(&res, []byte(text))
+	if err != nil {
+		return text
+	}
+	return res.String()
 }
 
 func appendGeneral(args []string, opts options) []string {

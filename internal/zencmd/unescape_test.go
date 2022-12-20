@@ -1,8 +1,6 @@
 package zencmd
 
-import (
-	"testing"
-)
+import "testing"
 
 var unescapeTests = []struct {
 	data string

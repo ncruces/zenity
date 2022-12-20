@@ -10,7 +10,7 @@ import (
 )
 
 func calendar(text string, opts options) (time.Time, error) {
-	args := []string{"--calendar", "--text", text, "--date-format", zenutil.DateFormat}
+	args := []string{"--calendar", "--text", quoteMarkup(text), "--date-format", zenutil.DateFormat}
 	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)

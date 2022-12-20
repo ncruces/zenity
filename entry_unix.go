@@ -2,12 +2,10 @@
 
 package zenity
 
-import (
-	"github.com/ncruces/zenity/internal/zenutil"
-)
+import "github.com/ncruces/zenity/internal/zenutil"
 
 func entry(text string, opts options) (string, error) {
-	args := []string{"--entry", "--text", text}
+	args := []string{"--entry", "--text", quoteMnemonics(text)}
 	args = appendGeneral(args, opts)
 	args = appendButtons(args, opts)
 	args = appendWidthHeight(args, opts)
