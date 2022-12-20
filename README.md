@@ -73,7 +73,7 @@ and [man page](https://linux.die.net/man/1/zenity) of that command.
 * on macOS:
   * only dependency is `osascript`
 * on other Unixes:
-  * wraps either one of `zenity`, `qarma`, `matedialog`
+  * wraps either one of `zenity`, `matedialog`, [`qarma`](https://github.com/luebking/qarma)
 
 ## Credits
 
