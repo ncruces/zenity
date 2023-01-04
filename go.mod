@@ -8,7 +8,7 @@ require (
 	github.com/ncruces/go-strftime v0.1.8
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	go.uber.org/goleak v1.2.0 // test
-	golang.org/x/image v0.2.0
+	golang.org/x/image v0.3.0
 	golang.org/x/sys v0.3.0
 )
 
