@@ -741,12 +741,12 @@ func addColumn(s string) error {
 func addFileFilter(s string) error {
 	var filter zenity.FileFilter
 
-	if head, tail, cut := strings.Cut(s, "|"); cut {
-		filter.Name = head
-		s = tail
+	if name, rest, cut := strings.Cut(s, "|"); cut {
+		filter.Name = name
+		s = rest
 	}
 
-	filter.Patterns = strings.Split(strings.Trim(s, " "), " ")
+	filter.Patterns = strings.Fields(s)
 	fileFilters = append(fileFilters, filter)
 	return nil
 }

@@ -60,5 +60,6 @@ type IBindCtx struct{ IUnknown }
 //sys CoCreateInstance(clsid *GUID, unkOuter *IUnknown, clsContext int32, iid *GUID, address unsafe.Pointer) (res error) = ole32.CoCreateInstance
 
 func guid(s string) *GUID {
+	// TODO: use unsafe.StringData after 1.20
 	return (*GUID)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data))
 }

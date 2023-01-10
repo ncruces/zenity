@@ -33,7 +33,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if bytes.ContainsAny(data, "`") {
+		if bytes.ContainsRune(data, '`') {
 			log.Fatalf("illegal character: %s: `", name)
 		}
 		_, err = template.New(file.Name()).Funcs(funcs).Parse(string(data))

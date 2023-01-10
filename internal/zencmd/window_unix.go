@@ -92,12 +92,10 @@ func getWindowIDs() ([]string, error) {
 		return nil, err
 	}
 
-	if i := bytes.IndexByte(out, '\t'); i < 0 {
-		return nil, fmt.Errorf("xprop: unexpected output: %q", out)
-	} else {
-		out = out[i+1:]
+	if _, out, cut := bytes.Cut(out, []byte("\t")); cut {
+		return strings.Split(string(out), ", "), nil
 	}
-	return strings.Split(string(out), ", "), nil
+	return nil, fmt.Errorf("xprop: unexpected output: %q", out)
 }
 
 func getWindowPid(id string) (int, error) {
@@ -106,10 +104,8 @@ func getWindowPid(id string) (int, error) {
 		return 0, err
 	}
 
-	if i := bytes.IndexByte(out, '\t'); i < 0 {
-		return 0, fmt.Errorf("xprop: unexpected output: %q", out)
-	} else {
-		out = out[i+1:]
+	if _, out, cut := bytes.Cut(out, []byte("\t")); cut {
+		return strconv.Atoi(string(out))
 	}
-	return strconv.Atoi(string(out))
+	return 0, fmt.Errorf("xprop: unexpected output: %q", out)
 }

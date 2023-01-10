@@ -25,14 +25,13 @@ func notify(opts ...zenity.Option) error {
 	ico := zenity.NoIcon
 	for scanner := bufio.NewScanner(os.Stdin); scanner.Scan(); {
 		line := scanner.Text()
-		var cmd, msg string
-		if n := strings.IndexByte(line, ':'); n >= 0 {
-			cmd = strings.TrimSpace(line[:n])
-			msg = strings.TrimSpace(zencmd.Unescape(line[n+1:]))
-		} else {
+		cmd, msg, cut := strings.Cut(line, ":")
+		if !cut {
 			os.Stderr.WriteString("Could not parse command from stdin\n")
 			continue
 		}
+		cmd = strings.TrimSpace(cmd)
+		msg = strings.TrimSpace(zencmd.Unescape(msg))
 		switch cmd {
 		case "icon":
 			switch msg {
@@ -51,9 +50,9 @@ func notify(opts ...zenity.Option) error {
 			}
 		case "message", "tooltip":
 			opts := []zenity.Option{ico}
-			if n := strings.IndexByte(msg, '\n'); n >= 0 {
-				opts = append(opts, zenity.Title(msg[:n]))
-				msg = msg[n+1:]
+			if title, rest, cut := strings.Cut(msg, "\n"); cut {
+				opts = append(opts, zenity.Title(title))
+				msg = rest
 			}
 			if err := zenity.Notify(msg, opts...); err != nil {
 				return err
