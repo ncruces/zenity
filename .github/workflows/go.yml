@@ -17,13 +17,16 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18
+        go-version: oldstable
 
     - name: Build
       run: go build -v -tags dev ./...
 
     - name: Test
       run: go test -v ./...
+
+    - name: Update coverage badge
+      uses: ncruces/go-coverage-report@v0.1.0
 
   macos:
     runs-on: macos-latest
@@ -33,7 +36,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18
+        go-version: oldstable
 
     - name: Build
       run: go build -v ./...
@@ -49,7 +52,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18
+        go-version: oldstable
 
     - name: Build
       run: go build -v ./...
