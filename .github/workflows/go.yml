@@ -26,9 +26,9 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-    - name: Update coverage badge
-      uses: ncruces/go-coverage-report@v0.1.2
-      continue-on-error: true
+    - if: github.event_name == 'push'
+      name: Update coverage badge
+      uses: ncruces/go-coverage-report@v0.1.0
 
   macos:
     runs-on: macos-latest
