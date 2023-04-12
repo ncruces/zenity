@@ -28,7 +28,7 @@ func Test_splitDirAndName(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		gotDir, gotName := splitDirAndName(tt.path)
+		gotDir, gotName, _ := splitDirAndName(tt.path)
 		if gotDir != tt.wantDir {
 			t.Errorf("splitDirAndName[%d].dir = %q; want %q", i, gotDir, tt.wantDir)
 		}

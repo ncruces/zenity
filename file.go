@@ -325,12 +325,15 @@ func isUniformTypeIdentifier(pattern string) bool {
 	return true
 }
 
-func splitDirAndName(path string) (dir, name string) {
-	if path != "" {
-		fi, err := os.Stat(path)
-		if err == nil && fi.IsDir() {
-			return path, ""
-		}
+func splitDirAndName(path string) (dir, name string, err error) {
+	if path == "" {
+		return "", "", nil
 	}
-	return filepath.Split(path)
+	fi, err := os.Stat(path)
+	if err == nil && fi.IsDir() {
+		return path, "", nil
+	}
+	dir, name = filepath.Split(path)
+	_, err = os.Stat(dir)
+	return dir, name, err
 }

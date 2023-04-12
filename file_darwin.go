@@ -2,11 +2,14 @@ package zenity
 
 import "github.com/ncruces/zenity/internal/zenutil"
 
-func selectFile(opts options) (string, error) {
+func selectFile(opts options) (name string, err error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
-	data.Options.Location, _ = splitDirAndName(opts.filename)
+	data.Options.Location, _, err = splitDirAndName(opts.filename)
+	if err != nil {
+		return "", err
+	}
 	if opts.attach != nil {
 		data.Application = opts.attach
 	}
@@ -25,13 +28,16 @@ func selectFile(opts options) (string, error) {
 	return strResult(opts, out, err)
 }
 
-func selectFileMultiple(opts options) ([]string, error) {
+func selectFileMultiple(opts options) (list []string, err error) {
 	var data zenutil.File
+	data.Separator = zenutil.Separator
+	data.Options.Multiple = true
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
-	data.Options.Location, _ = splitDirAndName(opts.filename)
-	data.Options.Multiple = true
-	data.Separator = zenutil.Separator
+	data.Options.Location, _, err = splitDirAndName(opts.filename)
+	if err != nil {
+		return nil, err
+	}
 	if opts.attach != nil {
 		data.Application = opts.attach
 	}
@@ -50,11 +56,14 @@ func selectFileMultiple(opts options) ([]string, error) {
 	return lstResult(opts, out, err)
 }
 
-func selectFileSave(opts options) (string, error) {
+func selectFileSave(opts options) (name string, err error) {
 	var data zenutil.File
 	data.Options.Prompt = opts.title
 	data.Options.Invisibles = opts.showHidden
-	data.Options.Location, data.Options.Name = splitDirAndName(opts.filename)
+	data.Options.Location, data.Options.Name, err = splitDirAndName(opts.filename)
+	if err != nil {
+		return "", err
+	}
 	if opts.attach != nil {
 		data.Application = opts.attach
 	}

@@ -321,7 +321,7 @@ func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uin
 }
 
 func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
-	d, n := splitDirAndName(filename)
+	d, n, _ := splitDirAndName(filename)
 	e := filepath.Ext(n)
 	if n != "" {
 		copy(name, syscall.StringToUTF16(n))
