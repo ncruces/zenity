@@ -21,6 +21,7 @@ func Test_splitDirAndName(t *testing.T) {
 		{"a/", "a/", ""},
 		{"a", "", "a"},
 		{"/", "/", ""},
+		{"", "", ""},
 		// we split differently if we know it's a directory
 		{tempDir, tempDir, ""},
 		{filepath.Clean(tempDir), filepath.Clean(tempDir), ""},
