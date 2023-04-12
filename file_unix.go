@@ -43,11 +43,13 @@ func initFilters(filters FileFilters) []string {
 		buf.WriteString("--file-filter=")
 		if f.Name != "" {
 			buf.WriteString(f.Name)
-			buf.WriteRune('|')
+			buf.WriteByte('|')
 		}
-		for _, p := range f.Patterns {
+		for i, p := range f.Patterns {
+			if i != 0 {
+				buf.WriteByte(' ')
+			}
 			buf.WriteString(p)
-			buf.WriteRune(' ')
 		}
 		res = append(res, buf.String())
 	}
