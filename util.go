@@ -135,5 +135,5 @@ func formsResult(opts options, out []byte, err error) ([]string, error) {
 	if len(out) == 0 {
 		return []string{}, nil
 	}
-	return strings.Split(str, zenutil.Separator), nil
+	return strings.Split(str, "|"), nil
 }
