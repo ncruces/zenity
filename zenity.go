@@ -246,6 +246,12 @@ func CalendarField(name string) Option {
 	})
 }
 
+func ComboBoxField(name string, values ...string) Option {
+	return funcOption(func(o *options) {
+		o.fields = append(o.fields, formFields{kind: FormFieldComboBox, name: name, values: values})
+	})
+}
+
 // Context returns an Option to set a Context that can dismiss the dialog.
 //
 // Dialogs dismissed by ctx return ctx.Err().

@@ -3,6 +3,8 @@
 package zenity
 
 import (
+	"strings"
+
 	"github.com/ncruces/zenity/internal/zenutil"
 )
 
@@ -19,6 +21,9 @@ func forms(text string, opts options) ([]string, error) {
 			args = append(args, "--add-password", quoteMarkup(field.name))
 		case FormFieldCalendar:
 			args = append(args, "--add-calendar", quoteMarkup(field.name))
+		case FormFieldComboBox:
+			args = append(args, "--add-combo", quoteMarkup(field.name))
+			args = append(args, "--combo-values", quoteMarkup(strings.Join(field.values, "|")))
 		}
 	}
 
