@@ -91,6 +91,7 @@ type options struct {
 	// Forms options
 	passwords []string
 	calendars []string
+	entries   []string
 
 	// Context for timeout
 	ctx context.Context
@@ -235,6 +236,10 @@ func PasswordField(name string) Option {
 
 func CalendarField(name string) Option {
 	return funcOption(func(o *options) { o.calendars = append(o.calendars, name) })
+}
+
+func EntryField(name string) Option {
+	return funcOption(func(o *options) { o.entries = append(o.entries, name) })
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
