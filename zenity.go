@@ -88,6 +88,8 @@ type options struct {
 	noCancel      bool
 	timeRemaining bool
 
+	// Forms options
+	passwords []string
 	// Context for timeout
 	ctx context.Context
 }
@@ -225,6 +227,9 @@ func ClassHint(name, class string) Option {
 	})
 }
 
+func PasswordField(name string) Option {
+	return funcOption(func(o *options) { o.passwords = append(o.passwords, name) })
+}
 // Context returns an Option to set a Context that can dismiss the dialog.
 //
 // Dialogs dismissed by ctx return ctx.Err().

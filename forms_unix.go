@@ -12,6 +12,10 @@ func forms(text string, opts options) ([]string, error) {
 	args := []string{"--forms", "--text", quoteMarkup(text)}
 	args = appendGeneral(args, opts)
 
+	// password fields
+	for _, name := range opts.passwords {
+		args = append(args, "--add-password", quoteMarkup(name))
+	}
 
 	out, err := zenutil.Run(opts.ctx, args)
 	fmt.Println(err)
