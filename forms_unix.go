@@ -17,6 +17,11 @@ func forms(text string, opts options) ([]string, error) {
 		args = append(args, "--add-password", quoteMarkup(name))
 	}
 
+	// calendar fields
+	for _, name := range opts.calendars {
+		args = append(args, "--add-calendar", quoteMarkup(name))
+	}
+
 	out, err := zenutil.Run(opts.ctx, args)
 	fmt.Println(err)
 	fmt.Println(string(out))
