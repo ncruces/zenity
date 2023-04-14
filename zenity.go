@@ -89,9 +89,7 @@ type options struct {
 	timeRemaining bool
 
 	// Forms options
-	passwords []string
-	calendars []string
-	entries   []string
+	fields []formFields
 
 	// Context for timeout
 	ctx context.Context
@@ -230,16 +228,22 @@ func ClassHint(name, class string) Option {
 	})
 }
 
+func EntryField(name string) Option {
+	return funcOption(func(o *options) {
+		o.fields = append(o.fields, formFields{kind: FormFieldEntry, name: name})
+	})
+}
+
 func PasswordField(name string) Option {
-	return funcOption(func(o *options) { o.passwords = append(o.passwords, name) })
+	return funcOption(func(o *options) {
+		o.fields = append(o.fields, formFields{kind: FormFieldPassword, name: name})
+	})
 }
 
 func CalendarField(name string) Option {
-	return funcOption(func(o *options) { o.calendars = append(o.calendars, name) })
-}
-
-func EntryField(name string) Option {
-	return funcOption(func(o *options) { o.entries = append(o.entries, name) })
+	return funcOption(func(o *options) {
+		o.fields = append(o.fields, formFields{kind: FormFieldCalendar, name: name})
+	})
 }
 
 // Context returns an Option to set a Context that can dismiss the dialog.
