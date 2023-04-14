@@ -23,7 +23,20 @@ func forms(text string, opts options) ([]string, error) {
 			args = append(args, "--add-calendar", quoteMarkup(field.name))
 		case FormFieldComboBox:
 			args = append(args, "--add-combo", quoteMarkup(field.name))
-			args = append(args, "--combo-values", quoteMarkup(strings.Join(field.values, "|")))
+			if len(field.values) > 0 {
+				args = append(args, "--combo-values", quoteMarkup(strings.Join(field.values, "|")))
+			}
+		case FormFieldList:
+			args = append(args, "--add-list", quoteMarkup(field.name))
+			if field.showHeader {
+				args = append(args, "--show-header")
+			}
+			if len(field.cols) > 0 {
+				args = append(args, "--column-values", quoteMarkup(strings.Join(field.cols, "|")))
+			}
+			if len(field.values) > 0 {
+				args = append(args, "--list-values", quoteMarkup(strings.Join(field.values, "|")))
+			}
 		}
 	}
 

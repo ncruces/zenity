@@ -7,12 +7,15 @@ const (
 	FormFieldPassword
 	FormFieldCalendar
 	FormFieldComboBox
+	FormFieldList
 )
 
 type formFields struct {
-	kind   formFieldKind
-	name   string
-	values []string
+	kind       formFieldKind
+	name       string
+	cols       []string
+	values     []string
+	showHeader bool
 }
 
 func Forms(text string, options ...Option) ([]string, error) {

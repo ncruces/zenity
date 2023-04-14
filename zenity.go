@@ -230,25 +230,55 @@ func ClassHint(name, class string) Option {
 
 func EntryField(name string) Option {
 	return funcOption(func(o *options) {
-		o.fields = append(o.fields, formFields{kind: FormFieldEntry, name: name})
+		o.fields = append(o.fields,
+			formFields{
+				kind: FormFieldEntry,
+				name: name,
+			})
 	})
 }
 
 func PasswordField(name string) Option {
 	return funcOption(func(o *options) {
-		o.fields = append(o.fields, formFields{kind: FormFieldPassword, name: name})
+		o.fields = append(o.fields,
+			formFields{
+				kind: FormFieldPassword,
+				name: name,
+			})
 	})
 }
 
 func CalendarField(name string) Option {
 	return funcOption(func(o *options) {
-		o.fields = append(o.fields, formFields{kind: FormFieldCalendar, name: name})
+		o.fields = append(o.fields,
+			formFields{
+				kind: FormFieldCalendar,
+				name: name,
+			})
 	})
 }
 
 func ComboBoxField(name string, values ...string) Option {
 	return funcOption(func(o *options) {
-		o.fields = append(o.fields, formFields{kind: FormFieldComboBox, name: name, values: values})
+		o.fields = append(o.fields,
+			formFields{
+				kind:   FormFieldComboBox,
+				name:   name,
+				values: values,
+			})
+	})
+}
+
+func ListField(name string, showHeader bool, cols []string, values ...string) Option {
+	return funcOption(func(o *options) {
+		o.fields = append(o.fields,
+			formFields{
+				kind:       FormFieldList,
+				name:       name,
+				showHeader: showHeader,
+				cols:       cols,
+				values:     values,
+			})
 	})
 }
 
