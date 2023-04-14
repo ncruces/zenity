@@ -126,3 +126,14 @@ func pwdResult(sep string, opts options, out []byte, err error) (string, string,
 	}
 	return "", str, err
 }
+
+func formsResult(opts options, out []byte, err error) ([]string, error) {
+	str, err := strResult(opts, out, err)
+	if err != nil {
+		return nil, err
+	}
+	if len(out) == 0 {
+		return []string{}, nil
+	}
+	return strings.Split(str, zenutil.Separator), nil
+}
