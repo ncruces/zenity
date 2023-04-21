@@ -11,6 +11,7 @@ import (
 func forms(text string, opts options) ([]string, error) {
 	args := []string{"--forms", "--text", quoteMarkup(text)}
 	args = appendGeneral(args, opts)
+	args = appendButtons(args, opts)
 
 	// fields
 	for _, field := range opts.fields {
