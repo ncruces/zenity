@@ -5,5 +5,5 @@ import (
 )
 
 func forms(text string, opts options) ([]string, error) {
-	return nil, zenity.ErrUnsupported
+	return nil, ErrUnsupported
 }
