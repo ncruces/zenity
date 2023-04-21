@@ -22,16 +22,28 @@ func forms(text string, opts options) ([]string, error) {
 	return dlg.setup(text, opts)
 }
 
+type uiCtrl struct {
+	hwnd   win.HWND
+	x      int
+	y      int
+	width  int
+	height int
+}
+
 type formsDialog struct {
 	out []string
 	err error
 
-	wnd       win.HWND
-	textCtl   win.HWND
-	okBtn     win.HWND
-	cancelBtn win.HWND
-	extraBtn  win.HWND
-	font      font
+	height       int
+	wnd          win.HWND
+	textCtl      win.HWND
+	okBtn        win.HWND
+	cancelBtn    win.HWND
+	extraBtn     win.HWND
+	pwdLabelList []win.HWND
+	pwdEditList  []win.HWND
+	dnyUIList    []uiCtrl
+	font         font
 }
 
 func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
@@ -62,9 +74,77 @@ func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
 		win.CW_USEDEFAULT, win.CW_USEDEFAULT,
 		281, 281, owner, 0, instance, unsafe.Pointer(dlg))
 
+	// coordinates
+	x := 12
+	y := 10
+	w := 241
+	h := 16
+
 	dlg.textCtl, _ = win.CreateWindowEx(0,
 		strptr("STATIC"), strptr(text), _WS_ZEN_LABEL,
-		12, 10, 241, 16, dlg.wnd, 0, instance, nil)
+		x, y, w, h, dlg.wnd, 0, instance, nil)
+
+	// fields
+	for _, field := range opts.fields {
+		switch field.kind {
+		case FormFieldEntry:
+			// label
+			y += h + 4
+			h = 16
+			ctl, _ := win.CreateWindowEx(0,
+				strptr("STATIC"), strptr(field.name), _WS_ZEN_LABEL,
+				x, y, w, h, dlg.wnd, 0, instance, nil)
+			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+
+			// Edit
+			y += h + 4
+			h = 24
+			ctl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
+				strptr("EDIT"), nil,
+				_WS_ZEN_CONTROL|win.ES_AUTOHSCROLL,
+				x, y, w, h, dlg.wnd, 0, instance, nil)
+			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+		case FormFieldPassword:
+			// label
+			y += h + 4
+			h = 16
+			ctl, _ := win.CreateWindowEx(0,
+				strptr("STATIC"), strptr(field.name), _WS_ZEN_LABEL,
+				x, y, w, h, dlg.wnd, 0, instance, nil)
+			dlg.pwdLabelList = append(dlg.pwdLabelList, ctl)
+			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+
+			// edit
+			y += h + 4
+			h = 24
+			ctl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
+				strptr("EDIT"), nil,
+				_WS_ZEN_CONTROL|win.ES_AUTOHSCROLL|win.ES_PASSWORD,
+				x, y, w, h, dlg.wnd, 0, instance, nil)
+			dlg.pwdEditList = append(dlg.pwdEditList, ctl)
+			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+
+			// args = append(args, "--add-password", quoteMarkup(field.name))
+		case FormFieldCalendar:
+			// args = append(args, "--add-calendar", quoteMarkup(field.name))
+		case FormFieldComboBox:
+			// args = append(args, "--add-combo", quoteMarkup(field.name))
+			// if len(field.values) > 0 {
+			// 	args = append(args, "--combo-values", quoteMarkup(strings.Join(field.values, "|")))
+			// }
+		case FormFieldList:
+			// args = append(args, "--add-list", quoteMarkup(field.name))
+			// if field.showHeader {
+			// 	args = append(args, "--show-header")
+			// }
+			// if len(field.cols) > 0 {
+			// 	args = append(args, "--column-values", quoteMarkup(strings.Join(field.cols, "|")))
+			// }
+			// if len(field.values) > 0 {
+			// 	args = append(args, "--list-values", quoteMarkup(strings.Join(field.values, "|")))
+			// }
+		}
+	}
 
 	// var flags uint32 = _WS_ZEN_CONTROL | win.WS_VSCROLL | win.LBS_NOTIFY
 	// if dlg.multiple {
@@ -74,38 +154,47 @@ func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
 	// 	strptr("LISTBOX"), nil, flags,
 	// 	12, 30, 241, 164, dlg.wnd, 0, instance, nil)
 
-	dlg.okBtn, _ = win.CreateWindowEx(0,
+	x = 95
+	y += h + 12
+	h = 24
+	w = 75
+	ctl, _ := win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(quoteAccelerators(*opts.okLabel)),
 		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON,
-		12, 206, 75, 24, dlg.wnd, win.IDOK, instance, nil)
-	dlg.cancelBtn, _ = win.CreateWindowEx(0,
+		x, y, w, h, dlg.wnd, win.IDOK, instance, nil)
+	dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+	dlg.okBtn = ctl
+
+	x += w + 8
+	h = 24
+	w = 75
+	ctl, _ = win.CreateWindowEx(0,
 		strptr("BUTTON"), strptr(quoteAccelerators(*opts.cancelLabel)),
 		_WS_ZEN_BUTTON,
-		12, 206, 75, 24, dlg.wnd, win.IDCANCEL, instance, nil)
+		x, y, w, h, dlg.wnd, win.IDCANCEL, instance, nil)
+	dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+	dlg.cancelBtn = ctl
+
 	if opts.extraButton != nil {
-		dlg.extraBtn, _ = win.CreateWindowEx(0,
+		x = 12
+		// y += h + 4
+		h = 24
+		ctl, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(quoteAccelerators(*opts.extraButton)),
 			_WS_ZEN_BUTTON,
-			12, 206, 75, 24, dlg.wnd, win.IDNO, instance, nil)
+			x, y, w, h, dlg.wnd, win.IDNO, instance, nil)
+		dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+		dlg.extraBtn = ctl
 	}
 
-	// for i, item := range dlg.items {
-	// 	win.SendMessagePointer(dlg.listCtl, win.LB_ADDSTRING, 0, unsafe.Pointer(strptr(item)))
-	// 	for _, def := range opts.defaultItems {
-	// 		if def == item {
-	// 			if dlg.multiple {
-	// 				win.SendMessage(dlg.listCtl, win.LB_SETSEL, 1, uintptr(i))
-	// 			} else {
-	// 				win.SendMessage(dlg.listCtl, win.LB_SETCURSEL, uintptr(i), 0)
-	// 			}
-	// 		}
-	// 	}
-	// }
+	dlg.height = y + h + 50
 
 	dlg.update()
 	dlg.layout(getDPI(dlg.wnd))
 	centerWindow(dlg.wnd)
-	// win.SetFocus(dlg.listCtl)
+	if len(dlg.dnyUIList) > 0 {
+		win.SetFocus(dlg.dnyUIList[0].hwnd)
+	}
 	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 
 	if opts.ctx != nil {
@@ -133,20 +222,13 @@ func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
 func (dlg *formsDialog) layout(dpi dpi) {
 	font := dlg.font.forDPI(dpi)
 	win.SendMessage(dlg.textCtl, win.WM_SETFONT, font, 1)
-	// win.SendMessage(dlg.listCtl, win.WM_SETFONT, font, 1)
-	win.SendMessage(dlg.okBtn, win.WM_SETFONT, font, 1)
-	win.SendMessage(dlg.cancelBtn, win.WM_SETFONT, font, 1)
-	win.SendMessage(dlg.extraBtn, win.WM_SETFONT, font, 1)
-	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(281), win.SWP_NOMOVE|win.SWP_NOZORDER)
+	win.SetWindowPos(dlg.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(dlg.height), win.SWP_NOMOVE|win.SWP_NOZORDER)
 	win.SetWindowPos(dlg.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
-	// win.SetWindowPos(dlg.listCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(164), win.SWP_NOZORDER)
-	if dlg.extraBtn == 0 {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-	} else {
-		win.SetWindowPos(dlg.okBtn, 0, dpi.scale(12), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		win.SetWindowPos(dlg.extraBtn, 0, dpi.scale(95), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		win.SetWindowPos(dlg.cancelBtn, 0, dpi.scale(178), dpi.scale(206), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+
+	// dynamic ui list
+	for _, ctl := range dlg.dnyUIList {
+		win.SendMessage(ctl.hwnd, win.WM_SETFONT, font, 1)
+		win.SetWindowPos(ctl.hwnd, 0, dpi.scale(ctl.x), dpi.scale(ctl.y), dpi.scale(ctl.width), dpi.scale(ctl.height), win.SWP_NOZORDER)
 	}
 }
 
