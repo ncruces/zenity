@@ -334,6 +334,9 @@ func splitDirAndName(path string) (dir, name string, err error) {
 		return path, "", nil
 	}
 	dir, name = filepath.Split(path)
+	if dir == "" {
+		return "", name, nil
+	}
 	_, err = os.Stat(dir)
 	return dir, name, err
 }
