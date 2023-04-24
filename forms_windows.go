@@ -104,6 +104,7 @@ func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
 				_WS_ZEN_CONTROL|win.ES_AUTOHSCROLL,
 				x, y, w, h, dlg.wnd, 0, instance, nil)
 			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
+			dlg.pwdEditList = append(dlg.pwdEditList, ctl)
 		case FormFieldPassword:
 			// label
 			y += h + 4
@@ -123,36 +124,11 @@ func (dlg *formsDialog) setup(text string, opts options) ([]string, error) {
 				x, y, w, h, dlg.wnd, 0, instance, nil)
 			dlg.pwdEditList = append(dlg.pwdEditList, ctl)
 			dlg.dnyUIList = append(dlg.dnyUIList, uiCtrl{hwnd: ctl, x: x, y: y, width: w, height: h})
-
-			// args = append(args, "--add-password", quoteMarkup(field.name))
 		case FormFieldCalendar:
-			// args = append(args, "--add-calendar", quoteMarkup(field.name))
 		case FormFieldComboBox:
-			// args = append(args, "--add-combo", quoteMarkup(field.name))
-			// if len(field.values) > 0 {
-			// 	args = append(args, "--combo-values", quoteMarkup(strings.Join(field.values, "|")))
-			// }
 		case FormFieldList:
-			// args = append(args, "--add-list", quoteMarkup(field.name))
-			// if field.showHeader {
-			// 	args = append(args, "--show-header")
-			// }
-			// if len(field.cols) > 0 {
-			// 	args = append(args, "--column-values", quoteMarkup(strings.Join(field.cols, "|")))
-			// }
-			// if len(field.values) > 0 {
-			// 	args = append(args, "--list-values", quoteMarkup(strings.Join(field.values, "|")))
-			// }
 		}
 	}
-
-	// var flags uint32 = _WS_ZEN_CONTROL | win.WS_VSCROLL | win.LBS_NOTIFY
-	// if dlg.multiple {
-	// 	flags |= win.LBS_EXTENDEDSEL
-	// }
-	// dlg.listCtl, _ = win.CreateWindowEx(win.WS_EX_CLIENTEDGE,
-	// 	strptr("LISTBOX"), nil, flags,
-	// 	12, 30, 241, 164, dlg.wnd, 0, instance, nil)
 
 	x = 95
 	y += h + 12
@@ -272,6 +248,9 @@ func formsProc(wnd win.HWND, msg uint32, wparam uintptr, lparam *unsafe.Pointer)
 			dlg.update()
 			return 1
 		case win.IDOK, win.IDYES:
+			for _, ctl := range dlg.pwdEditList {
+				dlg.out = append(dlg.out, win.GetWindowText(ctl))
+			}
 		case win.IDCANCEL:
 			dlg.err = ErrCanceled
 		case win.IDNO:
