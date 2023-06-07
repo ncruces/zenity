@@ -157,12 +157,14 @@ func (f FileFilters) types() []string {
 				res = append(res, pattern)
 				continue
 			}
-
-			ext := pattern[strings.LastIndexByte(pattern, '.')+1:]
+			dot := strings.LastIndexByte(pattern, '.')
+			if dot < 0 {
+				continue
+			}
 
 			var escape bool
 			var buf strings.Builder
-			for _, b := range []byte(removeClasses(ext)) {
+			for _, b := range []byte(removeClasses(pattern[dot+1:])) {
 				switch {
 				case escape:
 					escape = false
@@ -174,9 +176,7 @@ func (f FileFilters) types() []string {
 				}
 				buf.WriteByte(b)
 			}
-			if buf.Len() > 0 {
-				res = append(res, buf.String())
-			}
+			res = append(res, buf.String())
 		}
 	}
 	if res == nil {

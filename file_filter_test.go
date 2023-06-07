@@ -31,6 +31,7 @@ func TestFileFilters_simplify(t *testing.T) {
 	}{
 		{[]string{``}, nil},
 		{[]string{`*.\?`}, nil},
+		{[]string{`*.`}, []string{`*.`}},
 		{[]string{`*.png`}, []string{"*.png"}},
 		{[]string{`*.pn?`}, []string{"*.pn?"}},
 		{[]string{`*.pn;`}, []string{"*.pn?"}},
@@ -91,6 +92,7 @@ func TestFileFilters_types(t *testing.T) {
 		want []string
 	}{
 		{[]string{``}, nil},
+		{[]string{`*.`}, []string{".", ""}},
 		{[]string{`*.png`}, []string{".", "png"}},
 		{[]string{`*.pn?`}, nil},
 		{[]string{`*.pn;`}, []string{".", "pn;"}},
