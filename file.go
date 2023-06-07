@@ -182,8 +182,8 @@ func (f FileFilters) types() []string {
 	if res == nil {
 		return nil
 	}
-	// Workaround for macOS bug: first type cannot be a four letter extension, so prepend empty string.
-	return append([]string{""}, res...)
+	// Workaround for macOS bug: first type cannot be a four letter extension, so prepend dot string.
+	return append([]string{"."}, res...)
 }
 
 // Unix patterns are case-sensitive. Fold them if requested.
