@@ -1,9 +1,15 @@
 package zenity
 
 import (
+	"encoding/xml"
 	"math/rand"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
+	"text/template"
 	"time"
 	"unsafe"
 
@@ -16,6 +22,64 @@ func notify(text string, opts options) error {
 		return opts.ctx.Err()
 	}
 
+	file, err := os.CreateTemp("", "*.ps1")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(file.Name())
+
+	data := struct {
+		Title string
+		Text  string
+		Icon  string
+	}{
+		Title: "zenity",
+		Text:  text,
+	}
+
+	if opts.title != nil {
+		data.Title = *opts.title
+	}
+
+	if i, ok := opts.icon.(string); ok {
+		_, err := os.Stat(i)
+		if err != nil {
+			return err
+		}
+		data.Icon, err = filepath.Abs(i)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = script.Execute(file, data)
+	if err != nil {
+		return err
+	}
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	var cmd *exec.Cmd
+	if opts.ctx != nil {
+		cmd = exec.CommandContext(opts.ctx, "PowerShell", "-ExecutionPolicy", "Bypass", "-File", file.Name())
+	} else {
+		cmd = exec.Command("PowerShell", "-ExecutionPolicy", "Bypass", "-File", file.Name())
+	}
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	err = cmd.Run()
+
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return opts.ctx.Err()
+	}
+	if err != nil {
+		return shellNotify(text, opts)
+	}
+	return nil
+}
+
+func shellNotify(text string, opts options) error {
 	var args win.NOTIFYICONDATA
 	args.StructSize = uint32(unsafe.Sizeof(args))
 	args.ID = rand.Uint32()
@@ -104,3 +168,39 @@ func wtsMessage(text string, opts options) error {
 		&ptitle[0], 2*len(ptitle), &ptext[0], 2*len(ptext),
 		flags, timeout, &res, false)
 }
+
+var script = template.Must(template.New("").Funcs(template.FuncMap{"xml": func(s string) string {
+	var buf strings.Builder
+	xml.EscapeText(&buf, []byte(s))
+	return buf.String()
+}}).Parse("\xEF\xBB\xBF" + `
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
+
+$title = @"
+{{.Title}}
+"@
+
+$data = @"
+<toast activationType="protocol">
+ <visual>
+  <binding template="ToastGeneric">
+   {{- if .Text}}
+    <text><![CDATA[{{.Text}}]]></text>
+   {{- end}}
+   {{- if .Icon}}
+    <image placement="appLogoOverride" src="{{xml .Icon}}" />
+   {{- end}}
+  </binding>
+ </visual>
+ <audio src="ms-winsoundevent:Notification.Default" />
+</toast>
+"@
+
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml($data)
+
+$toast = New-Object Windows.UI.Notifications.ToastNotification $xml
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($title).Show($toast)
+`))
