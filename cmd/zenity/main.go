@@ -609,6 +609,9 @@ func loadFlags() []zenity.Option {
 	if noCancel {
 		opts = append(opts, zenity.NoCancel())
 	}
+	if autoClose {
+		opts = append(opts, zenity.AutoClose())
+	}
 	if timeRemaining {
 		opts = append(opts, zenity.TimeRemaining())
 	}

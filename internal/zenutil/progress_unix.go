@@ -20,6 +20,7 @@ type progressDialog struct {
 	ctx     context.Context
 	cmd     *exec.Cmd
 	max     int
+	close   bool
 	percent bool
 	closed  int32
 	lines   chan string
@@ -41,6 +42,9 @@ func (d *progressDialog) Text(text string) error {
 }
 
 func (d *progressDialog) Value(value int) error {
+	if value >= d.max && d.close {
+		return d.Close()
+	}
 	if d.percent {
 		return d.send(strconv.FormatFloat(100*float64(value)/float64(d.max), 'f', -1, 64))
 	} else {

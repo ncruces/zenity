@@ -86,6 +86,7 @@ type options struct {
 	// Progress indication options
 	maxValue      int
 	noCancel      bool
+	autoClose     bool
 	timeRemaining bool
 
 	// Context for timeout

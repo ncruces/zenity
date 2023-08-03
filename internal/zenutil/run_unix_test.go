@@ -31,7 +31,7 @@ func TestRun_context(t *testing.T) {
 }
 
 func TestRunProgress(t *testing.T) {
-	_, err := RunProgress(nil, 100, nil, []string{"--version"})
+	_, err := RunProgress(nil, 100, false, nil, []string{"--version"})
 	if skip, err := skip(err); skip {
 		t.Skip("skipping:", err)
 	}

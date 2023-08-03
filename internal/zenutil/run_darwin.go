@@ -46,7 +46,7 @@ func Run(ctx context.Context, script string, data any) ([]byte, error) {
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, data Progress) (dlg *progressDialog, err error) {
+func RunProgress(ctx context.Context, max int, close bool, data Progress) (_ *progressDialog, err error) {
 	var buf bytes.Buffer
 	err = scripts.ExecuteTemplate(&buf, "progress", data)
 	if err != nil {
@@ -108,10 +108,11 @@ func RunProgress(ctx context.Context, max int, data Progress) (dlg *progressDial
 		return nil, err
 	}
 
-	dlg = &progressDialog{
+	dlg := &progressDialog{
 		ctx:   ctx,
 		cmd:   cmd,
 		max:   max,
+		close: close,
 		lines: make(chan string),
 		done:  make(chan struct{}),
 	}

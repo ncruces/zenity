@@ -23,5 +23,5 @@ func progress(opts options) (ProgressDialog, error) {
 		data.WindowIcon = i
 	}
 
-	return zenutil.RunProgress(opts.ctx, opts.maxValue, data)
+	return zenutil.RunProgress(opts.ctx, opts.maxValue, opts.autoClose, data)
 }

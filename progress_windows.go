@@ -29,8 +29,9 @@ func progress(opts options) (ProgressDialog, error) {
 	}
 
 	dlg := &progressDialog{
-		done: make(chan struct{}),
-		max:  opts.maxValue,
+		done:  make(chan struct{}),
+		max:   opts.maxValue,
+		close: opts.autoClose,
 	}
 	dlg.init.Add(1)
 
@@ -44,10 +45,11 @@ func progress(opts options) (ProgressDialog, error) {
 }
 
 type progressDialog struct {
-	init sync.WaitGroup
-	done chan struct{}
-	max  int
-	err  error
+	init  sync.WaitGroup
+	done  chan struct{}
+	err   error
+	max   int
+	close bool
 
 	wnd       win.HWND
 	textCtl   win.HWND
@@ -69,6 +71,9 @@ func (d *progressDialog) Text(text string) error {
 }
 
 func (d *progressDialog) Value(value int) error {
+	if value >= d.max && d.close {
+		return d.Close()
+	}
 	select {
 	default:
 		win.SendMessage(d.progCtl, win.PBM_SETPOS, uintptr(value), 0)
@@ -156,10 +161,12 @@ func (dlg *progressDialog) setup(opts options) error {
 		nil, flags,
 		12, 30, 241, 16, dlg.wnd, 0, instance, nil)
 
-	dlg.okBtn, _ = win.CreateWindowEx(0,
-		strptr("BUTTON"), strptr(quoteAccelerators(*opts.okLabel)),
-		_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON|win.WS_DISABLED,
-		12, 58, 75, 24, dlg.wnd, win.IDOK, instance, nil)
+	if !opts.noCancel || !opts.autoClose {
+		dlg.okBtn, _ = win.CreateWindowEx(0,
+			strptr("BUTTON"), strptr(quoteAccelerators(*opts.okLabel)),
+			_WS_ZEN_BUTTON|win.BS_DEFPUSHBUTTON|win.WS_DISABLED,
+			12, 58, 75, 24, dlg.wnd, win.IDOK, instance, nil)
+	}
 	if !opts.noCancel {
 		dlg.cancelBtn, _ = win.CreateWindowEx(0,
 			strptr("BUTTON"), strptr(quoteAccelerators(*opts.cancelLabel)),
@@ -213,22 +220,23 @@ func (d *progressDialog) layout(dpi dpi) {
 	win.SetWindowPos(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(133), win.SWP_NOMOVE|win.SWP_NOZORDER)
 	win.SetWindowPos(d.textCtl, 0, dpi.scale(12), dpi.scale(10), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
 	win.SetWindowPos(d.progCtl, 0, dpi.scale(12), dpi.scale(30), dpi.scale(241), dpi.scale(16), win.SWP_NOZORDER)
-	if d.extraBtn == 0 {
-		if d.cancelBtn == 0 {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		} else {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		}
-	} else {
-		if d.cancelBtn == 0 {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-			win.SetWindowPos(d.extraBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		} else {
-			win.SetWindowPos(d.okBtn, 0, dpi.scale(12), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-			win.SetWindowPos(d.extraBtn, 0, dpi.scale(95), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-			win.SetWindowPos(d.cancelBtn, 0, dpi.scale(178), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
-		}
+
+	pos := 178
+	if d.cancelBtn != 0 {
+		win.SetWindowPos(d.cancelBtn, 0, dpi.scale(pos), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		pos -= 83
+	}
+	if d.extraBtn != 0 {
+		win.SetWindowPos(d.extraBtn, 0, dpi.scale(pos), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		pos -= 83
+	}
+	if d.okBtn != 0 {
+		win.SetWindowPos(d.okBtn, 0, dpi.scale(pos), dpi.scale(58), dpi.scale(75), dpi.scale(24), win.SWP_NOZORDER)
+		pos -= 83
+	}
+
+	if pos == 178 {
+		win.SetWindowPos(d.wnd, 0, 0, 0, dpi.scale(281), dpi.scale(97), win.SWP_NOMOVE|win.SWP_NOZORDER)
 	}
 }
 

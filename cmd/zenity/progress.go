@@ -14,6 +14,9 @@ import (
 )
 
 func progress(opts ...zenity.Option) (err error) {
+	const scale = 16777216
+
+	opts = append(opts, zenity.MaxValue(scale*100))
 	dlg, err := zenity.Progress(opts...)
 	if err != nil {
 		return err
@@ -30,7 +33,7 @@ func progress(opts ...zenity.Option) (err error) {
 	if err := dlg.Text(text); err != nil {
 		return err
 	}
-	if err := dlg.Value(int(math.Round(percentage))); err != nil {
+	if err := dlg.Value(int(math.Round(scale * percentage))); err != nil {
 		return err
 	}
 
@@ -54,11 +57,8 @@ func progress(opts ...zenity.Option) (err error) {
 					return err
 				}
 			} else if v, err := strconv.ParseFloat(line, 64); err == nil {
-				if err := dlg.Value(int(math.Round(v))); err != nil {
+				if err := dlg.Value(int(math.Round(scale * v))); err != nil {
 					return err
-				}
-				if v >= 100 && autoClose {
-					return dlg.Close()
 				}
 			}
 			continue

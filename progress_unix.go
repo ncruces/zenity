@@ -19,8 +19,11 @@ func progress(opts options) (ProgressDialog, error) {
 	if opts.noCancel {
 		args = append(args, "--no-cancel")
 	}
+	if opts.autoClose {
+		args = append(args, "--auto-close")
+	}
 	if opts.timeRemaining {
 		args = append(args, "--time-remaining")
 	}
-	return zenutil.RunProgress(opts.ctx, opts.maxValue, opts.extraButton, args)
+	return zenutil.RunProgress(opts.ctx, opts.maxValue, opts.autoClose, opts.extraButton, args)
 }

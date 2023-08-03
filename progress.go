@@ -47,6 +47,11 @@ func NoCancel() Option {
 	return funcOption(func(o *options) { o.noCancel = true })
 }
 
+// AutoClose returns an Option to dismiss the dialog when 100% has been reached.
+func AutoClose() Option {
+	return funcOption(func(o *options) { o.autoClose = true })
+}
+
 // TimeRemaining returns an Option to estimate when progress will reach 100% (Unix only).
 func TimeRemaining() Option {
 	return funcOption(func(o *options) { o.timeRemaining = true })

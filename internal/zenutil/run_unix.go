@@ -54,7 +54,7 @@ func Run(ctx context.Context, args []string) ([]byte, error) {
 }
 
 // RunProgress is internal.
-func RunProgress(ctx context.Context, max int, extra *string, args []string) (*progressDialog, error) {
+func RunProgress(ctx context.Context, max int, close bool, extra *string, args []string) (*progressDialog, error) {
 	pathOnce.Do(initPath)
 	if Command && path != "" {
 		if Timeout > 0 {
@@ -85,6 +85,7 @@ func RunProgress(ctx context.Context, max int, extra *string, args []string) (*p
 		cmd:     cmd,
 		max:     max,
 		percent: true,
+		close:   close,
 		lines:   make(chan string),
 		done:    make(chan struct{}),
 	}
