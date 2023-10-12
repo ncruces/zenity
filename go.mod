@@ -1,6 +1,6 @@
 module github.com/ncruces/zenity
 
-go 1.18
+go 1.20
 
 require (
 	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f
