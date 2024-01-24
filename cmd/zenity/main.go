@@ -307,6 +307,7 @@ func parseFlags() []string {
 	err := fset.Parse(os.Args[1:])
 	if err == flag.ErrHelp {
 		fmt.Println("usage: zenity [options...]")
+		fset.SetOutput(os.Stdout)
 		fset.PrintDefaults()
 		os.Exit(0)
 	}
