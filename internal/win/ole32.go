@@ -24,6 +24,7 @@ const (
 
 	E_CANCELED         = windows.ERROR_CANCELLED | windows.FACILITY_WIN32<<16 | 0x80000000
 	RPC_E_CHANGED_MODE = syscall.Errno(windows.RPC_E_CHANGED_MODE)
+	S_FALSE            = syscall.Errno(windows.S_FALSE)
 )
 
 func CoInitializeEx(reserved uintptr, coInit uint32) error {

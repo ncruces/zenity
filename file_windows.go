@@ -1,8 +1,10 @@
 package zenity
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -35,6 +37,12 @@ func selectFile(opts options) (string, error) {
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
+
+	uninit, err := coInitialize()
+	if err != nil {
+		return "", err
+	}
+	defer uninit()
 
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
@@ -78,6 +86,12 @@ func selectFileMultiple(opts options) ([]string, error) {
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
+
+	uninit, err := coInitialize()
+	if err != nil {
+		return nil, err
+	}
+	defer uninit()
 
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
@@ -153,6 +167,12 @@ func selectFileSave(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
+	uninit, err := coInitialize()
+	if err != nil {
+		return "", err
+	}
+	defer uninit()
+
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
@@ -171,16 +191,14 @@ func selectFileSave(opts options) (string, error) {
 }
 
 func pickFolders(opts options, multi bool) (string, []string, error) {
+	uninit, err := coInitialize()
+	if err != nil {
+		return "", nil, err
+	}
+	defer uninit()
+
 	owner, _ := opts.attach.(win.HWND)
 	defer setup(owner)()
-
-	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
-	if err != win.RPC_E_CHANGED_MODE {
-		if err != nil {
-			return "", nil, err
-		}
-		defer win.CoUninitialize()
-	}
 
 	var dialog *win.IFileOpenDialog
 	err = win.CoCreateInstance(
@@ -318,6 +336,22 @@ func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uin
 		win.SendMessage(wnd, win.BFFM_SETSELECTION, 1, data)
 	}
 	return 0
+}
+
+func coInitialize() (context.CancelFunc, error) {
+	runtime.LockOSThread()
+	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
+	if err == nil || err == win.S_FALSE {
+		return func() {
+			win.CoUninitialize()
+			runtime.UnlockOSThread()
+		}, nil
+	}
+	if err == win.RPC_E_CHANGED_MODE {
+		return runtime.UnlockOSThread, nil
+	}
+	runtime.UnlockOSThread()
+	return nil, err
 }
 
 func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
