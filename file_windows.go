@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -338,16 +339,17 @@ func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uin
 	return 0
 }
 
+var initializedMap sync.Map
+
 func coInitialize() (context.CancelFunc, error) {
 	runtime.LockOSThread()
-	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
-	if err == nil || err == win.S_FALSE {
-		return func() {
-			win.CoUninitialize()
-			runtime.UnlockOSThread()
-		}, nil
+	tid := win.GetCurrentThreadId()
+	if _, inited := initializedMap.Load(tid); inited {
+		return runtime.UnlockOSThread, nil
 	}
-	if err == win.RPC_E_CHANGED_MODE {
+	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
+	if err == nil || err == win.S_FALSE || err == win.RPC_E_CHANGED_MODE {
+		initializedMap.Store(tid, true)
 		return runtime.UnlockOSThread, nil
 	}
 	runtime.UnlockOSThread()
