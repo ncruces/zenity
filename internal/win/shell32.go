@@ -123,7 +123,9 @@ type IDLIST struct{}
 var (
 	IID_IShellItem       = guid("\x1e\x6d\x82\x43\x18\xe7\xee\x42\xbc\x55\xa1\xe2\x61\xc3\x7b\xfe")
 	IID_IFileOpenDialog  = guid("\x88\x72\x7c\xd5\xad\xd4\x68\x47\xbe\x02\x9d\x96\x95\x32\xd9\x60")
+	IID_IFileSaveDialog  = guid("\x23\xcd\xbc\x84\xde\x5f\xdb\x4c\xae\xa4\xaf\x64\xb8\x3d\x78\xab")
 	CLSID_FileOpenDialog = guid("\x9c\x5a\x1c\xdc\x8a\xe8\xde\x4d\xa5\xa1\x60\xf8\x2a\x20\xae\xf7")
+	CLSID_FileSaveDialog = guid("\xf3\xe2\xb4\xc0\x21\xba\x73\x47\x8d\xba\x33\x5e\xc9\x46\xeb\x8b")
 )
 
 type IFileOpenDialog struct{ IFileDialog }
@@ -140,6 +142,16 @@ func (u *IFileOpenDialog) GetResults() (res *IShellItemArray, err error) {
 		err = syscall.Errno(hr)
 	}
 	return
+}
+
+type IFileSaveDialog struct{ IFileDialog }
+type IFileSaveDialogVtbl struct {
+	iFileDialogVtbl
+	SetSaveAsItem          uintptr
+	SetProperties          uintptr
+	SetCollectedProperties uintptr
+	GetProperties          uintptr
+	ApplyProperties        uintptr
 }
 
 type IFileDialog struct{ IModalWindow }

@@ -130,6 +130,10 @@ func selectFileMultiple(opts options) ([]string, error) {
 }
 
 func selectFileSave(opts options) (string, error) {
+	name, shown, err := fileSaveDialog(opts)
+	if shown || opts.ctx != nil && opts.ctx.Err() != nil {
+		return name, err
+	}
 	if opts.directory {
 		return selectFile(opts)
 	}
@@ -278,6 +282,86 @@ func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 		}
 		return str, nil, true, nil
 	}
+}
+
+func fileSaveDialog(opts options) (string, bool, error) {
+	uninit, err := coInitialize()
+	if err != nil {
+		return "", false, err
+	}
+	defer uninit()
+
+	owner, _ := opts.attach.(win.HWND)
+	defer setup(owner)()
+
+	var dialog *win.IFileSaveDialog
+	err = win.CoCreateInstance(
+		win.CLSID_FileSaveDialog, nil, win.CLSCTX_ALL,
+		win.IID_IFileSaveDialog, unsafe.Pointer(&dialog))
+	if err != nil {
+		return "", false, err
+	}
+	defer dialog.Release()
+
+	flgs, err := dialog.GetOptions()
+	if err != nil {
+		return "", false, err
+	}
+	flgs |= win.FOS_NOCHANGEDIR | win.FOS_PATHMUSTEXIST | win.FOS_NOREADONLYRETURN | win.FOS_FORCEFILESYSTEM
+	if opts.confirmOverwrite {
+		flgs |= win.FOS_OVERWRITEPROMPT
+	}
+	if opts.confirmCreate {
+		flgs |= win.FOS_CREATEPROMPT
+	}
+	if opts.showHidden {
+		flgs |= win.FOS_FORCESHOWHIDDEN
+	}
+	err = dialog.SetOptions(flgs)
+	if err != nil {
+		return "", false, err
+	}
+
+	if opts.title != nil {
+		dialog.SetTitle(strptr(*opts.title))
+	}
+
+	if opts.filename != "" {
+		var item *win.IShellItem
+		dir, name, _ := splitDirAndName(opts.filename)
+		dialog.SetFileName(strptr(name))
+		if ext := filepath.Ext(name); len(ext) > 1 {
+			dialog.SetDefaultExtension(strptr(ext[1:]))
+		}
+		win.SHCreateItemFromParsingName(strptr(dir), nil, win.IID_IShellItem, &item)
+		if item != nil {
+			defer item.Release()
+			dialog.SetFolder(item)
+		}
+	}
+
+	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
+	if err != nil {
+		return "", false, err
+	}
+	defer unhook()
+
+	err = dialog.Show(owner)
+	if opts.ctx != nil && opts.ctx.Err() != nil {
+		return "", true, opts.ctx.Err()
+	}
+	if err == win.E_CANCELED {
+		return "", true, ErrCanceled
+	}
+	if err != nil {
+		return "", true, err
+	}
+
+	str, err := shellItemPath(dialog.GetResult())
+	if err != nil {
+		return "", true, err
+	}
+	return str, true, nil
 }
 
 func shellItemPath(item *win.IShellItem, err error) (string, error) {
