@@ -46,43 +46,51 @@ const (
 	// NOTIFYICONDATA state
 	NIS_HIDDEN     = 0x1
 	NIS_SHAREDICON = 0x2
+)
 
-	// IFileOpenDialog options
-	FOS_OVERWRITEPROMPT          = 0x2
-	FOS_STRICTFILETYPES          = 0x4
-	FOS_NOCHANGEDIR              = 0x8
-	FOS_PICKFOLDERS              = 0x20
-	FOS_FORCEFILESYSTEM          = 0x40
-	FOS_ALLNONSTORAGEITEMS       = 0x80
-	FOS_NOVALIDATE               = 0x100
-	FOS_ALLOWMULTISELECT         = 0x200
-	FOS_PATHMUSTEXIST            = 0x800
-	FOS_FILEMUSTEXIST            = 0x1000
-	FOS_CREATEPROMPT             = 0x2000
-	FOS_SHAREAWARE               = 0x4000
-	FOS_NOREADONLYRETURN         = 0x8000
-	FOS_NOTESTFILECREATE         = 0x10000
-	FOS_HIDEMRUPLACES            = 0x20000
-	FOS_HIDEPINNEDPLACES         = 0x40000
-	FOS_NODEREFERENCELINKS       = 0x100000
-	FOS_OKBUTTONNEEDSINTERACTION = 0x200000
-	FOS_DONTADDTORECENT          = 0x2000000
-	FOS_FORCESHOWHIDDEN          = 0x10000000
-	FOS_DEFAULTNOMINIMODE        = 0x20000000
-	FOS_FORCEPREVIEWPANEON       = 0x40000000
-	FOS_SUPPORTSTREAMABLEITEMS   = 0x80000000
+// https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_fileopendialogoptions
+type _FILEOPENDIALOGOPTIONS int
 
-	// IShellItem.GetDisplayName forms
-	SIGDN_NORMALDISPLAY               = 0x00000000
-	SIGDN_PARENTRELATIVEPARSING       = ^(^0x18001 + 0x80000000)
-	SIGDN_DESKTOPABSOLUTEPARSING      = ^(^0x28000 + 0x80000000)
-	SIGDN_PARENTRELATIVEEDITING       = ^(^0x31001 + 0x80000000)
-	SIGDN_DESKTOPABSOLUTEEDITING      = ^(^0x4c000 + 0x80000000)
-	SIGDN_FILESYSPATH                 = ^(^0x58000 + 0x80000000)
-	SIGDN_URL                         = ^(^0x68000 + 0x80000000)
-	SIGDN_PARENTRELATIVEFORADDRESSBAR = ^(^0x7c001 + 0x80000000)
-	SIGDN_PARENTRELATIVE              = ^(^0x80001 + 0x80000000)
-	SIGDN_PARENTRELATIVEFORUI         = ^(^0x94001 + 0x80000000)
+const (
+	FOS_OVERWRITEPROMPT          _FILEOPENDIALOGOPTIONS = 0x2
+	FOS_STRICTFILETYPES          _FILEOPENDIALOGOPTIONS = 0x4
+	FOS_NOCHANGEDIR              _FILEOPENDIALOGOPTIONS = 0x8
+	FOS_PICKFOLDERS              _FILEOPENDIALOGOPTIONS = 0x20
+	FOS_FORCEFILESYSTEM          _FILEOPENDIALOGOPTIONS = 0x40
+	FOS_ALLNONSTORAGEITEMS       _FILEOPENDIALOGOPTIONS = 0x80
+	FOS_NOVALIDATE               _FILEOPENDIALOGOPTIONS = 0x100
+	FOS_ALLOWMULTISELECT         _FILEOPENDIALOGOPTIONS = 0x200
+	FOS_PATHMUSTEXIST            _FILEOPENDIALOGOPTIONS = 0x800
+	FOS_FILEMUSTEXIST            _FILEOPENDIALOGOPTIONS = 0x1000
+	FOS_CREATEPROMPT             _FILEOPENDIALOGOPTIONS = 0x2000
+	FOS_SHAREAWARE               _FILEOPENDIALOGOPTIONS = 0x4000
+	FOS_NOREADONLYRETURN         _FILEOPENDIALOGOPTIONS = 0x8000
+	FOS_NOTESTFILECREATE         _FILEOPENDIALOGOPTIONS = 0x10000
+	FOS_HIDEMRUPLACES            _FILEOPENDIALOGOPTIONS = 0x20000
+	FOS_HIDEPINNEDPLACES         _FILEOPENDIALOGOPTIONS = 0x40000
+	FOS_NODEREFERENCELINKS       _FILEOPENDIALOGOPTIONS = 0x100000
+	FOS_OKBUTTONNEEDSINTERACTION _FILEOPENDIALOGOPTIONS = 0x200000
+	FOS_DONTADDTORECENT          _FILEOPENDIALOGOPTIONS = 0x2000000
+	FOS_FORCESHOWHIDDEN          _FILEOPENDIALOGOPTIONS = 0x10000000
+	FOS_DEFAULTNOMINIMODE        _FILEOPENDIALOGOPTIONS = 0x20000000
+	FOS_FORCEPREVIEWPANEON       _FILEOPENDIALOGOPTIONS = 0x40000000
+	FOS_SUPPORTSTREAMABLEITEMS   _FILEOPENDIALOGOPTIONS = 0x80000000
+)
+
+// https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-sigdn
+type SIGDN int
+
+const (
+	SIGDN_NORMALDISPLAY               SIGDN = 0x00000000
+	SIGDN_PARENTRELATIVEPARSING       SIGDN = ^(^0x18001 + 0x80000000)
+	SIGDN_DESKTOPABSOLUTEPARSING      SIGDN = ^(^0x28000 + 0x80000000)
+	SIGDN_PARENTRELATIVEEDITING       SIGDN = ^(^0x31001 + 0x80000000)
+	SIGDN_DESKTOPABSOLUTEEDITING      SIGDN = ^(^0x4c000 + 0x80000000)
+	SIGDN_FILESYSPATH                 SIGDN = ^(^0x58000 + 0x80000000)
+	SIGDN_URL                         SIGDN = ^(^0x68000 + 0x80000000)
+	SIGDN_PARENTRELATIVEFORADDRESSBAR SIGDN = ^(^0x7c001 + 0x80000000)
+	SIGDN_PARENTRELATIVE              SIGDN = ^(^0x80001 + 0x80000000)
+	SIGDN_PARENTRELATIVEFORUI         SIGDN = ^(^0x94001 + 0x80000000)
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow
@@ -116,7 +124,14 @@ type NOTIFYICONDATA struct {
 	// BalloonIcon  Handle   // NOTIFYICONDATAA_V3_SIZE
 }
 
-type IDLIST struct{}
+// https://docs.microsoft.com/en-us/windows/win32/api/shtypes/ns-shtypes-comdlg_filterspec
+type COMDLG_FILTERSPEC struct {
+	Name *uint16
+	Spec *uint16
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/shtypes/ns-shtypes-itemidlist
+type ITEMIDLIST struct{}
 
 // https://github.com/wine-mirror/wine/blob/master/include/shobjidl.idl
 
@@ -182,7 +197,16 @@ type iFileDialogVtbl struct {
 	SetFilter           uintptr
 }
 
-func (u *IFileDialog) SetOptions(fos int) (err error) {
+func (u *IFileDialog) SetFileTypes(cFileTypes int, rgFilterSpec *COMDLG_FILTERSPEC) (err error) {
+	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
+	hr, _, _ := u.call(vtbl.SetFileTypes, uintptr(cFileTypes), uintptr(unsafe.Pointer(rgFilterSpec)))
+	if hr != 0 {
+		err = syscall.Errno(hr)
+	}
+	return
+}
+
+func (u *IFileDialog) SetOptions(fos _FILEOPENDIALOGOPTIONS) (err error) {
 	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.SetOptions, uintptr(fos))
 	if hr != 0 {
@@ -191,7 +215,7 @@ func (u *IFileDialog) SetOptions(fos int) (err error) {
 	return
 }
 
-func (u *IFileDialog) GetOptions() (fos int, err error) {
+func (u *IFileDialog) GetOptions() (fos _FILEOPENDIALOGOPTIONS, err error) {
 	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.GetOptions, uintptr(unsafe.Pointer(&fos)))
 	if hr != 0 {
@@ -270,7 +294,7 @@ type iShellItemVtbl struct {
 	Compare        uintptr
 }
 
-func (u *IShellItem) GetDisplayName(name int) (res string, err error) {
+func (u *IShellItem) GetDisplayName(name SIGDN) (res string, err error) {
 	var ptr *uint16
 	vtbl := *(**iShellItemVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.GetDisplayName, uintptr(name), uintptr(unsafe.Pointer(&ptr)))
@@ -314,7 +338,7 @@ func (u *IShellItemArray) GetItemAt(index uint32) (item *IShellItem, err error) 
 }
 
 //sys ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Handle, err error) = shell32.ExtractAssociatedIconW
-//sys SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) = shell32.SHBrowseForFolder
+//sys SHBrowseForFolder(bi *BROWSEINFO) (ret *ITEMIDLIST) = shell32.SHBrowseForFolder
 //sys SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **IShellItem) (res error) = shell32.SHCreateItemFromParsingName
 //sys ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ok bool) = shell32.Shell_NotifyIconW
-//sys SHGetPathFromIDListEx(ptr *IDLIST, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx
+//sys SHGetPathFromIDListEx(ptr *ITEMIDLIST, path *uint16, pathLen int, opts int) (ok bool) = shell32.SHGetPathFromIDListEx

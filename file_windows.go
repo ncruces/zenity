@@ -222,6 +222,9 @@ func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 	if opts.title != nil {
 		dialog.SetTitle(strptr(*opts.title))
 	}
+	if opts.fileFilters != nil {
+		dialog.SetFileTypes(initFileTypes(opts.fileFilters))
+	}
 
 	if opts.filename != "" {
 		var item *win.IShellItem
@@ -324,6 +327,9 @@ func fileSaveDialog(opts options) (string, bool, error) {
 
 	if opts.title != nil {
 		dialog.SetTitle(strptr(*opts.title))
+	}
+	if opts.fileFilters != nil {
+		dialog.SetFileTypes(initFileTypes(opts.fileFilters))
 	}
 
 	if opts.filename != "" {
@@ -459,11 +465,10 @@ func initFilters(filters FileFilters) *uint16 {
 		if len(f.Patterns) == 0 {
 			continue
 		}
-		res = append(res, utf16.Encode([]rune(f.Name))...)
-		res = append(res, 0)
+		res = append(res, syscall.StringToUTF16(f.Name)...)
 		for _, p := range f.Patterns {
-			res = append(res, utf16.Encode([]rune(p))...)
-			res = append(res, uint16(';'))
+			res = append(res, syscall.StringToUTF16(p)...)
+			res[len(res)-1] = ';'
 		}
 		res = append(res, 0)
 	}
@@ -472,4 +477,25 @@ func initFilters(filters FileFilters) *uint16 {
 		return &res[0]
 	}
 	return nil
+}
+
+func initFileTypes(filters FileFilters) (int, *win.COMDLG_FILTERSPEC) {
+	filters.simplify()
+	filters.name()
+	var res []win.COMDLG_FILTERSPEC
+	for _, f := range filters {
+		if len(f.Patterns) == 0 {
+			continue
+		}
+		var spec []uint16
+		for _, p := range f.Patterns {
+			spec = append(spec, syscall.StringToUTF16(p)...)
+			spec[len(spec)-1] = ';'
+		}
+		res = append(res, win.COMDLG_FILTERSPEC{
+			Name: syscall.StringToUTF16Ptr(f.Name),
+			Spec: &spec[0],
+		})
+	}
+	return len(res), &res[0]
 }
