@@ -130,12 +130,12 @@ func selectFileMultiple(opts options) ([]string, error) {
 }
 
 func selectFileSave(opts options) (string, error) {
+	if opts.directory {
+		return selectFile(opts)
+	}
 	name, shown, err := fileSaveDialog(opts)
 	if shown || opts.ctx != nil && opts.ctx.Err() != nil {
 		return name, err
-	}
-	if opts.directory {
-		return selectFile(opts)
 	}
 
 	var args win.OPENFILENAME
