@@ -197,9 +197,27 @@ func (u *IFileDialog) SetFolder(item *IShellItem) (err error) {
 	return
 }
 
+func (u *IFileDialog) SetFileName(name *uint16) (err error) {
+	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
+	hr, _, _ := u.call(vtbl.SetFileName, uintptr(unsafe.Pointer(name)))
+	if hr != 0 {
+		err = syscall.Errno(hr)
+	}
+	return
+}
+
 func (u *IFileDialog) SetTitle(title *uint16) (err error) {
 	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.SetTitle, uintptr(unsafe.Pointer(title)))
+	if hr != 0 {
+		err = syscall.Errno(hr)
+	}
+	return
+}
+
+func (u *IFileDialog) SetDefaultExtension(extension *uint16) (err error) {
+	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
+	hr, _, _ := u.call(vtbl.SetDefaultExtension, uintptr(unsafe.Pointer(extension)))
 	if hr != 0 {
 		err = syscall.Errno(hr)
 	}

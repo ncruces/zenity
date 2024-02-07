@@ -13,9 +13,12 @@ import (
 )
 
 func selectFile(opts options) (string, error) {
+	name, _, shown, err := fileOpenDialog(opts, false)
+	if shown || opts.ctx != nil && opts.ctx.Err() != nil {
+		return name, err
+	}
 	if opts.directory {
-		res, _, err := pickFolders(opts, false)
-		return res, err
+		return browseForFolder(opts)
 	}
 
 	var args win.OPENFILENAME
@@ -38,12 +41,6 @@ func selectFile(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	uninit, err := coInitialize()
-	if err != nil {
-		return "", err
-	}
-	defer uninit()
-
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
@@ -62,9 +59,12 @@ func selectFile(opts options) (string, error) {
 }
 
 func selectFileMultiple(opts options) ([]string, error) {
+	_, list, shown, err := fileOpenDialog(opts, true)
+	if shown || opts.ctx != nil && opts.ctx.Err() != nil {
+		return list, err
+	}
 	if opts.directory {
-		_, res, err := pickFolders(opts, true)
-		return res, err
+		return nil, fmt.Errorf("%w: multiple directory", ErrUnsupported)
 	}
 
 	var args win.OPENFILENAME
@@ -86,12 +86,6 @@ func selectFileMultiple(opts options) ([]string, error) {
 	args.File = &res[0]
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
-
-	uninit, err := coInitialize()
-	if err != nil {
-		return nil, err
-	}
-	defer uninit()
 
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
@@ -137,8 +131,7 @@ func selectFileMultiple(opts options) ([]string, error) {
 
 func selectFileSave(opts options) (string, error) {
 	if opts.directory {
-		res, _, err := pickFolders(opts, false)
-		return res, err
+		return selectFile(opts)
 	}
 
 	var args win.OPENFILENAME
@@ -167,12 +160,6 @@ func selectFileSave(opts options) (string, error) {
 	args.MaxFile = uint32(len(res))
 	args.InitialDir, args.DefExt = initDirNameExt(opts.filename, res[:])
 
-	uninit, err := coInitialize()
-	if err != nil {
-		return "", err
-	}
-	defer uninit()
-
 	defer setup(args.Owner)()
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
@@ -190,10 +177,10 @@ func selectFileSave(opts options) (string, error) {
 	return syscall.UTF16ToString(res[:]), nil
 }
 
-func pickFolders(opts options, multi bool) (string, []string, error) {
+func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 	uninit, err := coInitialize()
 	if err != nil {
-		return "", nil, err
+		return "", nil, false, err
 	}
 	defer uninit()
 
@@ -205,27 +192,27 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 		win.CLSID_FileOpenDialog, nil, win.CLSCTX_ALL,
 		win.IID_IFileOpenDialog, unsafe.Pointer(&dialog))
 	if err != nil {
-		if multi {
-			return "", nil, fmt.Errorf("%w: multiple directory", ErrUnsupported)
-		}
-		return browseForFolder(opts)
+		return "", nil, false, err
 	}
 	defer dialog.Release()
 
 	flgs, err := dialog.GetOptions()
 	if err != nil {
-		return "", nil, err
+		return "", nil, false, err
 	}
-	flgs |= win.FOS_NOCHANGEDIR | win.FOS_PICKFOLDERS | win.FOS_FORCEFILESYSTEM
+	flgs |= win.FOS_NOCHANGEDIR | win.FOS_FILEMUSTEXIST | win.FOS_FORCEFILESYSTEM
 	if multi {
 		flgs |= win.FOS_ALLOWMULTISELECT
+	}
+	if opts.directory {
+		flgs |= win.FOS_PICKFOLDERS
 	}
 	if opts.showHidden {
 		flgs |= win.FOS_FORCESHOWHIDDEN
 	}
 	err = dialog.SetOptions(flgs)
 	if err != nil {
-		return "", nil, err
+		return "", nil, false, err
 	}
 
 	if opts.title != nil {
@@ -234,7 +221,12 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 
 	if opts.filename != "" {
 		var item *win.IShellItem
-		win.SHCreateItemFromParsingName(strptr(opts.filename), nil, win.IID_IShellItem, &item)
+		dir, name, _ := splitDirAndName(opts.filename)
+		dialog.SetFileName(strptr(name))
+		if ext := filepath.Ext(name); len(ext) > 1 {
+			dialog.SetDefaultExtension(strptr(ext[1:]))
+		}
+		win.SHCreateItemFromParsingName(strptr(dir), nil, win.IID_IShellItem, &item)
 		if item != nil {
 			defer item.Release()
 			dialog.SetFolder(item)
@@ -243,48 +235,48 @@ func pickFolders(opts options, multi bool) (string, []string, error) {
 
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
-		return "", nil, err
+		return "", nil, false, err
 	}
 	defer unhook()
 
 	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", nil, opts.ctx.Err()
+		return "", nil, true, opts.ctx.Err()
 	}
 	if err == win.E_CANCELED {
-		return "", nil, ErrCanceled
+		return "", nil, true, ErrCanceled
 	}
 	if err != nil {
-		return "", nil, err
+		return "", nil, true, err
 	}
 
 	if multi {
 		items, err := dialog.GetResults()
 		if err != nil {
-			return "", nil, err
+			return "", nil, true, err
 		}
 		defer items.Release()
 
 		count, err := items.GetCount()
 		if err != nil {
-			return "", nil, err
+			return "", nil, true, err
 		}
 
 		var lst []string
 		for i := uint32(0); i < count && err == nil; i++ {
 			str, err := shellItemPath(items.GetItemAt(i))
 			if err != nil {
-				return "", nil, err
+				return "", nil, true, err
 			}
 			lst = append(lst, str)
 		}
-		return "", lst, nil
+		return "", lst, true, nil
 	} else {
 		str, err := shellItemPath(dialog.GetResult())
 		if err != nil {
-			return "", nil, err
+			return "", nil, true, err
 		}
-		return str, nil, nil
+		return str, nil, true, nil
 	}
 }
 
@@ -296,7 +288,13 @@ func shellItemPath(item *win.IShellItem, err error) (string, error) {
 	return item.GetDisplayName(win.SIGDN_FILESYSPATH)
 }
 
-func browseForFolder(opts options) (string, []string, error) {
+func browseForFolder(opts options) (string, error) {
+	uninit, err := coInitialize()
+	if err != nil {
+		return "", err
+	}
+	defer uninit()
+
 	var args win.BROWSEINFO
 	args.Owner, _ = opts.attach.(win.HWND)
 	args.Flags = win.BIF_RETURNONLYFSDIRS
@@ -311,16 +309,16 @@ func browseForFolder(opts options) (string, []string, error) {
 
 	unhook, err := hookDialog(opts.ctx, opts.windowIcon, nil, nil)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 	defer unhook()
 
 	ptr := win.SHBrowseForFolder(&args)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
-		return "", nil, opts.ctx.Err()
+		return "", opts.ctx.Err()
 	}
 	if ptr == nil {
-		return "", nil, ErrCanceled
+		return "", ErrCanceled
 	}
 	defer win.CoTaskMemFree(unsafe.Pointer(ptr))
 
@@ -328,7 +326,7 @@ func browseForFolder(opts options) (string, []string, error) {
 	win.SHGetPathFromIDListEx(ptr, &res[0], len(res), 0)
 
 	str := syscall.UTF16ToString(res[:])
-	return str, []string{str}, nil
+	return str, nil
 }
 
 func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uintptr {
