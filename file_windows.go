@@ -246,6 +246,18 @@ func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 	}
 	defer unhook()
 
+	if opts.ctx != nil && opts.ctx.Done() != nil {
+		wait := make(chan struct{})
+		defer close(wait)
+		go func() {
+			select {
+			case <-opts.ctx.Done():
+				dialog.Close(win.E_TIMEOUT)
+			case <-wait:
+			}
+		}()
+	}
+
 	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", nil, true, opts.ctx.Err()
@@ -352,6 +364,18 @@ func fileSaveDialog(opts options) (string, bool, error) {
 	}
 	defer unhook()
 
+	if opts.ctx != nil && opts.ctx.Done() != nil {
+		wait := make(chan struct{})
+		defer close(wait)
+		go func() {
+			select {
+			case <-opts.ctx.Done():
+				dialog.Close(win.E_TIMEOUT)
+			case <-wait:
+			}
+		}()
+	}
+
 	err = dialog.Show(owner)
 	if opts.ctx != nil && opts.ctx.Err() != nil {
 		return "", true, opts.ctx.Err()
@@ -428,14 +452,19 @@ func browseForFolderCallback(wnd win.HWND, msg uint32, lparam, data uintptr) uin
 
 func coInitialize() (context.CancelFunc, error) {
 	runtime.LockOSThread()
-	err := win.CoInitializeEx(0, win.COINIT_APARTMENTTHREADED|win.COINIT_DISABLE_OLE1DDE)
-	if err == nil || err == win.S_FALSE {
-		return func() {
-			win.CoUninitialize()
-			runtime.UnlockOSThread()
-		}, nil
+	// .NET uses MTA for all background threads, so do the same.
+	// If someone needs STA because they're doing UI,
+	// they should initialize COM themselves before.
+	err := win.CoInitializeEx(0, win.COINIT_MULTITHREADED|win.COINIT_DISABLE_OLE1DDE)
+	if err == win.S_FALSE {
+		// COM was already initialized, we simply increased the ref count.
+		// Make this a no-op by decreasing our ref count.
+		win.CoUninitialize()
+		return runtime.UnlockOSThread, nil
 	}
-	if err == win.RPC_E_CHANGED_MODE {
+	// Don't uninitialize COM; this is against the docs, but it's what .NET does.
+	// Eventually all threads will have COM initialized.
+	if err == nil || err == win.RPC_E_CHANGED_MODE {
 		return runtime.UnlockOSThread, nil
 	}
 	runtime.UnlockOSThread()

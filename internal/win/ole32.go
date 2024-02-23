@@ -23,6 +23,7 @@ const (
 	CLSCTX_ALL            = windows.CLSCTX_INPROC_SERVER | windows.CLSCTX_INPROC_HANDLER | windows.CLSCTX_LOCAL_SERVER | windows.CLSCTX_REMOTE_SERVER
 
 	E_CANCELED         = windows.ERROR_CANCELLED | windows.FACILITY_WIN32<<16 | 0x80000000
+	E_TIMEOUT          = windows.ERROR_TIMEOUT | windows.FACILITY_WIN32<<16 | 0x80000000
 	RPC_E_CHANGED_MODE = syscall.Errno(windows.RPC_E_CHANGED_MODE)
 	S_FALSE            = syscall.Errno(windows.S_FALSE)
 )

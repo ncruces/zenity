@@ -251,6 +251,15 @@ func (u *IFileDialog) SetTitle(title *uint16) (err error) {
 	return
 }
 
+func (u *IFileDialog) GetResult() (item *IShellItem, err error) {
+	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
+	hr, _, _ := u.call(vtbl.GetResult, uintptr(unsafe.Pointer(&item)))
+	if hr != 0 {
+		err = syscall.Errno(hr)
+	}
+	return
+}
+
 func (u *IFileDialog) SetDefaultExtension(extension *uint16) (err error) {
 	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
 	hr, _, _ := u.call(vtbl.SetDefaultExtension, uintptr(unsafe.Pointer(extension)))
@@ -260,9 +269,9 @@ func (u *IFileDialog) SetDefaultExtension(extension *uint16) (err error) {
 	return
 }
 
-func (u *IFileDialog) GetResult() (item *IShellItem, err error) {
+func (u *IFileDialog) Close(res syscall.Errno) (err error) {
 	vtbl := *(**iFileDialogVtbl)(unsafe.Pointer(u))
-	hr, _, _ := u.call(vtbl.GetResult, uintptr(unsafe.Pointer(&item)))
+	hr, _, _ := u.call(vtbl.Close, uintptr(res))
 	if hr != 0 {
 		err = syscall.Errno(hr)
 	}
