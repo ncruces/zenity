@@ -190,7 +190,7 @@ func (dlg *progressDialog) setup(opts options) error {
 	}
 	once.Do(dlg.init.Done)
 
-	if opts.ctx != nil {
+	if opts.ctx != nil && opts.ctx.Done() != nil {
 		wait := make(chan struct{})
 		defer close(wait)
 		go func() {

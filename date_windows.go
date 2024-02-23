@@ -102,7 +102,7 @@ func (dlg *calendarDialog) setup(text string, opts options) (time.Time, error) {
 	win.SetFocus(dlg.dateCtl)
 	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 
-	if opts.ctx != nil {
+	if opts.ctx != nil && opts.ctx.Done() != nil {
 		wait := make(chan struct{})
 		defer close(wait)
 		go func() {

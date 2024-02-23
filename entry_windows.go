@@ -97,7 +97,7 @@ func (dlg *entryDialog) setup(text string, opts options) (string, error) {
 	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 	win.SendMessage(dlg.editCtl, win.EM_SETSEL, 0, intptr(-1))
 
-	if opts.ctx != nil {
+	if opts.ctx != nil && opts.ctx.Done() != nil {
 		wait := make(chan struct{})
 		defer close(wait)
 		go func() {

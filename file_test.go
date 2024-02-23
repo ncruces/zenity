@@ -3,7 +3,6 @@ package zenity_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -124,7 +123,7 @@ func TestSelectFile_script(t *testing.T) {
 	}
 
 	t.Run("Cancel", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
+		zenity.Info("In the file selection dialog, cancel.")
 		str, err := zenity.SelectFile()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -134,7 +133,7 @@ func TestSelectFile_script(t *testing.T) {
 		}
 	})
 	t.Run("File", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, pick any file."))
+		zenity.Info("In the file selection dialog, pick any file.")
 		str, err := zenity.SelectFile()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -147,7 +146,7 @@ func TestSelectFile_script(t *testing.T) {
 		}
 	})
 	t.Run("Directory", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, pick any directory."))
+		zenity.Info("In the file selection dialog, pick any directory.")
 		str, err := zenity.SelectFile(zenity.Directory())
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -169,7 +168,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 	}
 
 	t.Run("Cancel", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, cancel."))
+		zenity.Info("In the file selection dialog, cancel.")
 		lst, err := zenity.SelectFileMultiple()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -179,7 +178,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 		}
 	})
 	t.Run("Files", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, pick two files."))
+		zenity.Info("In the file selection dialog, pick two files.")
 		lst, err := zenity.SelectFileMultiple()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -194,7 +193,7 @@ func TestSelectFileMultiple_script(t *testing.T) {
 		}
 	})
 	t.Run("Directories", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file selection dialog, pick two directories."))
+		zenity.Info("In the file selection dialog, pick two directories.")
 		lst, err := zenity.SelectFileMultiple(zenity.Directory())
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -221,7 +220,7 @@ func TestSelectFileSave_script(t *testing.T) {
 	}
 
 	t.Run("Cancel", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file save dialog, cancel."))
+		zenity.Info("In the file save dialog, cancel.")
 		str, err := zenity.SelectFileSave()
 		if skip, err := skip(err); skip {
 			t.Skip("skipping:", err)
@@ -231,7 +230,7 @@ func TestSelectFileSave_script(t *testing.T) {
 		}
 	})
 	t.Run("Name", func(t *testing.T) {
-		zenity.Info(fmt.Sprintf("In the file save dialog, press OK."))
+		zenity.Info("In the file save dialog, press OK.")
 		str, err := zenity.SelectFileSave(
 			zenity.ConfirmOverwrite(),
 			zenity.Filename("Χρτο.go"),

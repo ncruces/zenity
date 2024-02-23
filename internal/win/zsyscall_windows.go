@@ -235,9 +235,9 @@ func ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Han
 	return
 }
 
-func SHBrowseForFolder(bi *BROWSEINFO) (ret *IDLIST) {
+func SHBrowseForFolder(bi *BROWSEINFO) (ret *ITEMIDLIST) {
 	r0, _, _ := syscall.Syscall(procSHBrowseForFolder.Addr(), 1, uintptr(unsafe.Pointer(bi)), 0, 0)
-	ret = (*IDLIST)(unsafe.Pointer(r0))
+	ret = (*ITEMIDLIST)(unsafe.Pointer(r0))
 	return
 }
 
@@ -249,7 +249,7 @@ func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **I
 	return
 }
 
-func SHGetPathFromIDListEx(ptr *IDLIST, path *uint16, pathLen int, opts int) (ok bool) {
+func SHGetPathFromIDListEx(ptr *ITEMIDLIST, path *uint16, pathLen int, opts int) (ok bool) {
 	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(unsafe.Pointer(ptr)), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
 	ok = r0 != 0
 	return
