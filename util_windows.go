@@ -118,7 +118,7 @@ func newDialogHook(ctx context.Context, icon any, title *string, init func(wnd w
 		title: title,
 		init:  init,
 	}
-	if ctx != nil {
+	if ctx != nil && ctx.Done() != nil {
 		hook.done = make(chan struct{})
 		go hook.wait()
 	}

@@ -121,7 +121,7 @@ func shellNotify(text string, opts options) error {
 	major, minor, _ := win.RtlGetNtVersionNumbers()
 	// On Windows 7 (6.1) and lower, wait up to 10 seconds to clean up.
 	if major < 6 || major == 6 && minor < 2 {
-		if opts.ctx != nil {
+		if opts.ctx != nil && opts.ctx.Done() != nil {
 			select {
 			case <-opts.ctx.Done():
 			case <-time.After(10 * time.Second):

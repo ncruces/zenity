@@ -128,7 +128,7 @@ func (dlg *listDialog) setup(text string, opts options) ([]string, error) {
 	win.SetFocus(dlg.listCtl)
 	win.ShowWindow(dlg.wnd, win.SW_NORMAL)
 
-	if opts.ctx != nil {
+	if opts.ctx != nil && opts.ctx.Done() != nil {
 		wait := make(chan struct{})
 		defer close(wait)
 		go func() {
