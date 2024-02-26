@@ -49,7 +49,7 @@ const (
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_fileopendialogoptions
-type _FILEOPENDIALOGOPTIONS int
+type _FILEOPENDIALOGOPTIONS uint32
 
 const (
 	FOS_OVERWRITEPROMPT          _FILEOPENDIALOGOPTIONS = 0x2
@@ -78,7 +78,7 @@ const (
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-sigdn
-type SIGDN int
+type SIGDN int32
 
 const (
 	SIGDN_NORMALDISPLAY               SIGDN = 0x00000000
