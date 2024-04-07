@@ -77,7 +77,7 @@ and [man page](https://linux.die.net/man/1/zenity) of that command.
 
 ## Zenity wrappers
 
-Zenity wrappers for languages other than Go can benefit from the `zenity` command. On Unix (Linux, FreeBSD, etc) they can use the original tool, and on Windows/macOS they may use the command from this repo for portability.
+Zenity wrappers for languages other than Go can benefit from our `zenity` command. On Unix (Linux, FreeBSD, etc) they can use the original tool, and on Windows/macOS they may use the command from this repo for portability.
 
 Examples:
 - NodeJS [`dialog-gui`](https://github.com/SnurfDev/dialog-gui) by [@SnurfDev](https://github.com/SnurfDev/dialog-gui)
