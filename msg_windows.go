@@ -52,6 +52,10 @@ func message(kind messageKind, text string, opts options) error {
 		}
 	}
 
+	if opts.alwaysOnTop {
+		flags |= win.MB_SYSTEMMODAL
+	}
+
 	owner, _ := opts.attach.(win.HWND)
 	defer setup(owner)()
 	unhook, err := hookMessageDialog(opts)
