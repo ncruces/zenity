@@ -49,6 +49,7 @@ type options struct {
 	windowIcon    any
 	attach        any
 	modal         bool
+	alwaysOnTop   bool
 	display       string
 	class         string
 	name          string
@@ -113,6 +114,13 @@ func applyOptions(options []Option) (res options) {
 // Title returns an Option to set the dialog title.
 func Title(title string) Option {
 	return funcOption(func(o *options) { o.title = &title })
+}
+
+// AlwaysOnTop returns an Option to set the dialog to be always on top (Windows only)..
+func AlwaysOnTop(alwaysOnTop bool) Option {
+	return funcOption(func(o *options) {
+		o.alwaysOnTop = alwaysOnTop
+	})
 }
 
 // Width returns an Option to set the dialog width (Unix only).
