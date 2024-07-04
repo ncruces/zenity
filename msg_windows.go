@@ -7,7 +7,7 @@ import (
 )
 
 func message(kind messageKind, text string, opts options) error {
-	var flags uint32
+	var flags uint32 = win.MB_SETFOREGROUND
 
 	switch {
 	case kind == questionKind && opts.extraButton != nil:

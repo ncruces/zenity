@@ -37,6 +37,7 @@ const (
 	MB_DEFBUTTON1        = windows.MB_DEFBUTTON1
 	MB_DEFBUTTON2        = windows.MB_DEFBUTTON2
 	MB_DEFBUTTON3        = windows.MB_DEFBUTTON3
+	MB_SETFOREGROUND     = windows.MB_SETFOREGROUND
 
 	// Window messages
 	WM_DESTROY     = 0x0002
