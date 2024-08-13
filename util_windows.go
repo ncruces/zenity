@@ -3,6 +3,7 @@ package zenity
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -372,4 +373,12 @@ func enableVisualStyles() (cookie uintptr) {
 		win.ReleaseActCtx(hnd)
 	}
 	return
+}
+
+func stringToUTF16(s string) []uint16 {
+	utf16, err := syscall.UTF16FromString(s)
+	if err != nil {
+		panic(fmt.Errorf("stringToUTF16: %v", err))
+	}
+	return utf16
 }

@@ -282,7 +282,7 @@ func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 		}
 
 		var lst []string
-		for i := uint32(0); i < count && err == nil; i++ {
+		for i := uint32(0); i < count; /* && err == nil */ i++ {
 			str, err := shellItemPath(items.GetItemAt(i))
 			if err != nil {
 				return "", nil, true, err
@@ -475,13 +475,15 @@ func initDirNameExt(filename string, name []uint16) (dir *uint16, ext *uint16) {
 	d, n, _ := splitDirAndName(filename)
 	e := filepath.Ext(n)
 	if n != "" {
-		copy(name, syscall.StringToUTF16(n))
+		copy(name, stringToUTF16(n))
 	}
 	if d != "" {
-		dir = syscall.StringToUTF16Ptr(d)
+		utf16 := stringToUTF16(d)
+		dir = &utf16[0]
 	}
 	if len(e) > 1 {
-		ext = syscall.StringToUTF16Ptr(e[1:])
+		utf16 := stringToUTF16(e[1:])
+		ext = &utf16[0]
 	}
 	return
 }
@@ -494,9 +496,9 @@ func initFilters(filters FileFilters) *uint16 {
 		if len(f.Patterns) == 0 {
 			continue
 		}
-		res = append(res, syscall.StringToUTF16(f.Name)...)
+		res = append(res, stringToUTF16(f.Name)...)
 		for _, p := range f.Patterns {
-			res = append(res, syscall.StringToUTF16(p)...)
+			res = append(res, stringToUTF16(p)...)
 			res[len(res)-1] = ';'
 		}
 		res = append(res, 0)
@@ -517,12 +519,16 @@ func initFileTypes(filters FileFilters) (int, *win.COMDLG_FILTERSPEC) {
 			continue
 		}
 		var spec []uint16
-		for _, p := range f.Patterns {
-			spec = append(spec, syscall.StringToUTF16(p)...)
-			spec[len(spec)-1] = ';'
+		for i, p := range f.Patterns {
+			utf16 := stringToUTF16(p)
+			spec = append(spec, utf16...)
+			if i != len(f.Patterns)-1 {
+				spec[len(spec)-1] = ';'
+			}
 		}
+		utf16 := stringToUTF16(f.Name)
 		res = append(res, win.COMDLG_FILTERSPEC{
-			Name: syscall.StringToUTF16Ptr(f.Name),
+			Name: &utf16[0],
 			Spec: &spec[0],
 		})
 	}
