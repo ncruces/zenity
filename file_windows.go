@@ -282,7 +282,7 @@ func fileOpenDialog(opts options, multi bool) (string, []string, bool, error) {
 		}
 
 		var lst []string
-		for i := uint32(0); i < count && err == nil; i++ {
+		for i := uint32(0); i < count; i++ {
 			str, err := shellItemPath(items.GetItemAt(i))
 			if err != nil {
 				return "", nil, true, err
@@ -499,7 +499,7 @@ func initFilters(filters FileFilters) *uint16 {
 			res = append(res, syscall.StringToUTF16(p)...)
 			res[len(res)-1] = ';'
 		}
-		res = append(res, 0)
+		res[len(res)-1] = 0
 	}
 	if res != nil {
 		res = append(res, 0)
@@ -517,12 +517,11 @@ func initFileTypes(filters FileFilters) (int, *win.COMDLG_FILTERSPEC) {
 			continue
 		}
 		var spec []uint16
-		for i, p := range f.Patterns {
+		for _, p := range f.Patterns {
 			spec = append(spec, syscall.StringToUTF16(p)...)
-			if i != len(f.Patterns)-1 {
-				spec[len(spec)-1] = ';'
-			}
+			spec[len(spec)-1] = ';'
 		}
+		spec[len(spec)-1] = 0
 		res = append(res, win.COMDLG_FILTERSPEC{
 			Name: syscall.StringToUTF16Ptr(f.Name),
 			Spec: &spec[0],
