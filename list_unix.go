@@ -2,7 +2,11 @@
 
 package zenity
 
-import "github.com/ncruces/zenity/internal/zenutil"
+import (
+	"slices"
+
+	"github.com/ncruces/zenity/internal/zenutil"
+)
 
 func list(text string, items []string, opts options) (string, error) {
 	args := []string{"--list", "--hide-header", "--text", text}
@@ -27,15 +31,6 @@ func list(text string, items []string, opts options) (string, error) {
 	return strResult(opts, out, err)
 }
 
-func isSelected(defaults []string, value string) string {
-	for _, d := range defaults {
-		if d == value {
-			return "TRUE"
-		}
-	}
-	return "FALSE"
-}
-
 func listMultiple(text string, items []string, opts options) ([]string, error) {
 	args := []string{"--list", "--hide-header", "--text", text, "--multiple", "--separator", zenutil.Separator}
 	args = appendGeneral(args, opts)
@@ -48,7 +43,11 @@ func listMultiple(text string, items []string, opts options) ([]string, error) {
 	if opts.listKind == checkListKind || len(opts.defaultItems) > 0 {
 		args = append(args, "--checklist", "--column=", "--column=")
 		for _, i := range items {
-			args = append(args, isSelected(opts.defaultItems, i), i)
+			selected := ""
+			if slices.Contains(opts.defaultItems, i) {
+				selected = "true"
+			}
+			args = append(args, selected, i)
 		}
 	} else {
 		args = append(args, "--column=")
