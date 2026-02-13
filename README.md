@@ -7,7 +7,7 @@
 
 This repo includes:
 - a cross-platform [Go](https://go.dev/) package providing
-[Zenity](https://help.gnome.org/users/zenity/stable/)-like dialogs
+[Zenity](https://gitlab.gnome.org/GNOME/zenity)-like dialogs
 (simple dialogs that interact graphically with the user)
 - a *“port”* of the `zenity` command to both Windows and macOS based on that library.
 
@@ -52,7 +52,7 @@ For the Go package, consult the [documentation](https://pkg.go.dev/github.com/nc
 and [examples](https://pkg.go.dev/github.com/ncruces/zenity#pkg-examples).
 
 The `zenity` command does its best to be compatible with the GNOME version.\
-Consult the [documentation](https://help.gnome.org/users/zenity/stable/)
+Consult the [documentation](https://gitlab.gnome.org/GNOME/zenity)
 and [man page](https://linux.die.net/man/1/zenity) of that command.
 
 ## Why?
