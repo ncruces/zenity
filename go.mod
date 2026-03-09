@@ -1,6 +1,6 @@
 module github.com/ncruces/zenity
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/dchest/jsmin v1.0.0
@@ -9,7 +9,7 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	go.uber.org/goleak v1.3.0 // test
 	golang.org/x/image v0.36.0
-	golang.org/x/sys v0.41.0
+	golang.org/x/sys v0.42.0
 )
 
 require github.com/akavel/rsrc v0.10.2 // indirect
