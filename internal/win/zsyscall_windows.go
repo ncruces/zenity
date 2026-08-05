@@ -109,55 +109,55 @@ var (
 )
 
 func InitCommonControlsEx(icc *INITCOMMONCONTROLSEX) (ok bool) {
-	r0, _, _ := syscall.Syscall(procInitCommonControlsEx.Addr(), 1, uintptr(unsafe.Pointer(icc)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procInitCommonControlsEx.Addr(), uintptr(unsafe.Pointer(icc)))
 	ok = r0 != 0
 	return
 }
 
 func ChooseColor(cc *CHOOSECOLOR) (ok bool) {
-	r0, _, _ := syscall.Syscall(procChooseColorW.Addr(), 1, uintptr(unsafe.Pointer(cc)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procChooseColorW.Addr(), uintptr(unsafe.Pointer(cc)))
 	ok = r0 != 0
 	return
 }
 
 func commDlgExtendedError() (code int) {
-	r0, _, _ := syscall.Syscall(procCommDlgExtendedError.Addr(), 0, 0, 0, 0)
+	r0, _, _ := syscall.SyscallN(procCommDlgExtendedError.Addr())
 	code = int(r0)
 	return
 }
 
 func GetOpenFileName(ofn *OPENFILENAME) (ok bool) {
-	r0, _, _ := syscall.Syscall(procGetOpenFileNameW.Addr(), 1, uintptr(unsafe.Pointer(ofn)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procGetOpenFileNameW.Addr(), uintptr(unsafe.Pointer(ofn)))
 	ok = r0 != 0
 	return
 }
 
 func GetSaveFileName(ofn *OPENFILENAME) (ok bool) {
-	r0, _, _ := syscall.Syscall(procGetSaveFileNameW.Addr(), 1, uintptr(unsafe.Pointer(ofn)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procGetSaveFileNameW.Addr(), uintptr(unsafe.Pointer(ofn)))
 	ok = r0 != 0
 	return
 }
 
 func CreateFontIndirect(lf *LOGFONT) (ret Handle) {
-	r0, _, _ := syscall.Syscall(procCreateFontIndirectW.Addr(), 1, uintptr(unsafe.Pointer(lf)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procCreateFontIndirectW.Addr(), uintptr(unsafe.Pointer(lf)))
 	ret = Handle(r0)
 	return
 }
 
 func DeleteObject(o Handle) (ok bool) {
-	r0, _, _ := syscall.Syscall(procDeleteObject.Addr(), 1, uintptr(o), 0, 0)
+	r0, _, _ := syscall.SyscallN(procDeleteObject.Addr(), uintptr(o))
 	ok = r0 != 0
 	return
 }
 
 func GetDeviceCaps(dc Handle, index int) (ret int) {
-	r0, _, _ := syscall.Syscall(procGetDeviceCaps.Addr(), 2, uintptr(dc), uintptr(index), 0)
+	r0, _, _ := syscall.SyscallN(procGetDeviceCaps.Addr(), uintptr(dc), uintptr(index))
 	ret = int(r0)
 	return
 }
 
 func ActivateActCtx(actCtx Handle, cookie *uintptr) (err error) {
-	r1, _, e1 := syscall.Syscall(procActivateActCtx.Addr(), 2, uintptr(actCtx), uintptr(unsafe.Pointer(cookie)), 0)
+	r1, _, e1 := syscall.SyscallN(procActivateActCtx.Addr(), uintptr(actCtx), uintptr(unsafe.Pointer(cookie)))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -165,7 +165,7 @@ func ActivateActCtx(actCtx Handle, cookie *uintptr) (err error) {
 }
 
 func CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall(procCreateActCtxW.Addr(), 1, uintptr(unsafe.Pointer(actCtx)), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procCreateActCtxW.Addr(), uintptr(unsafe.Pointer(actCtx)))
 	ret = Handle(r0)
 	if ret == ^Handle(0) {
 		err = errnoErr(e1)
@@ -174,7 +174,7 @@ func CreateActCtx(actCtx *ACTCTX) (ret Handle, err error) {
 }
 
 func DeactivateActCtx(flags uint32, cookie uintptr) (err error) {
-	r1, _, e1 := syscall.Syscall(procDeactivateActCtx.Addr(), 2, uintptr(flags), uintptr(cookie), 0)
+	r1, _, e1 := syscall.SyscallN(procDeactivateActCtx.Addr(), uintptr(flags), uintptr(cookie))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -182,13 +182,13 @@ func DeactivateActCtx(flags uint32, cookie uintptr) (err error) {
 }
 
 func GetConsoleWindow() (ret HWND) {
-	r0, _, _ := syscall.Syscall(procGetConsoleWindow.Addr(), 0, 0, 0, 0)
+	r0, _, _ := syscall.SyscallN(procGetConsoleWindow.Addr())
 	ret = HWND(r0)
 	return
 }
 
 func GetModuleHandle(moduleName *uint16) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall(procGetModuleHandleW.Addr(), 1, uintptr(unsafe.Pointer(moduleName)), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procGetModuleHandleW.Addr(), uintptr(unsafe.Pointer(moduleName)))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -197,7 +197,7 @@ func GetModuleHandle(moduleName *uint16) (ret Handle, err error) {
 }
 
 func GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall(procGlobalAlloc.Addr(), 2, uintptr(flags), uintptr(bytes), 0)
+	r0, _, e1 := syscall.SyscallN(procGlobalAlloc.Addr(), uintptr(flags), uintptr(bytes))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -206,7 +206,7 @@ func GlobalAlloc(flags uint32, bytes uintptr) (ret Handle, err error) {
 }
 
 func GlobalFree(mem Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procGlobalFree.Addr(), 1, uintptr(mem), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procGlobalFree.Addr(), uintptr(mem))
 	if r1 != 0 {
 		err = errnoErr(e1)
 	}
@@ -214,12 +214,12 @@ func GlobalFree(mem Handle) (err error) {
 }
 
 func ReleaseActCtx(actCtx Handle) {
-	syscall.Syscall(procReleaseActCtx.Addr(), 1, uintptr(actCtx), 0, 0)
+	syscall.SyscallN(procReleaseActCtx.Addr(), uintptr(actCtx))
 	return
 }
 
 func CoCreateInstance(clsid *GUID, unkOuter *IUnknown, clsContext int32, iid *GUID, address unsafe.Pointer) (res error) {
-	r0, _, _ := syscall.Syscall6(procCoCreateInstance.Addr(), 5, uintptr(unsafe.Pointer(clsid)), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(unsafe.Pointer(iid)), uintptr(address), 0)
+	r0, _, _ := syscall.SyscallN(procCoCreateInstance.Addr(), uintptr(unsafe.Pointer(clsid)), uintptr(unsafe.Pointer(unkOuter)), uintptr(clsContext), uintptr(unsafe.Pointer(iid)), uintptr(address))
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}
@@ -227,7 +227,7 @@ func CoCreateInstance(clsid *GUID, unkOuter *IUnknown, clsContext int32, iid *GU
 }
 
 func ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall(procExtractAssociatedIconW.Addr(), 3, uintptr(instance), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(icon)))
+	r0, _, e1 := syscall.SyscallN(procExtractAssociatedIconW.Addr(), uintptr(instance), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(icon)))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -236,13 +236,13 @@ func ExtractAssociatedIcon(instance Handle, path *uint16, icon *uint16) (ret Han
 }
 
 func SHBrowseForFolder(bi *BROWSEINFO) (ret *ITEMIDLIST) {
-	r0, _, _ := syscall.Syscall(procSHBrowseForFolder.Addr(), 1, uintptr(unsafe.Pointer(bi)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSHBrowseForFolder.Addr(), uintptr(unsafe.Pointer(bi)))
 	ret = (*ITEMIDLIST)(unsafe.Pointer(r0))
 	return
 }
 
 func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **IShellItem) (res error) {
-	r0, _, _ := syscall.Syscall6(procSHCreateItemFromParsingName.Addr(), 4, uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(item)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSHCreateItemFromParsingName.Addr(), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(bc)), uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(item)))
 	if r0 != 0 {
 		res = syscall.Errno(r0)
 	}
@@ -250,19 +250,19 @@ func SHCreateItemFromParsingName(path *uint16, bc *IBindCtx, iid *GUID, item **I
 }
 
 func SHGetPathFromIDListEx(ptr *ITEMIDLIST, path *uint16, pathLen int, opts int) (ok bool) {
-	r0, _, _ := syscall.Syscall6(procSHGetPathFromIDListEx.Addr(), 4, uintptr(unsafe.Pointer(ptr)), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSHGetPathFromIDListEx.Addr(), uintptr(unsafe.Pointer(ptr)), uintptr(unsafe.Pointer(path)), uintptr(pathLen), uintptr(opts))
 	ok = r0 != 0
 	return
 }
 
 func ShellNotifyIcon(message uint32, data *NOTIFYICONDATA) (ok bool) {
-	r0, _, _ := syscall.Syscall(procShell_NotifyIconW.Addr(), 2, uintptr(message), uintptr(unsafe.Pointer(data)), 0)
+	r0, _, _ := syscall.SyscallN(procShell_NotifyIconW.Addr(), uintptr(message), uintptr(unsafe.Pointer(data)))
 	ok = r0 != 0
 	return
 }
 
 func CallNextHookEx(hk Handle, code int32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
-	r0, _, _ := syscall.Syscall6(procCallNextHookEx.Addr(), 4, uintptr(hk), uintptr(code), uintptr(wparam), uintptr(lparam), 0, 0)
+	r0, _, _ := syscall.SyscallN(procCallNextHookEx.Addr(), uintptr(hk), uintptr(code), uintptr(wparam), uintptr(lparam))
 	ret = uintptr(r0)
 	return
 }
@@ -276,7 +276,7 @@ func CreateIconFromResourceEx(resBits []byte, icon bool, ver uint32, cx int, cy 
 	if icon {
 		_p1 = 1
 	}
-	r0, _, e1 := syscall.Syscall9(procCreateIconFromResourceEx.Addr(), 7, uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(_p1), uintptr(ver), uintptr(cx), uintptr(cy), uintptr(flags), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procCreateIconFromResourceEx.Addr(), uintptr(unsafe.Pointer(_p0)), uintptr(len(resBits)), uintptr(_p1), uintptr(ver), uintptr(cx), uintptr(cy), uintptr(flags))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -285,7 +285,7 @@ func CreateIconFromResourceEx(resBits []byte, icon bool, ver uint32, cx int, cy 
 }
 
 func CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style uint32, x int, y int, width int, height int, parent HWND, menu Handle, instance Handle, param unsafe.Pointer) (ret HWND, err error) {
-	r0, _, e1 := syscall.Syscall12(procCreateWindowExW.Addr(), 12, uintptr(exStyle), uintptr(unsafe.Pointer(className)), uintptr(unsafe.Pointer(windowName)), uintptr(style), uintptr(x), uintptr(y), uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(param))
+	r0, _, e1 := syscall.SyscallN(procCreateWindowExW.Addr(), uintptr(exStyle), uintptr(unsafe.Pointer(className)), uintptr(unsafe.Pointer(windowName)), uintptr(style), uintptr(x), uintptr(y), uintptr(width), uintptr(height), uintptr(parent), uintptr(menu), uintptr(instance), uintptr(param))
 	ret = HWND(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -294,13 +294,13 @@ func CreateWindowEx(exStyle uint32, className *uint16, windowName *uint16, style
 }
 
 func DefWindowProc(wnd HWND, msg uint32, wparam uintptr, lparam unsafe.Pointer) (ret uintptr) {
-	r0, _, _ := syscall.Syscall6(procDefWindowProcW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	r0, _, _ := syscall.SyscallN(procDefWindowProcW.Addr(), uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam))
 	ret = uintptr(r0)
 	return
 }
 
 func DestroyIcon(icon Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procDestroyIcon.Addr(), 1, uintptr(icon), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procDestroyIcon.Addr(), uintptr(icon))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -308,7 +308,7 @@ func DestroyIcon(icon Handle) (err error) {
 }
 
 func DestroyWindow(wnd HWND) (err error) {
-	r1, _, e1 := syscall.Syscall(procDestroyWindow.Addr(), 1, uintptr(wnd), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procDestroyWindow.Addr(), uintptr(wnd))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -316,7 +316,7 @@ func DestroyWindow(wnd HWND) (err error) {
 }
 
 func DispatchMessage(msg *MSG) (ret uintptr) {
-	r0, _, _ := syscall.Syscall(procDispatchMessageW.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procDispatchMessageW.Addr(), uintptr(unsafe.Pointer(msg)))
 	ret = uintptr(r0)
 	return
 }
@@ -326,13 +326,13 @@ func EnableWindow(wnd HWND, enable bool) (ok bool) {
 	if enable {
 		_p0 = 1
 	}
-	r0, _, _ := syscall.Syscall(procEnableWindow.Addr(), 2, uintptr(wnd), uintptr(_p0), 0)
+	r0, _, _ := syscall.SyscallN(procEnableWindow.Addr(), uintptr(wnd), uintptr(_p0))
 	ok = r0 != 0
 	return
 }
 
 func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
-	r1, _, e1 := syscall.Syscall(procEnumChildWindows.Addr(), 2, uintptr(enumFunc), uintptr(lparam), 0)
+	r1, _, e1 := syscall.SyscallN(procEnumChildWindows.Addr(), uintptr(enumFunc), uintptr(lparam))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -340,7 +340,7 @@ func EnumWindows(enumFunc uintptr, lparam unsafe.Pointer) (err error) {
 }
 
 func GetDlgItem(dlg HWND, dlgItemID int) (ret HWND, err error) {
-	r0, _, e1 := syscall.Syscall(procGetDlgItem.Addr(), 2, uintptr(dlg), uintptr(dlgItemID), 0)
+	r0, _, e1 := syscall.SyscallN(procGetDlgItem.Addr(), uintptr(dlg), uintptr(dlgItemID))
 	ret = HWND(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -353,7 +353,7 @@ func GetDpiForWindow(wnd HWND) (ret int, err error) {
 	if err != nil {
 		return
 	}
-	r0, _, e1 := syscall.Syscall(procGetDpiForWindow.Addr(), 1, uintptr(wnd), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procGetDpiForWindow.Addr(), uintptr(wnd))
 	ret = int(r0)
 	if false {
 		err = errnoErr(e1)
@@ -362,7 +362,7 @@ func GetDpiForWindow(wnd HWND) (ret int, err error) {
 }
 
 func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (ret uintptr, err error) {
-	r0, _, e1 := syscall.Syscall6(procGetMessageW.Addr(), 4, uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procGetMessageW.Addr(), uintptr(unsafe.Pointer(msg)), uintptr(wnd), uintptr(msgFilterMin), uintptr(msgFilterMax))
 	ret = uintptr(r0)
 	if int32(ret) == -1 {
 		err = errnoErr(e1)
@@ -371,19 +371,19 @@ func GetMessage(msg *MSG, wnd HWND, msgFilterMin uint32, msgFilterMax uint32) (r
 }
 
 func GetSystemMetrics(index int) (ret int) {
-	r0, _, _ := syscall.Syscall(procGetSystemMetrics.Addr(), 1, uintptr(index), 0, 0)
+	r0, _, _ := syscall.SyscallN(procGetSystemMetrics.Addr(), uintptr(index))
 	ret = int(r0)
 	return
 }
 
 func GetWindowDC(wnd HWND) (ret Handle) {
-	r0, _, _ := syscall.Syscall(procGetWindowDC.Addr(), 1, uintptr(wnd), 0, 0)
+	r0, _, _ := syscall.SyscallN(procGetWindowDC.Addr(), uintptr(wnd))
 	ret = Handle(r0)
 	return
 }
 
 func GetWindowRect(wnd HWND, cmdShow *RECT) (err error) {
-	r1, _, e1 := syscall.Syscall(procGetWindowRect.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(cmdShow)), 0)
+	r1, _, e1 := syscall.SyscallN(procGetWindowRect.Addr(), uintptr(wnd), uintptr(unsafe.Pointer(cmdShow)))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -391,7 +391,7 @@ func GetWindowRect(wnd HWND, cmdShow *RECT) (err error) {
 }
 
 func getWindowTextLength(wnd HWND) (ret int, err error) {
-	r0, _, e1 := syscall.Syscall(procGetWindowTextLengthW.Addr(), 1, uintptr(wnd), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procGetWindowTextLengthW.Addr(), uintptr(wnd))
 	ret = int(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -400,7 +400,7 @@ func getWindowTextLength(wnd HWND) (ret int, err error) {
 }
 
 func getWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) {
-	r0, _, e1 := syscall.Syscall(procGetWindowTextW.Addr(), 3, uintptr(wnd), uintptr(unsafe.Pointer(str)), uintptr(maxCount))
+	r0, _, e1 := syscall.SyscallN(procGetWindowTextW.Addr(), uintptr(wnd), uintptr(unsafe.Pointer(str)), uintptr(maxCount))
 	ret = int(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -409,13 +409,13 @@ func getWindowText(wnd HWND, str *uint16, maxCount int) (ret int, err error) {
 }
 
 func IsDialogMessage(wnd HWND, msg *MSG) (ok bool) {
-	r0, _, _ := syscall.Syscall(procIsDialogMessageW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(msg)), 0)
+	r0, _, _ := syscall.SyscallN(procIsDialogMessageW.Addr(), uintptr(wnd), uintptr(unsafe.Pointer(msg)))
 	ok = r0 != 0
 	return
 }
 
 func LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall(procLoadIconW.Addr(), 2, uintptr(instance), uintptr(resource), 0)
+	r0, _, e1 := syscall.SyscallN(procLoadIconW.Addr(), uintptr(instance), uintptr(resource))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -424,12 +424,12 @@ func LoadIcon(instance Handle, resource uintptr) (ret Handle, err error) {
 }
 
 func PostQuitMessage(exitCode int) {
-	syscall.Syscall(procPostQuitMessage.Addr(), 1, uintptr(exitCode), 0, 0)
+	syscall.SyscallN(procPostQuitMessage.Addr(), uintptr(exitCode))
 	return
 }
 
 func RegisterClassEx(cls *WNDCLASSEX) (err error) {
-	r1, _, e1 := syscall.Syscall(procRegisterClassExW.Addr(), 1, uintptr(unsafe.Pointer(cls)), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procRegisterClassExW.Addr(), uintptr(unsafe.Pointer(cls)))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -437,19 +437,19 @@ func RegisterClassEx(cls *WNDCLASSEX) (err error) {
 }
 
 func ReleaseDC(wnd HWND, dc Handle) (ok bool) {
-	r0, _, _ := syscall.Syscall(procReleaseDC.Addr(), 2, uintptr(wnd), uintptr(dc), 0)
+	r0, _, _ := syscall.SyscallN(procReleaseDC.Addr(), uintptr(wnd), uintptr(dc))
 	ok = r0 != 0
 	return
 }
 
 func SendMessage(wnd HWND, msg uint32, wparam uintptr, lparam uintptr) (ret uintptr) {
-	r0, _, _ := syscall.Syscall6(procSendMessageW.Addr(), 4, uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSendMessageW.Addr(), uintptr(wnd), uintptr(msg), uintptr(wparam), uintptr(lparam))
 	ret = uintptr(r0)
 	return
 }
 
 func SetDlgItemText(dlg HWND, dlgItemID int, str *uint16) (err error) {
-	r1, _, e1 := syscall.Syscall(procSetDlgItemTextW.Addr(), 3, uintptr(dlg), uintptr(dlgItemID), uintptr(unsafe.Pointer(str)))
+	r1, _, e1 := syscall.SyscallN(procSetDlgItemTextW.Addr(), uintptr(dlg), uintptr(dlgItemID), uintptr(unsafe.Pointer(str)))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -457,7 +457,7 @@ func SetDlgItemText(dlg HWND, dlgItemID int, str *uint16) (err error) {
 }
 
 func SetFocus(wnd HWND) (ret HWND, err error) {
-	r0, _, e1 := syscall.Syscall(procSetFocus.Addr(), 1, uintptr(wnd), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procSetFocus.Addr(), uintptr(wnd))
 	ret = HWND(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -466,7 +466,7 @@ func SetFocus(wnd HWND) (ret HWND, err error) {
 }
 
 func SetForegroundWindow(wnd HWND) (ok bool) {
-	r0, _, _ := syscall.Syscall(procSetForegroundWindow.Addr(), 1, uintptr(wnd), 0, 0)
+	r0, _, _ := syscall.SyscallN(procSetForegroundWindow.Addr(), uintptr(wnd))
 	ok = r0 != 0
 	return
 }
@@ -476,7 +476,7 @@ func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
 	if err != nil {
 		return
 	}
-	r0, _, e1 := syscall.Syscall(procSetThreadDpiAwarenessContext.Addr(), 1, uintptr(dpiContext), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procSetThreadDpiAwarenessContext.Addr(), uintptr(dpiContext))
 	ret = uintptr(r0)
 	if false {
 		err = errnoErr(e1)
@@ -485,7 +485,7 @@ func SetThreadDpiAwarenessContext(dpiContext uintptr) (ret uintptr, err error) {
 }
 
 func SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) {
-	r0, _, e1 := syscall.Syscall(procSetWindowLongW.Addr(), 3, uintptr(wnd), uintptr(index), uintptr(newLong))
+	r0, _, e1 := syscall.SyscallN(procSetWindowLongW.Addr(), uintptr(wnd), uintptr(index), uintptr(newLong))
 	ret = int(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -494,7 +494,7 @@ func SetWindowLong(wnd HWND, index int, newLong int) (ret int, err error) {
 }
 
 func SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, flags int) (err error) {
-	r1, _, e1 := syscall.Syscall9(procSetWindowPos.Addr(), 7, uintptr(wnd), uintptr(wndInsertAfter), uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), uintptr(flags), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procSetWindowPos.Addr(), uintptr(wnd), uintptr(wndInsertAfter), uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), uintptr(flags))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -502,7 +502,7 @@ func SetWindowPos(wnd HWND, wndInsertAfter HWND, x int, y int, cx int, cy int, f
 }
 
 func SetWindowText(wnd HWND, text *uint16) (err error) {
-	r1, _, e1 := syscall.Syscall(procSetWindowTextW.Addr(), 2, uintptr(wnd), uintptr(unsafe.Pointer(text)), 0)
+	r1, _, e1 := syscall.SyscallN(procSetWindowTextW.Addr(), uintptr(wnd), uintptr(unsafe.Pointer(text)))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -510,7 +510,7 @@ func SetWindowText(wnd HWND, text *uint16) (err error) {
 }
 
 func SetWindowsHookEx(idHook int, fn uintptr, mod Handle, threadID uint32) (ret Handle, err error) {
-	r0, _, e1 := syscall.Syscall6(procSetWindowsHookExW.Addr(), 4, uintptr(idHook), uintptr(fn), uintptr(mod), uintptr(threadID), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procSetWindowsHookExW.Addr(), uintptr(idHook), uintptr(fn), uintptr(mod), uintptr(threadID))
 	ret = Handle(r0)
 	if ret == 0 {
 		err = errnoErr(e1)
@@ -519,13 +519,13 @@ func SetWindowsHookEx(idHook int, fn uintptr, mod Handle, threadID uint32) (ret 
 }
 
 func ShowWindow(wnd HWND, cmdShow int) (ok bool) {
-	r0, _, _ := syscall.Syscall(procShowWindow.Addr(), 2, uintptr(wnd), uintptr(cmdShow), 0)
+	r0, _, _ := syscall.SyscallN(procShowWindow.Addr(), uintptr(wnd), uintptr(cmdShow))
 	ok = r0 != 0
 	return
 }
 
 func SystemParametersInfo(action int, uiParam uintptr, pvParam unsafe.Pointer, winIni int) (err error) {
-	r1, _, e1 := syscall.Syscall6(procSystemParametersInfoW.Addr(), 4, uintptr(action), uintptr(uiParam), uintptr(pvParam), uintptr(winIni), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procSystemParametersInfoW.Addr(), uintptr(action), uintptr(uiParam), uintptr(pvParam), uintptr(winIni))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -533,13 +533,13 @@ func SystemParametersInfo(action int, uiParam uintptr, pvParam unsafe.Pointer, w
 }
 
 func TranslateMessage(msg *MSG) (ok bool) {
-	r0, _, _ := syscall.Syscall(procTranslateMessage.Addr(), 1, uintptr(unsafe.Pointer(msg)), 0, 0)
+	r0, _, _ := syscall.SyscallN(procTranslateMessage.Addr(), uintptr(unsafe.Pointer(msg)))
 	ok = r0 != 0
 	return
 }
 
 func UnhookWindowsHookEx(hk Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procUnhookWindowsHookEx.Addr(), 1, uintptr(hk), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procUnhookWindowsHookEx.Addr(), uintptr(hk))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -547,7 +547,7 @@ func UnhookWindowsHookEx(hk Handle) (err error) {
 }
 
 func UnregisterClass(className *uint16, instance Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procUnregisterClassW.Addr(), 2, uintptr(unsafe.Pointer(className)), uintptr(instance), 0)
+	r1, _, e1 := syscall.SyscallN(procUnregisterClassW.Addr(), uintptr(unsafe.Pointer(className)), uintptr(instance))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -559,7 +559,7 @@ func WTSSendMessage(server Handle, sessionID uint32, title *uint16, titleLength 
 	if wait {
 		_p0 = 1
 	}
-	r1, _, e1 := syscall.Syscall12(procWTSSendMessageW.Addr(), 10, uintptr(server), uintptr(sessionID), uintptr(unsafe.Pointer(title)), uintptr(titleLength), uintptr(unsafe.Pointer(message)), uintptr(messageLength), uintptr(style), uintptr(timeout), uintptr(unsafe.Pointer(response)), uintptr(_p0), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procWTSSendMessageW.Addr(), uintptr(server), uintptr(sessionID), uintptr(unsafe.Pointer(title)), uintptr(titleLength), uintptr(unsafe.Pointer(message)), uintptr(messageLength), uintptr(style), uintptr(timeout), uintptr(unsafe.Pointer(response)), uintptr(_p0))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}

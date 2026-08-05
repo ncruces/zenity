@@ -9,7 +9,7 @@ TAG=$(git diff --quiet && git tag --points-at HEAD || true)
 echo 'package main; const tag = "'$TAG'"' | gofmt > tag.go
 
 printf '#!/bin/sh\nexec zenity.exe --unixeol --cygpath "$@"' > zenity
-go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo "-product-version=$TAG"
+go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo "-product-version=${TAG#v}"
 
 GOOS=windows GOARCH=386   CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath &&
 zip -9 zenity_win32.zip zenity zenity.exe
